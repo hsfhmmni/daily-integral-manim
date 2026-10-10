@@ -1,0 +1,18 @@
+Easy Integral - Saturday 10 October 2026
+
+1. How big is the green area from 0 to pi over 2?
+2. At each end one term blows up, so the curve tends to 0.
+3. Thin rectangles estimate the area; watch the gap shrink.
+4. Look at the bottom: swap and and nothing changes.
+5. Swapping x for pi over 2 minus x swaps sine and cos.
+6. Multiply top and bottom by sine xcos x; call it I.
+7. Replace x by pi over 2 minus x: same limits, sine and cos swap.
+8. Mirror the curve in x equals pi over 4: same area, sine and cos swapped.
+9. Stacked, the two curves make sine xcos x, area 1 over 2.
+10. Add the two forms of I, then factor the top.
+11. The bracket cancels with the bottom.
+12. The derivative of sine squared x2 is sine xcos x.
+13. Upper limit minus lower limit: 1 over 2 minus 0.
+14. Halve both sides.
+15. More, thinner rectangles close in on 1 over 4 equals 0.25.
+16. Takeaway: on [0, pi over 2], try x tends to pi over 2 minus x and add.

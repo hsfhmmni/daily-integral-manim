@@ -1,0 +1,18 @@
+Medium Integral - Friday 9 October 2026
+
+1. Endless roots on top and bottom. Can this area be exact?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Look at the bottom: it contains a copy of itself.
+4. So B squared equals x plus B; the top A obeys A squared equals x minus A.
+5. Name the top A and the bottom B, both positive.
+6. Subtract: B squared minus A squared equals B plus A, so B minus A equals 1.
+7. Switch to B: x equals B squared minus B, so dx equals (2B minus 1) dB.
+8. As x tends to 0 to the plus, B tends to 1; at x equals 1, B squared equals B plus 1, so B equals.
+9. In B: a new curve from 1 to , same area.
+10. Expand (B minus 1)(2B minus 1) equals 2B squared minus 3B plus 1, then divide by B.
+11. Integrate term by term.
+12. Upper limit minus lower limit; log 1 equals 0.
+13. The golden ratio obeys squared equals plus 1.
+14. With equals 1 plus root 52, 3 minus 2 equals 2 minus root 5.
+15. More, thinner rectangles close in on 2 minus root 5 plus log about 0.2451.
+16. Takeaway: an endless expression contains itself, so write an equation.

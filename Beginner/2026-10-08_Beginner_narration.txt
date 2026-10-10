@@ -1,0 +1,16 @@
+Beginner Integral - Thursday 8 October 2026
+
+1. How big is the green area between x equals minus 1 and x equals 1?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Look under the root: x cubed plus 5, in orange.
+4. Its derivative is already in front, so substitute.
+5. Move 3x squared next to dx: together they make du.
+6. With u equals x cubed plus 5, the limits minus 1 and 1 become 4 and 6.
+7. In x: the green area is about 4.465.
+8. In u: the curve is root u, and the area is unchanged.
+9. A square root is the power 1 over 2.
+10. Power rule: add one to the power, then divide by it.
+11. Upper limit minus lower limit.
+12. 6 cubed/2 equals 6root 6 and 4 cubed/2 equals 8.
+13. More, thinner rectangles close in on 4root 6 minus 16 over 3.
+14. Takeaway: spot an inside function whose derivative is also present.

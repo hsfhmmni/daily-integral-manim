@@ -1,0 +1,17 @@
+Easy Integral - Thursday 8 October 2026
+
+1. How big is this green area under the curve?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Look inside the inverse cosine: sine (pi x), in orange.
+4. Its derivative is already in the integral, so substitute.
+5. Slide pi next to cos (pi x) dx: together they make du.
+6. With u equals sine (pi x), the limits plus or minus 1 over 2 become plus or minus 1.
+7. In x: the area under the original curve is about 3.142.
+8. In u: the curve is cos inverse u, and the area is unchanged.
+9. Use the identity cos inverse u equals pi over 2 minus sine inverse u.
+10. The constant pi over 2 over a width of 2 gives pi over 2 times 2.
+11. sine inverse u is odd: its two pieces are mirror images.
+12. Spun about the origin, they cancel: signed area 0.
+13. So the inverse sine part contributes nothing.
+14. More, thinner rectangles close in on pi.
+15. Takeaway: when a function's derivative sits beside it, substitute.

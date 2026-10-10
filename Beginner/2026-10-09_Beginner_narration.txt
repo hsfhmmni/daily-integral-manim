@@ -1,0 +1,16 @@
+Beginner Integral - Friday 9 October 2026
+
+1. How big is the green area from x equals 0 to x equals log 3?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Look at the bottom: e squared x hides the top, e to the x.
+4. So set u equals e to the x: the bottom becomes 1 plus u squared.
+5. Write e squared x equals (e to the x) squared and move e to the x beside dx.
+6. With u equals e to the x, du equals e to the x dx; the limits become 1 and 3.
+7. In x: the green area is about 0.464.
+8. In u: the curve is 11 plus u squared, and the area is unchanged.
+9. 11 plus u squared is the derivative of inverse u.
+10. Upper limit minus lower limit.
+11. inverse 1 equals pi over 4, because pi over 4 equals 1.
+12. Subtraction formula: 3 minus 1 over 1 plus 3 times 1 equals 1 over 2.
+13. More, thinner rectangles close in on inverse 3 minus pi over 4 about 0.4636.
+14. Takeaway: spot 1 plus u squared in disguise, then expect an inverse tangent.

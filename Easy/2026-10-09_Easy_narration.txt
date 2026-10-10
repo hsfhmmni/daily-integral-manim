@@ -1,0 +1,15 @@
+Easy Integral - Friday 9 October 2026
+
+1. How big is the green area from 0 to pi over 6?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Look at the bottom, 2 plus sine x, in orange.
+4. The top is the bottom's derivative, so substitute.
+5. Move cos x beside dx: together they make du.
+6. With u equals 2 plus sine x, the limits become 2 and 5 over 2.
+7. In x: the green area is about 0.223.
+8. In u: the curve is 1 over u, and the area is unchanged.
+9. 1 over u is the derivative of log u, and here u>0.
+10. Upper limit minus lower limit.
+11. log a minus log b equals log a over b, and 5 over 2 2 equals 5 over 4.
+12. More, thinner rectangles close in on log 5 over 4 about 0.2231.
+13. Takeaway: when the top is the bottom's derivative, expect a logarithm.

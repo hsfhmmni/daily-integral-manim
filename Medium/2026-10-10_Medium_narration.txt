@@ -1,0 +1,17 @@
+Medium Integral - Saturday 10 October 2026
+
+1. Four nested absolute values. How big is this green area?
+2. Each corner is where some inside expression hits 0.
+3. Thin rectangles estimate the area; watch the gap shrink.
+4. Start from the innermost bars, |x|.
+5. |x| is even, so the whole integrand is even.
+6. Even integrand: double the half from 0 to 6, where |x| equals x.
+7. Unwrap from inside: subtract a number, then fold negatives up.
+8. A zigzag of straight pieces, reaching height 3 at x equals plus or minus 3.
+9. On [0,6] the zigzag is 2 minus x, then x, then 6 minus x.
+10. Let t be each piece's height: every part becomes t cubed dt.
+11. Each piece: _a to the bt cubed dt equals b to the 4 minus a to the 44.
+12. 15 over 4 plus 80 over 4 plus 81 over 4 equals 176 over 4 equals 44.
+13. Double it to count the left half too.
+14. More, thinner rectangles close in on 88.
+15. Takeaway: unwrap nested absolute values from the inside out.

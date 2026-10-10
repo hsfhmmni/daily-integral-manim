@@ -1,0 +1,16 @@
+Medium Integral - Thursday 8 October 2026
+
+1. No elementary antiderivative, and x equals 0 divides by zero. Now what?
+2. The hole at x equals 0 is removable: the curve tends to 1 over 2.
+3. Rectangles on [ minus 11 pi over 2,11 pi over 2] estimate the area; the gap shrinks.
+4. Look at the bottom: x factors out.
+5. Split it: sine x over x times a weight that climbs from 0 to 1.
+6. Factor: xe to the x plus x equals x(e to the x plus 1).
+7. Call the weight sigma(x); it climbs from 0 to 1.
+8. Mirror sigma(x) in the y-axis to get sigma(minus x).
+9. At every x the two heights add to exactly 1.
+10. Pair x with minus x: sine x over x is even, so fold at 0.
+11. The weights add to 1, so they vanish.
+12. The Dirichlet integral, which a Laplace transform evaluates.
+13. More rectangles on a wider window close in on pi over 2.
+14. Takeaway: pair x with minus x when a weight satisfies w(x) plus w(minus x) equals 1.
