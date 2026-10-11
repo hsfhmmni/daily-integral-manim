@@ -249,8 +249,18 @@ def frame_problems(scene):
                 out.append(f"{_label(m)} is too small to read: font {m.font_size / zoom:.0f} on screen "
                            f"< {floor} (the group was shrunk to fit; shorten the wording)")
 
+    wm = getattr(scene, "_watermark", None)
+    if wm is not None and (wm not in scene.mobjects or not _visible(wm)):
+        out.append("the watermark is missing (it must be in every frame)")
+    elif wm is not None and scene.mobjects[-1] is not wm and wm not in scene.foreground_mobjects:
+        out.append("the watermark is not in the foreground")
+
     for i, A in enumerate(tops):
+        if getattr(A, "_guard_dimmed", False):
+            continue                              # dimmed working behind a Rule Card
         for B in tops[i + 1:]:
+            if getattr(B, "_guard_dimmed", False):
+                continue
             for a in _texty_leaves(A):
                 for b in _texty_leaves(B):
                     if (_has_points(a) and _has_points(b) and _visible(a) and _visible(b)
@@ -432,6 +442,7 @@ def revolve_about_x_axis(scene3d, func, x_min, x_max):
     Use this when an integral is secretly a volume (pi * integral of f(x)^2 dx).
     """
     scene3d.set_camera_orientation(phi=65 * DEGREES, theta=-50 * DEGREES)
+    add_watermark(scene3d)
     axes = ThreeDAxes()
     curve = ParametricFunction(lambda t: np.array([t, func(t), 0]),
                                t_range=[x_min, x_max], color=BLUE)
@@ -470,10 +481,23 @@ BACKGROUND = "#0b0d12"      # near-black
 
 # ---- pacing
 CAPTION_MAX_WORDS = 12
-SECONDS_PER_WORD = 0.4
-MIN_HOLD = 1.5
+READ_WORDS_PER_SECOND = 2.5 # every caption stays at least max(2.0, reading words / 2.5) s
+MIN_HOLD = 2.0
+MATH_READ_WORDS = 2         # a $...$ block counts as 2 words when timing (1 for the 12-word limit)
 CAPTION_SIZE = 38
-TARGET_LENGTH = (90, 180)   # seconds
+TARGET_LENGTH = (90, 270)   # seconds (fallback; see TARGET_LENGTHS)
+TARGET_LENGTHS = {"Beginner": (90, 270), "Easy": (90, 240), "Medium": (90, 300), "Hard": (90, 300)}
+
+# ---- watermark (bottom-right, above everything, in every frame)
+WATERMARK_TEX = r"@d\_dxmercy"
+WATERMARK_SIZE = 24
+WATERMARK_OPACITY = 0.45
+
+# ---- Rule Cards
+CARD_COLOR = TEAL_C         # card border and title; not used by the maths colour code
+CARD_DIM = 0.8              # the working fades to 20% while a card is up
+CARD_LINE_SIZE = 40
+CARD_HEAD_SIZE = 30
 
 # ---- layout zones (scene units, unzoomed camera)
 CAPTION_TOP = -2.45                         # captions live below this line
@@ -532,9 +556,18 @@ def caption_words(text):
     return sum(1 for t in tokens if re.search(r"\w", t))       # lone punctuation is not a word
 
 
-def hold_time(text):
-    """How long a caption stays: 0.4 s per word, at least 1.5 s."""
-    return max(MIN_HOLD, SECONDS_PER_WORD * caption_words(text))
+def read_words(text):
+    """Words for timing: like caption_words, but each $...$ block counts as 2."""
+    maths = len(re.findall(r"(?<!\\)\$[^$]*\$", text))
+    return caption_words(text) + (MATH_READ_WORDS - 1) * maths
+
+
+def read_time(text):
+    """How long a sentence must stay on screen: max(2.0, reading words / 2.5) seconds."""
+    return max(MIN_HOLD, read_words(text) / READ_WORDS_PER_SECOND)
+
+
+hold_time = read_time       # older name, kept for scripts and tests that use it
 
 
 class CaptionTooLong(ValueError):
@@ -578,39 +611,133 @@ def make_badge(scene, difficulty, date_short):
     return attach_hud(scene, badge)
 
 
+def make_watermark():
+    """The @d_dxmercy handle: Tex (underscore escaped), size 24, white at 45%, bottom-right,
+    just inside the safe area. Laid out for the unzoomed camera."""
+    wm = Tex(WATERMARK_TEX, font_size=WATERMARK_SIZE, color=WHITE)
+    wm.set_opacity(WATERMARK_OPACITY)
+    return wm.to_corner(DR, buff=SAFE_MARGIN + 0.03)
+
+
+_WATERMARK_BOX = []
+
+
+def watermark_box():
+    """(left, right, bottom, top) of the watermark with the unzoomed camera."""
+    if not _WATERMARK_BOX:
+        wm = make_watermark()
+        _WATERMARK_BOX.extend([wm.get_left()[0], wm.get_right()[0], wm.get_bottom()[1], wm.get_top()[1]])
+    return tuple(_WATERMARK_BOX)
+
+
+def add_watermark(scene):
+    """Add the watermark once, above every animation, in every frame.
+
+    add_foreground_mobject keeps it on top of everything added later (Rule Cards too);
+    in a MovingCameraScene it follows the camera like the badge; in a ThreeDScene it is
+    fixed in the frame. Nothing may overlap it (it is reserved for the frame guard).
+    """
+    if getattr(scene, "_watermark", None) is not None:
+        return scene._watermark
+    wm = make_watermark()
+    if isinstance(scene, ThreeDScene):
+        scene.add_fixed_in_frame_mobjects(wm)
+    else:
+        attach_hud(scene, wm)
+    scene.add_foreground_mobject(wm)
+    scene._watermark = wm
+    scene._guard_reserved = list(getattr(scene, "_guard_reserved", [])) + [wm]
+    return wm
+
+
+def keep_watermark(scene):
+    """Put the watermark back on top (call after anything that may have removed it)."""
+    wm = getattr(scene, "_watermark", None)
+    if wm is not None:
+        scene.add_foreground_mobject(wm)
+    return wm
+
+
+def clear_scene_keep_watermark(scene, run_time=1.0):
+    """Fade out everything except the watermark, the badge and the camera frame.
+    Use this instead of FadeOut(*scene.mobjects) or scene.clear()."""
+    keep = {id(getattr(scene, "_watermark", None)), id(getattr(scene, "_badge", None)),
+            id(getattr(getattr(scene, "camera", None), "frame", None))}
+    gone = [m for m in scene.mobjects if id(m) not in keep and not isinstance(m, ValueTracker)]
+    if gone:
+        scene.play(*[FadeOut(m) for m in gone], run_time=run_time)
+        scene.remove(*gone)
+    if getattr(scene, "_caption", None) in gone:
+        _end_caption(scene)
+        scene._caption = None
+    keep_watermark(scene)
+
+
+def _caption_band_bottom():
+    """Captions sit above the watermark so they never touch it."""
+    return max(SAFE_BOTTOM, watermark_box()[3] + 0.12)
+
+
+# ---- hold times: every on-screen sentence stays at least read_time(text)
+def _now(scene):
+    return scene.renderer.time
+
+
+def _start_caption(scene, text):
+    if not hasattr(scene, "_caption_log"):
+        scene._caption_log = []
+    scene._caption_log.append([text, _now(scene), None, read_time(text)])
+
+
+def _end_caption(scene):
+    """Close the current caption's log entry, first waiting out the rest of its hold."""
+    log = getattr(scene, "_caption_log", None)
+    if not log or log[-1][2] is not None:
+        return
+    remaining = log[-1][1] + log[-1][3] - _now(scene)
+    if remaining > 0.01:
+        scene.wait(remaining)
+    log[-1][2] = _now(scene)
+
+
 def caption(scene, text, color=WHITE, wait=True, key=None):
     """Show one caption at the bottom of the screen, replacing the previous one.
 
-    Raises CaptionTooLong above 12 words. Holds 0.4 s per word (min 1.5 s) and
-    records the sentence for the narration script. key: name a key moment just after
-    the caption appears (for frame extraction).
+    Raises CaptionTooLong above 12 words. Every caption stays at least read_time(text)
+    = max(2.0, words / 2.5) s, each $...$ counting as 2 words; with wait=False the hold
+    is still kept, by waiting before the next caption replaces it. Records the sentence
+    for the narration script. key: name a key moment just after the caption appears.
     """
     words = caption_words(text)
     if words > CAPTION_MAX_WORDS:
         raise CaptionTooLong(f"caption has {words} words (max {CAPTION_MAX_WORDS}): {text!r}")
     new = rich(text, font_size=CAPTION_SIZE, width=12.4, color=color)
     new.set_stroke(BACKGROUND, width=6, background=True)
-    fit_into(new, SAFE_LEFT, SAFE_RIGHT, SAFE_BOTTOM, CAPTION_TOP)
-    new.move_to([0, (SAFE_BOTTOM + CAPTION_TOP) / 2, 0])
+    bottom = _caption_band_bottom()
+    fit_into(new, SAFE_LEFT, SAFE_RIGHT, bottom, CAPTION_TOP)
+    new.move_to([0, (bottom + CAPTION_TOP) / 2, 0])
     attach_hud(scene, new)
     old = getattr(scene, "_caption", None)
     anims = [FadeIn(new, shift=0.15 * UP)]
     if old is not None:
+        _end_caption(scene)
         anims.insert(0, FadeOut(old, shift=0.15 * UP))
     scene.play(*anims, run_time=0.8)
     scene._caption = new
+    _start_caption(scene, text)
     scene._narration.append(text)
     if key:
         mark(scene, key, offset=0.3)
     if wait:
-        scene.wait(hold_time(text))
+        scene.wait(read_time(text))
     return new
 
 
 def clear_caption(scene):
-    """Fade out the current caption, if any."""
+    """Fade out the current caption, if any (after its hold time is over)."""
     old = getattr(scene, "_caption", None)
     if old is not None:
+        _end_caption(scene)
         scene.play(FadeOut(old), run_time=0.5)
         scene._caption = None
 
@@ -853,11 +980,15 @@ def morph_to(scene, current, new_spec, colors, trail, run_time=1.5, name=None):
 def morph_steps(scene, current, steps, colors, trail, hooks=None):
     """Walk through the method: each step morphs the line and shows its caption.
 
-    steps: list of dicts {tex: eq(...), say: cap(...), optional highlight: ([tex parts], cap(label)),
+    steps: list of dicts {tex: eq(...), say: cap(...), rule: "key" or [keys] from rules.py
+    ("algebra" for a step that only simplifies), mapping: [cap(...)] or {key: [cap(...)]}
+    (how the rule applies here), optional highlight: ([tex parts], cap(label)),
     optional then: name of a hook in `hooks` (a function(scene, current) -> None)}.
+    Before a step with a rule, its Rule Card is shown (rule_cards).
     """
     hooks = hooks or {}
     for i, step in enumerate(steps, 1):
+        rule_cards(scene, step)
         scene._guard_section = f"Step {i}"
         current = morph_to(scene, current, step["tex"], colors, trail,
                            name=f"mid-morph {i}" if i <= 2 else None)
@@ -872,6 +1003,156 @@ def morph_steps(scene, current, steps, colors, trail, hooks=None):
         if step.get("then"):
             hooks[step["then"]](scene, current)
     return current
+
+
+# ---- Rule Cards: every rule is stated and explained before it is used
+from rules import ALGEBRA, RULE_CARDS          # noqa: E402  (rules.py has no Manim imports)
+
+CARD_SECTIONS = (("symbols", r"What the symbols mean"), ("when", r"When to use it"),
+                 ("why", r"Why it works"), ("mapping", r"In this problem"))
+
+
+def step_rules(step):
+    """The rule keys a step uses (rule="key" or a list), without "algebra"."""
+    r = step.get("rule")
+    keys = [] if r is None else [r] if isinstance(r, str) else list(r)
+    for k in keys:
+        if k != ALGEBRA and k not in RULE_CARDS:
+            raise KeyError(f"rule {k!r} is not in rules.RULE_CARDS; add a card for it to rules.py")
+    return [k for k in keys if k != ALGEBRA]
+
+
+def step_mapping(step, key, keys):
+    """The mapping lines for one rule of a step: mapping={key: [...]} per rule, or a plain
+    list, which goes with the step's last rule."""
+    m = step.get("mapping") or []
+    if isinstance(m, dict):
+        return list(m.get(key, []))
+    return list(m) if key == keys[-1] else []
+
+
+def _card_area(scene):
+    """(left, right, bottom, top) a card may use: inside the safe area, clear of the
+    badge above and the watermark below (unzoomed camera)."""
+    top = SAFE_TOP
+    badge = getattr(scene, "_badge", None)
+    if badge is not None:
+        top = min(top, badge.get_bottom()[1] - 0.15)
+    return SAFE_LEFT + 0.05, SAFE_RIGHT - 0.05, watermark_box()[3] + 0.15, top
+
+
+def _dim_working(scene):
+    """Fade everything on screen (except watermark, badge, camera) to 20%. Returns the
+    dimmed mobjects; the frame guard ignores them for text overlaps until restored."""
+    keep = {id(getattr(scene, "_watermark", None)), id(getattr(scene, "_badge", None)),
+            id(getattr(getattr(scene, "camera", None), "frame", None))}
+    targets = [m for m in scene.mobjects if id(m) not in keep and not isinstance(m, ValueTracker)
+               and _has_points(m) and _visible(m)]
+    for m in targets:
+        m.save_state()
+        m._guard_dimmed = True
+    if targets:
+        scene.play(*[m.animate.fade(CARD_DIM) for m in targets], run_time=0.6)
+    return targets
+
+
+def _undim_working(scene, targets):
+    if targets:
+        scene.play(*[Restore(m) for m in targets], run_time=0.6)
+    for m in targets:
+        m._guard_dimmed = False
+
+
+def _hold_beat(scene, lines):
+    """Hold a card beat for the read time of all its lines (and log it like a caption)."""
+    text = " ".join(lines)
+    _start_caption(scene, text)
+    scene._narration.extend(lines)
+    scene.wait(read_time(text))
+    scene._caption_log[-1][2] = _now(scene)
+
+
+def _card_lines(lines, width):
+    body = VGroup(*[rich(t, font_size=CARD_LINE_SIZE, width=width) for t in lines])
+    return body.arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+
+
+def show_rule_card(scene, key, mapping=(), full=True):
+    """Show one Rule Card centred in the frame, one beat at a time.
+
+    full=True:  name + statement, then what the symbols mean, when to use it, why it
+                works, and how it applies here (mapping), each held for its read time.
+    full=False: a short reminder: name + statement (and the mapping, if any).
+    The caller dims the working first (see rule_cards).
+    """
+    card = RULE_CARDS[key]
+    scene._guard_section = f"{'Card' if full else 'Reminder'} {key}"
+    left, right, bottom, top = _card_area(scene)
+    pad = 0.35
+    inner_w = right - left - 2 * pad
+    tag = r"Rule" if full else r"Reminder"
+    title = rich(r"%s: %s" % (tag, card["name"]), font_size=40, width=inner_w, color=CARD_COLOR)
+    statement = MathTex(card["statement"], font_size=48)
+    _fit(statement, inner_w)
+    header = VGroup(title, statement).arrange(DOWN, buff=0.35)
+    sections = []
+    for field, heading in CARD_SECTIONS:
+        lines = list(mapping) if field == "mapping" else (card[field] if full else [])
+        if lines:
+            head = Tex(heading, font_size=CARD_HEAD_SIZE, color=GREY_B)
+            sections.append((lines, VGroup(head, _card_lines(lines, inner_w - 0.2)).arrange(
+                DOWN, aligned_edge=LEFT, buff=0.18)))
+    body_h = max([s.height for _, s in sections], default=0)
+    if full:
+        box = Rectangle(width=right - left, height=top - bottom)
+        box.move_to([(left + right) / 2, (bottom + top) / 2, 0])
+    else:
+        h = header.height + (body_h + 0.5 if sections else 0) + 2 * pad + 0.2
+        box = Rectangle(width=right - left, height=min(h, top - bottom))
+        box.move_to([(left + right) / 2, min(0.4, top - box.height / 2), 0])
+    box.set_stroke(CARD_COLOR, 3).set_fill(BACKGROUND, 0.92)
+    fit_into(header, box.get_left()[0] + pad, box.get_right()[0] - pad, box.get_bottom()[1] + pad,
+             box.get_top()[1] - pad)
+    header.move_to([box.get_center()[0], box.get_top()[1] - pad - header.height / 2, 0])
+    rule_line = Line(LEFT, RIGHT).set_stroke(CARD_COLOR, 1.5, opacity=0.6)
+    rule_line.set_width(box.width - 2 * pad).next_to(header, DOWN, buff=0.25)
+    body_box = (box.get_left()[0] + pad, box.get_right()[0] - pad, box.get_bottom()[1] + pad,
+                rule_line.get_y() - 0.25)
+    for _, s in sections:
+        fit_into(s, *body_box)
+        s.move_to([0, 0, 0]).align_to(np.array([body_box[0], body_box[3], 0]), UL)
+    frame_parts = [box, header] + ([rule_line] if sections else [])
+
+    scene.play(FadeIn(box), FadeIn(title, shift=0.1 * DOWN), run_time=0.5)
+    scene.play(Write(statement), *([Create(rule_line)] if sections else []), run_time=0.8)
+    mark(scene, f"{'card' if full else 'reminder'} {key}", offset=0.2)
+    _hold_beat(scene, [card["name"], "$" + card["statement"] + "$"])
+    shown = None
+    for i, (lines, s) in enumerate(sections):
+        anims = [FadeIn(s, shift=0.1 * UP)]
+        if shown is not None:
+            anims.insert(0, FadeOut(shown, shift=0.1 * UP))
+        scene.play(*anims, run_time=0.5)
+        if lines is not None and i == len(sections) - 1 and mapping:
+            mark(scene, f"{key}: in this problem", offset=0.2)
+        _hold_beat(scene, lines)
+        shown = s
+    scene.play(FadeOut(VGroup(*frame_parts, *([shown] if shown is not None else []))), run_time=0.5)
+
+
+def rule_cards(scene, step):
+    """Before a step: dim the working, show each rule's card (full the first time the rule
+    appears in this video, a reminder after), then restore the working."""
+    keys = step_rules(step)
+    if not keys:
+        return
+    clear_caption(scene)
+    seen = scene.__dict__.setdefault("_rules_seen", set())
+    dimmed = _dim_working(scene)
+    for k in keys:
+        show_rule_card(scene, k, step_mapping(step, k, keys), full=k not in seen)
+        seen.add(k)
+    _undim_working(scene, dimmed)
 
 
 # ---- substitution: same area, the axis re-labels
@@ -1150,17 +1431,23 @@ class IntegralVideo(MovingCameraScene):
 
     def construct(self):
         install_frame_guard(self)
-        self._narration, self._keyframes, self._caption = [], [], None
+        self._narration, self._keyframes, self._caption, self._caption_log = [], [], None, []
+        self._rules_seen = set()
+        add_watermark(self)
         intro_card(self, self.DIFFICULTY, self.date_long(), self.PROBLEM, self.COLORS)
         badge = make_badge(self, self.DIFFICULTY, self.date_short())
-        self._guard_reserved = [badge]
+        self._badge = badge
+        self._guard_reserved = [badge, self._watermark]
         self.add(badge)
+        keep_watermark(self)
         gr, label, problem = self.hook()
         self.intuition(gr, label)
         problem = self.insight(problem)
         current, trail = self.method(problem)
         close(self, current, trail, self.ANSWER, self.COLORS, self.FUNC, self.window(), self.ANSWER_VALUE,
               self.COUNTS[-1], self.CLOSE_SAYS, widen_to=self.CLOSE_WIDEN)
+        if self._caption_log and self._caption_log[-1][2] is None:
+            self._caption_log[-1][2] = _now(self)        # the last caption stays to the end
         self.write_narration()
 
     def write_narration(self):

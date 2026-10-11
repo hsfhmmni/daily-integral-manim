@@ -31,6 +31,37 @@ reference manual (docs.manim.community, v0.21.0). No pi creatures, logos, music 
 | 14 | **Faint grid, numbered axes.** A soft background grid under clear axis numbers. | Gives scale without noise. | `Axes` + `NumberLine.add_labels` for nice values (fractions, multiples of pi), with faint grid lines from `axes.c2p` at stroke opacity 0.15. Helper: `build_graph()` |
 | 15 | **Gentle easing everywhere.** Smooth starts and stops; there-and-back for pulses. | Motion feels physical, not mechanical. | `rate_functions.smooth` (default), `there_and_back` for pulses, `ease_out_cubic` for trackers; run times of 1 to 2 s. |
 
+## Rule Cards
+Every rule, theorem, technique or identity a step uses is stated and explained on screen
+before the step, even "basic" ones such as the power rule or linearity. A step names it with
+`rule="key"` (or a list of keys; `rule="algebra"` for pure simplification) and gives
+`mapping=[cap(r"...")]` lines (or `{key: [...]}`) saying how the rule applies to this
+problem. Cards live in `rules.py` as `RULE_CARDS[key] = dict(name, statement, symbols, when,
+why)`: `statement` is a MathTex string; `symbols`, `when` and `why` are lists of `cap()`
+lines (12 words at most, maths in `$...$`). The `why` gives the actual reason, never just a
+restatement.
+
+On screen (`rule_cards()` / `show_rule_card()` in `common.py`): the working fades to 20%
+(technique 12, dim everything that is not the point), a bordered box with a teal title
+appears in the middle of the frame, and it reveals one beat at a time: name and statement,
+then the symbols, when to use it, why it works, and the mapping. The first use in a video
+gets the full card; later uses get a reminder (name, statement and the mapping). Teal is
+outside the maths colour code, so cards never borrow a meaning from the equations.
+
+## Hold times
+Every caption and every card beat stays at least `read_time = max(2.0, words / 2.5)` s, with
+each `$...$` block counting as 2 words. This replaces the old 0.4 s per word (technique 10).
+`caption()` keeps it automatically and logs it; `check_frame.py` verifies every hold.
+Length limits: Beginner 90-270 s, Easy 90-240 s, Medium 90-300 s.
+
+## Watermark
+`@d\_dxmercy` (Tex, size 24, white, 45% opacity) in the bottom-right corner, inside the safe
+area. Added once by `add_watermark()` with `add_foreground_mobject`, it sits above every
+animation and card, follows the camera like the badge, and is reserved in the frame guard so
+nothing touches it. Captions sit just above it. `check_frame.py --frames` compares the
+corner of a frame every 2 s with a reference crop. Clear the screen with
+`clear_scene_keep_watermark()`.
+
 ## What we deliberately do not do
 - No characters, no logos, no music and no voice. Captions carry the words (12 words at most each).
 - No decoration: geometry or 3D only when it explains something (a reflection for symmetry,

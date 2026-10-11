@@ -1,0 +1,49 @@
+Easy Integral - Sunday 11 October 2026
+
+1. How big is the green area from x equals 1 to x equals 2?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Factor the bottom, and the logarithm on top splits too.
+4. Logarithm Laws
+5. log (ab) equals log a plus log b, log a over b equals log a minus log b, log a to the k equals klog a
+6. a,b>0; k is any number.
+7. Logarithms of products, quotients or powers.
+8. A logarithm is an exponent; exponents add when powers multiply.
+9. Here a equals x and b equals x plus 1, both positive on [1,2].
+10. log (x(x plus 1)) becomes log x plus log (x plus 1).
+11. Group the log (x plus 1) terms into (x plus 1)log (x plus 1).
+12. Split the fraction: each term cancels one factor of the bottom.
+13. The Product Rule
+14. (f g)' equals f' g plus f g'
+15. f' is the derivative of f.
+16. A product, or f'g plus fg' inside an integral.
+17. A rectangle f by g grows on two sides.
+18. Here f equals log x and g equals log (x plus 1).
+19. Derivative of log x
+20. d over dxlog x equals 1 over x, x>0
+21. log x is the power of e giving x.
+22. Differentiating a logarithm.
+23. With y equals log x, dx over dy equals x, so dy over dx equals 1 over x.
+24. f' equals 1 over x gives the term log (x plus 1) over x.
+25. The Chain Rule
+26. d over dxf (g(x)) equals f' (g(x)) g'(x)
+27. g is inside; f is outside.
+28. A function of a function, like log (x plus 1).
+29. Rates multiply: f reacts to g, g to x.
+30. g' equals 1 over x plus 1 times 1 gives the term log x over x plus 1.
+31. That is the product rule for log x times log (x plus 1).
+32. The Fundamental Theorem of Calculus
+33. _a to the b f(x) dx equals F(b) minus F(a), F' equals f
+34. F is any antiderivative of f.
+35. A definite integral, once an antiderivative is known.
+36. Area grows at the rate of the curve's height.
+37. Here F equals log x times log (x plus 1), since F' is our integrand.
+38. Integrating a derivative undoes it.
+39. Two Logarithm Values
+40. log 1 equals 0, log e equals 1
+41. log has base e about 2.718.
+42. Limits at 1 or e.
+43. e to the 0 equals 1 and e to the 1 equals e.
+44. log 1 equals 0, so the lower limit adds nothing.
+45. At x equals 2: log 2 times log 3. At x equals 1: log 1 times log 2 equals 0.
+46. More, thinner rectangles close in on log 2 times log 3 about 0.7615.
+47. Takeaway: when terms pair up as f'g plus fg', integrate to fg.

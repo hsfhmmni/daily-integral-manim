@@ -1,0 +1,258 @@
+"""Ready-written Rule Cards: every rule, theorem, technique or identity a video uses.
+
+A day's step names the rule it uses with rule="key" (or a list of keys), and
+IntegralVideo shows the card before that step: the full card the first time the rule
+appears in a video, a short reminder (name and statement) after that.
+
+Each entry:
+    name       plain words (maths, if any, in $...$)
+    statement  a MathTex string (display maths, no $)
+    symbols, when, why
+               lists of cap(r"...") lines: at most 12 words each, each makes sense
+               alone, all maths in $...$ with LaTeX commands
+
+"why" must give the actual reason (u-substitution is the chain rule in reverse, ...).
+check_text.py typesets and checks every line here. Add a new card the first time a
+day needs a rule that is not here yet.
+"""
+
+
+def cap(text):
+    """Caption marker (same as common.cap); check_text.py finds every cap(...) line."""
+    return text
+
+
+ALGEBRA = "algebra"         # rule="algebra": a step that only simplifies; no card
+
+RULE_CARDS = {
+    "power_rule": dict(
+        name=r"The Power Rule",
+        statement=r"\int x^{n}\,dx=\frac{x^{n+1}}{n+1}+C,\qquad n\neq -1",
+        symbols=[cap(r"$n$ is fixed; $C$ is any constant.")],
+        when=[cap(r"A power of the variable, like $t^{3}$.")],
+        why=[cap(r"Differentiating $\frac{x^{n+1}}{n+1}$ gives back $x^{n}$.")],
+    ),
+    "linearity": dict(
+        name=r"Linearity of the Integral",
+        statement=r"\int \big(a\,f+b\,g\big)\,dx=a\!\int f\,dx+b\!\int g\,dx",
+        symbols=[cap(r"$f$, $g$ are functions; $a$, $b$ are constants.")],
+        when=[cap(r"A sum, or a constant factor.")],
+        why=[cap(r"Scaling heights scales area; stacking heights adds areas.")],
+    ),
+    "constant_of_integration": dict(
+        name=r"The Constant of Integration",
+        statement=r"\frac{d}{dx}\big(F(x)+C\big)=F'(x)",
+        symbols=[cap(r"$F$ is one antiderivative; $C$ is any constant.")],
+        when=[cap(r"Every indefinite integral, one without limits, needs $+\,C$.")],
+        why=[cap(r"A constant has derivative $0$, so it is invisible to $\frac{d}{dx}$."),
+             cap(r"So every vertical shift of $F$ is also an answer.")],
+    ),
+    "exp_integral": dict(
+        name=r"Integral of $e^{x}$",
+        statement=r"\int e^{x}\,dx=e^{x}+C",
+        symbols=[cap(r"$e\approx 2.718$ is Euler's number.")],
+        when=[cap(r"$e^{x}$, or $e$ to a linear power.")],
+        why=[cap(r"$e^{x}$ is its own derivative, so its own antiderivative.")],
+    ),
+    "reciprocal_integral": dict(
+        name=r"Integral of $\frac{1}{x}$",
+        statement=r"\int \frac{1}{x}\,dx=\ln|x|+C",
+        symbols=[cap(r"$\ln$ is the natural logarithm, with base $e$.")],
+        when=[cap(r"The integrand is $\frac{1}{x}$: the power rule fails for $n=-1$.")],
+        why=[cap(r"The derivative of $\ln x$ is $\frac{1}{x}$ for $x>0$."),
+             cap(r"The bars $|x|$ make it work for negative $x$ too.")],
+    ),
+    "sin_integral": dict(
+        name=r"Integral of $\sin x$",
+        statement=r"\int \sin x\,dx=-\cos x+C",
+        symbols=[cap(r"$x$ is an angle measured in radians.")],
+        when=[cap(r"The integrand is $\sin x$.")],
+        why=[cap(r"The derivative of $\cos x$ is $-\sin x$."),
+             cap(r"So $-\cos x$ has derivative $\sin x$.")],
+    ),
+    "cos_integral": dict(
+        name=r"Integral of $\cos x$",
+        statement=r"\int \cos x\,dx=\sin x+C",
+        symbols=[cap(r"$x$ is an angle measured in radians.")],
+        when=[cap(r"The integrand is $\cos x$.")],
+        why=[cap(r"The derivative of $\sin x$ is $\cos x$, so undo it.")],
+    ),
+    "sec2_integral": dict(
+        name=r"Integral of $\sec^{2}x$",
+        statement=r"\int \sec^{2}x\,dx=\tan x+C",
+        symbols=[cap(r"$\sec x=\frac{1}{\cos x}$, and $\tan x=\frac{\sin x}{\cos x}$.")],
+        when=[cap(r"The integrand is $\sec^{2}x$, or $\frac{1}{\cos^{2}x}$.")],
+        why=[cap(r"The quotient rule gives $\frac{d}{dx}\tan x=\frac{1}{\cos^{2}x}$."),
+             cap(r"That is $\sec^{2}x$, so $\tan x$ is its antiderivative.")],
+    ),
+    "ftc": dict(
+        name=r"The Fundamental Theorem of Calculus",
+        statement=r"\int_{a}^{b} f(x)\,dx=F(b)-F(a),\qquad F'=f",
+        symbols=[cap(r"$F$ is any antiderivative of $f$.")],
+        when=[cap(r"A definite integral, once an antiderivative is known.")],
+        why=[cap(r"Area grows at the rate of the curve's height.")],
+    ),
+    "u_substitution": dict(
+        name=r"$u$-Substitution",
+        statement=r"\int f\big(g(x)\big)\,g'(x)\,dx=\int f(u)\,du,\qquad u=g(x)",
+        symbols=[cap(r"$u=g(x)$ is the inside; $du=g'(x)\,dx$.")],
+        when=[cap(r"An inside function appears with its derivative.")],
+        why=[cap(r"It is the chain rule in reverse.")],
+    ),
+    "change_of_limits": dict(
+        name=r"Changing the Limits",
+        statement=r"\int_{a}^{b} f\big(g(x)\big)\,g'(x)\,dx=\int_{g(a)}^{g(b)} f(u)\,du",
+        symbols=[cap(r"Old limits $a,b$; new limits $g(a),g(b)$.")],
+        when=[cap(r"Substituting in an integral with limits.")],
+        why=[cap(r"$u=g(x)$ tracks $x$, so the ends move together.")],
+    ),
+    "integration_by_parts": dict(
+        name=r"Integration by Parts",
+        statement=r"\int u\,dv=uv-\int v\,du",
+        symbols=[cap(r"$u$ is the part we differentiate, giving $du$."),
+                 cap(r"$dv$ is the part we integrate, giving $v$.")],
+        when=[cap(r"A product of two functions, one simpler when differentiated.")],
+        why=[cap(r"It is the product rule, integrated on both sides."),
+             cap(r"$(uv)'=u'v+uv'$, so $\int uv'=uv-\int u'v$.")],
+    ),
+    "partial_fractions": dict(
+        name=r"Partial Fractions",
+        statement=r"\frac{1}{(x-a)(x-b)}=\frac{A}{x-a}+\frac{B}{x-b}",
+        symbols=[cap(r"$A$ and $B$ are constants we solve for.")],
+        when=[cap(r"A fraction of polynomials whose bottom factors into pieces.")],
+        why=[cap(r"Adding $\frac{A}{x-a}+\frac{B}{x-b}$ gives one fraction over that product."),
+             cap(r"Running it backwards splits a hard fraction into easy logarithms.")],
+    ),
+    "pythagorean_identity": dict(
+        name=r"The Pythagorean Identity",
+        statement=r"\sin^{2}x+\cos^{2}x=1",
+        symbols=[cap(r"$\sin^{2}x$ means $(\sin x)^{2}$.")],
+        when=[cap(r"Squares of $\sin x$ or $\cos x$ that you want to swap.")],
+        why=[cap(r"On the unit circle a point is $(\cos x,\sin x)$."),
+             cap(r"Pythagoras: its distance from the centre is $1$.")],
+    ),
+    "double_angle": dict(
+        name=r"Double Angle Identities",
+        statement=r"\sin 2x=2\sin x\cos x,\qquad \cos 2x=\cos^{2}x-\sin^{2}x",
+        symbols=[cap(r"$2x$ is twice the angle $x$.")],
+        when=[cap(r"Products like $\sin x\cos x$, or squares like $\cos^{2}x$.")],
+        why=[cap(r"Put $b=a$ in the angle-sum formulas for $\sin$ and $\cos$.")],
+    ),
+    "trig_substitution": dict(
+        name=r"Trigonometric Substitution",
+        statement=r"\sqrt{a^{2}-x^{2}}:\quad x=a\sin\theta,\quad dx=a\cos\theta\,d\theta",
+        symbols=[cap(r"$a$ is a positive constant; $\theta$ is the new angle variable.")],
+        when=[cap(r"A root like $\sqrt{a^{2}-x^{2}}$ in the integrand.")],
+        why=[cap(r"Then $a^{2}-x^{2}=a^{2}\cos^{2}\theta$, a perfect square."),
+             cap(r"The Pythagorean identity removes the square root.")],
+    ),
+    "log_laws": dict(
+        name=r"Logarithm Laws",
+        statement=r"\ln(ab)=\ln a+\ln b,\quad \ln\frac{a}{b}=\ln a-\ln b,\quad \ln a^{k}=k\ln a",
+        symbols=[cap(r"$a,b>0$; $k$ is any number.")],
+        when=[cap(r"Logarithms of products, quotients or powers.")],
+        why=[cap(r"A logarithm is an exponent; exponents add when powers multiply.")],
+    ),
+    "exponent_laws": dict(
+        name=r"Exponent Laws",
+        statement=r"a^{m}a^{n}=a^{m+n},\quad \frac{a^{m}}{a^{n}}=a^{m-n},\quad (a^{m})^{n}=a^{mn}",
+        symbols=[cap(r"$a>0$ is the base; $m,n$ are exponents.")],
+        when=[cap(r"Powers of one base, multiplied, divided or raised.")],
+        why=[cap(r"$a^{m}$ is $m$ copies of $a$; count the copies.")],
+    ),
+    "odd_even_symmetry": dict(
+        name=r"Odd and Even Symmetry",
+        statement=(r"\int_{-a}^{a} f(x)\,dx=\begin{cases}2\int_{0}^{a} f(x)\,dx & f\text{ even}\\"
+                   r" 0 & f\text{ odd}\end{cases}"),
+        symbols=[cap(r"Even: $f(-x)=f(x)$. Odd: $f(-x)=-f(x)$.")],
+        when=[cap(r"Limits from $-a$ to $a$, symmetric about $0$.")],
+        why=[cap(r"Even halves mirror each other; odd halves are opposite and cancel.")],
+    ),
+    "improper_integral": dict(
+        name=r"Improper Integrals",
+        statement=r"\int_{a}^{\infty} f(x)\,dx=\lim_{b\to\infty}\int_{a}^{b} f(x)\,dx",
+        symbols=[cap(r"$b$ is a finite upper limit that we let grow.")],
+        when=[cap(r"A limit is $\infty$, or the integrand blows up somewhere.")],
+        why=[cap(r"We cannot integrate to $\infty$ directly."),
+             cap(r"So integrate to $b$, then see what happens as $b\to\infty$.")],
+    ),
+    "laplace_transform": dict(
+        name=r"The Laplace Transform",
+        statement=r"\mathcal{L}\{f\}(s)=\int_{0}^{\infty} e^{-st}f(t)\,dt",
+        symbols=[cap(r"$t$ is time; $s$ is a new variable; $\mathcal{L}$ names the transform.")],
+        when=[cap(r"An integral of $e^{-st}$ times a function from $0$ to $\infty$.")],
+        why=[cap(r"The factor $e^{-st}$ shrinks fast, so the integral is finite."),
+             cap(r"Known transforms, like $\mathcal{L}\{1\}=\frac{1}{s}$, give answers instantly.")],
+    ),
+    "interval_additivity": dict(
+        name=r"Splitting the Interval",
+        statement=r"\int_{a}^{c} f(x)\,dx=\int_{a}^{b} f(x)\,dx+\int_{b}^{c} f(x)\,dx",
+        symbols=[cap(r"$b$ is any split point between $a$ and $c$.")],
+        when=[cap(r"The integrand has a different formula on different pieces.")],
+        why=[cap(r"The area from $a$ to $c$ is two areas side by side.")],
+    ),
+    "ln_derivative": dict(
+        name=r"Derivative of $\ln x$",
+        statement=r"\frac{d}{dx}\ln x=\frac{1}{x},\qquad x>0",
+        symbols=[cap(r"$\ln x$ is the power of $e$ giving $x$.")],
+        when=[cap(r"Differentiating a logarithm.")],
+        why=[cap(r"With $y=\ln x$, $\frac{dx}{dy}=x$, so $\frac{dy}{dx}=\frac{1}{x}$.")],
+    ),
+    "log_values": dict(
+        name=r"Two Logarithm Values",
+        statement=r"\ln 1=0,\qquad \ln e=1",
+        symbols=[cap(r"$\ln$ has base $e\approx 2.718$.")],
+        when=[cap(r"Limits at $1$ or $e$.")],
+        why=[cap(r"$e^{0}=1$ and $e^{1}=e$.")],
+    ),
+    "absolute_value": dict(
+        name=r"Absolute Value",
+        statement=r"|w|=\begin{cases}w & w\ge 0\\ -w & w<0\end{cases}",
+        symbols=[cap(r"$|w|$ is the distance of $w$ from $0$.")],
+        when=[cap(r"Bars around an expression that can change sign.")],
+        why=[cap(r"Distance is never negative, so a negative $w$ flips to $-w$.")],
+    ),
+    "product_rule": dict(
+        name=r"The Product Rule",
+        statement=r"\big(f\,g\big)'=f'\,g+f\,g'",
+        symbols=[cap(r"$f'$ is the derivative of $f$.")],
+        when=[cap(r"A product, or $f'g+fg'$ inside an integral.")],
+        why=[cap(r"A rectangle $f$ by $g$ grows on two sides.")],
+    ),
+    "chain_rule": dict(
+        name=r"The Chain Rule",
+        statement=r"\frac{d}{dx}f\big(g(x)\big)=f'\big(g(x)\big)\,g'(x)",
+        symbols=[cap(r"$g$ is inside; $f$ is outside.")],
+        when=[cap(r"A function of a function, like $\ln(x+1)$.")],
+        why=[cap(r"Rates multiply: $f$ reacts to $g$, $g$ to $x$.")],
+    ),
+    "quotient_rule": dict(
+        name=r"The Quotient Rule",
+        statement=r"\Big(\frac{f}{g}\Big)'=\frac{f'g-fg'}{g^{2}}",
+        symbols=[cap(r"$f$ is the top, $g$ the bottom.")],
+        when=[cap(r"Differentiating a fraction.")],
+        why=[cap(r"$\frac{f}{g}=f\cdot g^{-1}$: product rule plus chain rule.")],
+    ),
+    "exp_derivative": dict(
+        name=r"Derivative of $e^{x}$",
+        statement=r"\frac{d}{dx}e^{x}=e^{x}",
+        symbols=[cap(r"$e\approx 2.718$ is Euler's number.")],
+        when=[cap(r"Differentiating $e^{x}$.")],
+        why=[cap(r"Only base $e$ grows at exactly its own height.")],
+    ),
+    "exp_log_inverse": dict(
+        name=r"$e^{x}$ and $\ln x$ Undo Each Other",
+        statement=r"e^{\ln a}=a,\qquad \ln\big(e^{b}\big)=b",
+        symbols=[cap(r"$a>0$; $b$ is any number.")],
+        when=[cap(r"A variable trapped in a logarithm or exponent.")],
+        why=[cap(r"$\ln a$ is the power of $e$ giving $a$.")],
+    ),
+    "nested_fixed_point": dict(
+        name=r"Infinite Nested Expressions",
+        statement=r"y=g\big(g(g(\cdots))\big)\quad\Longrightarrow\quad y=g(y)",
+        symbols=[cap(r"$g$ is the step repeated forever.")],
+        when=[cap(r"An expression that repeats inside itself.")],
+        why=[cap(r"Peel one layer: the same tail, $y$, remains."),
+             cap(r"Of two roots, the limit has $|g'(y)|<1$.")],
+    ),
+}

@@ -19,7 +19,7 @@ if errorlevel 1 (
   exit /b 1
 )
 REM 2. Fast low-quality dry run with the frame guard: nothing outside the safe area, no
-REM    overlapping text, nothing on the badge, nothing too small, length 90-180 s.
+REM    overlapping text, nothing on the badge, nothing too small, length within its difficulty limit.
 .venv\Scripts\python check_frame.py %D%
 if errorlevel 1 (
   echo.

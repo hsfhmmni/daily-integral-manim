@@ -1,0 +1,79 @@
+Medium Integral - Sunday 11 October 2026
+
+1. Backwards limits, a curve below the axis. What sign results?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. The tower repeats inside itself: call it y.
+4. Infinite Nested Expressions
+5. y equals g (g(g(times s))) y equals g(y)
+6. g is the step repeated forever.
+7. An expression that repeats inside itself.
+8. Peel one layer: the same tail, y, remains.
+9. Of two roots, the limit has |g'(y)|<1.
+10. g'(y) equals 1 over y, so the limit has y 1.
+11. Under the outer log sits y again: y equals log (2xy).
+12. e to the x and log x Undo Each Other
+13. e to the log a equals a, log (e to the b) equals b
+14. a>0; b is any number.
+15. A variable trapped in a logarithm or exponent.
+16. log a is the power of e giving a.
+17. e to the y equals e to the log (2xy) equals 2xy.
+18. Derivative of e to the x
+19. d over dxe to the x equals e to the x
+20. e about 2.718 is Euler's number.
+21. Differentiating e to the x.
+22. Only base e grows at exactly its own height.
+23. The top, e to the y, has derivative e to the y.
+24. The Quotient Rule
+25. (f over g)' equals f'g minus fg'g squared
+26. f is the top, g the bottom.
+27. Differentiating a fraction.
+28. f over g equals f times g inverse: product rule plus chain rule.
+29. e to the y times 2y minus e to the y times 24y squared equals e to the y(y minus 1)2y squared.
+30. Solve for x, then trade dx for dy.
+31. u-Substitution
+32. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+33. u equals g(x) is the inside; du equals g'(x) dx.
+34. An inside function appears with its derivative.
+35. It is the chain rule in reverse.
+36. 1x squared equals 4y squared e squared y, times dx equals e to the y(y minus 1)2y squared dy.
+37. Changing the Limits
+38. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+39. Old limits a,b; new limits g(a),g(b).
+40. Substituting in an integral with limits.
+41. u equals g(x) tracks x, so the ends move together.
+42. x equals 1 over log 2 gives y equals 2log 2; x equals e over 2 gives y equals 1.
+43. Exponent Laws
+44. a to the ma to the n equals a to the m plus n, a to the ma to the n equals a to the m minus n, (a to the m) to the n equals a to the mn
+45. a>0 is the base; m,n are exponents.
+46. Powers of one base, multiplied, divided or raised.
+47. a to the m is m copies of a; count the copies.
+48. e to the ye squared y equals e to the y minus 2y equals e to the minus y.
+49. Substitute: y squared cancels and y minus 1 over 1 minus y equals minus 1.
+50. Linearity of the Integral
+51. (a f plus b g) dx equals a\! f dx plus b\! g dx
+52. f, g are functions; a, b are constants.
+53. A sum, or a constant factor.
+54. Scaling heights scales area; stacking heights adds areas.
+55. Pull out the constant minus 2.
+56. Integral of e to the x
+57. e to the x dx equals e to the x plus C
+58. e about 2.718 is Euler's number.
+59. e to the x, or e to a linear power.
+60. e to the x is its own derivative, so its own antiderivative.
+61. e to the minus y dy equals minus e to the minus y.
+62. Integrate minus 2e to the minus y.
+63. The Fundamental Theorem of Calculus
+64. _a to the b f(x) dx equals F(b) minus F(a), F' equals f
+65. F is any antiderivative of f.
+66. A definite integral, once an antiderivative is known.
+67. Area grows at the rate of the curve's height.
+68. Upper minus lower: 2e inverse minus 2e to the minus 2log 2.
+69. Exponent Laws
+70. a to the ma to the n equals a to the m plus n, a to the ma to the n equals a to the m minus n, (a to the m) to the n equals a to the mn
+71. e to the minus 2log 2 equals (e to the log 2) to the minus 2.
+72. e to the x and log x Undo Each Other
+73. e to the log a equals a, log (e to the b) equals b
+74. e to the log 2 equals 2, so that is 2 to the minus 2 equals 1 over 4.
+75. 2e inverse minus 2 over 4 equals 2 over e minus 1 over 2.
+76. 2048 rectangles agree: about 0.2358, positive.
+77. Takeaway: name a self-repeating tower, then solve for it.
