@@ -15,7 +15,7 @@ It reads the scripts without running them and checks:
       escaping mistake fails here instead of halfway through a render.
   (d) numbers: the answer matches mpmath, the 64-rectangle estimate is within 1%.
   (e) Rule Cards: every step has a rule field, every rule key is in rules.RULE_CARDS,
-      every non-algebra step has mapping lines written with cap(...). rules.py is always
+      every step that shows a card (rules.card_kind) has cap(...) mapping lines. rules.py is always
       scanned, so every card line follows the caption rules (b) and compiles (c).
       (e) applies to scripts dated RULES_FROM or later and to scripts outside the
       archive folders; earlier days are left as they were.
@@ -170,12 +170,16 @@ def _is_cap(node):
 
 def rule_checks(path):
     """(e) Every step dict in STEPS has rule="key" or a list of keys from rules.RULE_CARDS;
-    non-algebra steps carry mapping lines written as cap(...)."""
+    a step that shows a card (a rule's first use with rules.card_kind not None for the
+    script's DIFFICULTY) carries mapping lines written as cap(...)."""
     sys.path.insert(0, ROOT)
-    from rules import ALGEBRA, RULE_CARDS
+    from rules import ALGEBRA, RULE_CARDS, card_kind
     rel = os.path.relpath(path, ROOT)
     tree = ast.parse(open(path, encoding="utf-8").read(), path)
     problems, found = [], False
+    difficulty = next((_str(n.value) for n in ast.walk(tree) if isinstance(n, ast.Assign)
+                       and isinstance(n.targets[0], ast.Name) and n.targets[0].id == "DIFFICULTY"), "Easy")
+    seen = set()
     for node in ast.walk(tree):
         if not (isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name)
                 and node.targets[0].id == "STEPS" and isinstance(node.value, (ast.List, ast.Tuple))):
@@ -202,9 +206,11 @@ def rule_checks(path):
                 if k != ALGEBRA and k not in RULE_CARDS:
                     problems.append(f"{where}: rule {k!r} is not in rules.RULE_CARDS (add a card to rules.py)")
             real = [k for k in keys if k != ALGEBRA]
+            carded = [k for k in real if k in RULE_CARDS and k not in seen and card_kind(k, difficulty)]
+            seen.update(carded)
             m = kws.get("mapping")
-            if real and m is None:
-                problems.append(f"{where} uses {real} but has no mapping lines")
+            if carded and m is None:
+                problems.append(f"{where} shows a card for {carded} but has no mapping lines")
                 continue
             groups = []
             if isinstance(m, (ast.List, ast.Tuple)):

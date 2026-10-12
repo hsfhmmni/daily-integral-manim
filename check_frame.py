@@ -15,7 +15,7 @@ the first problem it lists every one. The guard checks, after every animation:
   * nothing touches the corner badge or the problem line at the top
   * no text was shrunk below a readable size
   * the watermark is on screen, in the foreground, and nothing touches it
-It also checks the length (Beginner 90-270 s, Easy 90-240 s, Medium 90-300 s) and that
+It also checks the length (Beginner 90-180 s, Easy 90-180 s, Medium 90-210 s) and that
 every caption and Rule Card beat stayed on screen for its read time.
 During a real render the same guard runs in "raise" mode and stops the render.
 

@@ -1,8 +1,9 @@
 """Ready-written Rule Cards: every rule, theorem, technique or identity a video uses.
 
 A day's step names the rule it uses with rule="key" (or a list of keys), and
-IntegralVideo shows the card before that step: the full card the first time the rule
-appears in a video, a short reminder (name and statement) after that.
+IntegralVideo shows the card before that step the first time the rule appears in a
+video, as card_kind() at the bottom decides (full, short or none), and a small corner
+tag on later uses.
 
 Each entry:
     name       plain words (maths, if any, in $...$)
@@ -255,4 +256,50 @@ RULE_CARDS = {
         why=[cap(r"Peel one layer: the same tail, $y$, remains."),
              cap(r"Of two roots, the limit has $|g'(y)|<1$.")],
     ),
+    "volume_of_revolution": dict(
+        name=r"Volume of Revolution",
+        statement=r"V=\pi\int_{a}^{b} y^{2}\,dx",
+        symbols=[cap(r"$y=f(x)$ is the curve spun about the $x$-axis.")],
+        when=[cap(r"A curve turned a full circle about the $x$-axis.")],
+        why=[cap(r"Each thin slice is a disc of area $\pi y^{2}$.")],
+    ),
+    "reflection_property": dict(
+        name=r"Reflecting the Variable",
+        statement=r"\int_{-a}^{a} f(x)\,dx=\int_{-a}^{a} f(-x)\,dx",
+        symbols=[cap(r"$f(-x)$ is the graph of $f$ mirrored in the $y$-axis.")],
+        when=[cap(r"Limits symmetric about $0$, but $f$ neither odd nor even.")],
+        why=[cap(r"A mirror image of a region has the same area.")],
+    ),
+    "cosh_definition": dict(
+        name=r"Hyperbolic Cosine",
+        statement=r"\cosh x=\frac{e^{x}+e^{-x}}{2}",
+        symbols=[cap(r"$\cosh$ is the hyperbolic cosine.")],
+        when=[cap(r"$\cosh x$ appears next to $e^{x}$ or $e^{-x}$.")],
+        why=[cap(r"It is defined as the average of $e^{x}$ and $e^{-x}$.")],
+    ),
 }
+
+
+# ---- Which cards are shown (from 2026-10-12)
+# Beginner and Easy follow the Pure Year 1 syllabus, Medium the Further Pure syllabus (never
+# named on screen). A rule taught before the syllabus gets no card; techniques get a short
+# card (name, statement, how it applies here); rules beyond the syllabus get the full card.
+# A rule's later uses in the same video show a small corner tag instead of a card.
+SILENT = {          # assumed known: no card and no tag; the step's caption carries the working
+    "power_rule", "linearity", "constant_of_integration", "ftc", "log_laws", "exponent_laws",
+    "absolute_value", "log_values", "exp_log_inverse", "exp_derivative", "ln_derivative",
+}
+STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
+STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
+ADVANCED = {"laplace_transform", "nested_fixed_point"}     # always the full card
+
+
+def card_kind(key, difficulty):
+    """How a rule's first use in a video is shown: "full", "short" or None (no card)."""
+    if key == ALGEBRA or key in SILENT:
+        return None
+    if key in ADVANCED:
+        return "full"
+    if key in STANDARD and difficulty not in STANDARD_CARD_LEVELS:
+        return None
+    return "short"

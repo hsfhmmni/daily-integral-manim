@@ -1,0 +1,14 @@
+Beginner Integral - Monday 12 October 2026
+
+1. Two enormous powers, yet the curve is perfectly flat. Why?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. These bases multiply to 1: each is the other's reciprocal.
+4. Write 3 minus 2root 2 as (3 plus 2root 2) inverse: that power turns negative.
+5. Same base, so multiplying the powers adds the exponents.
+6. Expand both: 25x squared plus 30x appears twice and cancels.
+7. Only 8 minus 9 equals minus 1 survives in the exponent.
+8. So the height is the constant 3 minus 2root 2 about 0.17.
+9. A constant height: the area is width times height.
+10. Difference of squares: 3 squared minus (2root 2) squared equals 9 minus 8.
+11. Every rectangle has the same height: the estimate is exactly 1.
+12. Takeaway: check whether two bases are reciprocals before integrating.

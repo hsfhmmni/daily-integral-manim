@@ -485,8 +485,8 @@ READ_WORDS_PER_SECOND = 2.5 # every caption stays at least max(2.0, reading word
 MIN_HOLD = 2.0
 MATH_READ_WORDS = 2         # a $...$ block counts as 2 words when timing (1 for the 12-word limit)
 CAPTION_SIZE = 38
-TARGET_LENGTH = (90, 270)   # seconds (fallback; see TARGET_LENGTHS)
-TARGET_LENGTHS = {"Beginner": (90, 270), "Easy": (90, 240), "Medium": (90, 300), "Hard": (90, 300)}
+TARGET_LENGTH = (90, 180)   # seconds (fallback; see TARGET_LENGTHS)
+TARGET_LENGTHS = {"Beginner": (90, 180), "Easy": (90, 180), "Medium": (90, 210), "Hard": (90, 210)}
 
 # ---- watermark (bottom-right, above everything, in every frame)
 WATERMARK_TEX = r"@d\_dxmercy"
@@ -984,29 +984,34 @@ def morph_steps(scene, current, steps, colors, trail, hooks=None):
     ("algebra" for a step that only simplifies), mapping: [cap(...)] or {key: [cap(...)]}
     (how the rule applies here), optional highlight: ([tex parts], cap(label)),
     optional then: name of a hook in `hooks` (a function(scene, current) -> None)}.
-    Before a step with a rule, its Rule Card is shown (rule_cards).
+    Before a step with a rule, its Rule Card is shown (rule_cards), or a corner tag for a
+    rule already carded in this video; the tag fades after the step's caption.
     """
     hooks = hooks or {}
     for i, step in enumerate(steps, 1):
-        rule_cards(scene, step)
+        tag = rule_cards(scene, step)
         scene._guard_section = f"Step {i}"
         current = morph_to(scene, current, step["tex"], colors, trail,
                            name=f"mid-morph {i}" if i <= 2 else None)
         if "highlight" in step:
             texs, label = step["highlight"]
+            clear_caption(scene)        # the previous step's caption must not label this highlight
             extra = highlight(scene, parts_of(current, *texs), label, side=step.get("side", DOWN),
                               zoom=False, hold=0.5)
             caption(scene, step["say"])
             scene.play(FadeOut(extra), run_time=0.6)
         else:
             caption(scene, step["say"])
+        if tag is not None:
+            scene.play(FadeOut(tag), run_time=0.4)
         if step.get("then"):
             hooks[step["then"]](scene, current)
     return current
 
 
-# ---- Rule Cards: every rule is stated and explained before it is used
-from rules import ALGEBRA, RULE_CARDS          # noqa: E402  (rules.py has no Manim imports)
+# ---- Rule Cards: a card the first time a rule is used (rules.card_kind decides full,
+# short or none by difficulty), a small corner tag on later uses
+from rules import ALGEBRA, RULE_CARDS, card_kind          # noqa: E402  (rules.py has no Manim imports)
 
 CARD_SECTIONS = (("symbols", r"What the symbols mean"), ("when", r"When to use it"),
                  ("why", r"Why it works"), ("mapping", r"In this problem"))
@@ -1082,16 +1087,15 @@ def show_rule_card(scene, key, mapping=(), full=True):
 
     full=True:  name + statement, then what the symbols mean, when to use it, why it
                 works, and how it applies here (mapping), each held for its read time.
-    full=False: a short reminder: name + statement (and the mapping, if any).
+    full=False: a short card: name + statement, then the mapping (how it applies here).
     The caller dims the working first (see rule_cards).
     """
     card = RULE_CARDS[key]
-    scene._guard_section = f"{'Card' if full else 'Reminder'} {key}"
+    scene._guard_section = f"{'Card' if full else 'Short card'} {key}"
     left, right, bottom, top = _card_area(scene)
     pad = 0.35
     inner_w = right - left - 2 * pad
-    tag = r"Rule" if full else r"Reminder"
-    title = rich(r"%s: %s" % (tag, card["name"]), font_size=40, width=inner_w, color=CARD_COLOR)
+    title = rich(r"Rule: %s" % card["name"], font_size=40, width=inner_w, color=CARD_COLOR)
     statement = MathTex(card["statement"], font_size=48)
     _fit(statement, inner_w)
     header = VGroup(title, statement).arrange(DOWN, buff=0.35)
@@ -1125,7 +1129,7 @@ def show_rule_card(scene, key, mapping=(), full=True):
 
     scene.play(FadeIn(box), FadeIn(title, shift=0.1 * DOWN), run_time=0.5)
     scene.play(Write(statement), *([Create(rule_line)] if sections else []), run_time=0.8)
-    mark(scene, f"{'card' if full else 'reminder'} {key}", offset=0.2)
+    mark(scene, f"{'card' if full else 'short card'} {key}", offset=0.2)
     _hold_beat(scene, [card["name"], "$" + card["statement"] + "$"])
     shown = None
     for i, (lines, s) in enumerate(sections):
@@ -1141,18 +1145,39 @@ def show_rule_card(scene, key, mapping=(), full=True):
 
 
 def rule_cards(scene, step):
-    """Before a step: dim the working, show each rule's card (full the first time the rule
-    appears in this video, a reminder after), then restore the working."""
+    """Before a step: for each rule used for the first time in this video, dim the working
+    and show its card (full or short, from rules.card_kind; none for assumed rules). A rule
+    already carded gets a small corner tag instead. Returns the tag (or None); the caller
+    fades it out after the step."""
     keys = step_rules(step)
     if not keys:
-        return
-    clear_caption(scene)
+        return None
     seen = scene.__dict__.setdefault("_rules_seen", set())
-    dimmed = _dim_working(scene)
-    for k in keys:
-        show_rule_card(scene, k, step_mapping(step, k, keys), full=k not in seen)
-        seen.add(k)
-    _undim_working(scene, dimmed)
+    diff = getattr(scene, "DIFFICULTY", "Easy")
+    new = [k for k in keys if k not in seen and card_kind(k, diff)]
+    again = [k for k in keys if k in seen]
+    if new:
+        clear_caption(scene)
+        dimmed = _dim_working(scene)
+        for k in new:
+            show_rule_card(scene, k, step_mapping(step, k, keys), full=card_kind(k, diff) == "full")
+            seen.add(k)
+        _undim_working(scene, dimmed)
+    return show_rule_tag(scene, again) if again else None
+
+
+def show_rule_tag(scene, keys):
+    """A small teal tag under the badge naming rules already carded in this video."""
+    names = ", ".join(RULE_CARDS[k]["name"] for k in keys)
+    tag = rich(r"Again: %s" % names, font_size=26, width=5.0, color=CARD_COLOR)
+    badge = getattr(scene, "_badge", None)
+    top = (badge.get_bottom()[1] if badge is not None else SAFE_TOP) - 0.12
+    if tag.width > 5.0:
+        tag.scale_to_fit_width(5.0)
+    tag.move_to([SAFE_RIGHT - tag.width / 2 - 0.05, top - tag.height / 2, 0])
+    scene.play(FadeIn(tag, shift=0.1 * LEFT), run_time=0.4)
+    mark(scene, "tag " + "+".join(keys), offset=0.1)
+    return tag
 
 
 # ---- substitution: same area, the axis re-labels
@@ -1190,7 +1215,8 @@ def reflection_view(scene, spec, func, mode, says, box=None):
     mode="point":  odd function; the left piece of area spins 180 degrees about the origin
                    onto the right piece, showing they cancel.
     mode="mirror": a curve and its mirror image in the y-axis add to a constant
-                   (spec["sum"], drawn dashed).
+                   (spec["sum"], drawn dashed), or to a function (spec["sum"] callable,
+                   with spec["sum_label"] as its MathTex label).
     says: two captions. Everything fades out at the end.
     """
     scene._guard_section = "Reflection"
@@ -1221,9 +1247,16 @@ def reflection_view(scene, spec, func, mode, says, box=None):
         caption(scene, says[0])
         mark(scene, "reflection", offset=1.0)
         scene.play(mirror.animate.flip(UP, about_point=origin), run_time=2.0)
-        total = DashedLine(gr.axes.c2p(lo, spec["sum"]), gr.axes.c2p(hi, spec["sum"]),
-                           color=WHITE, dash_length=0.12)
-        total_label = MathTex(f"{spec['sum']:g}", font_size=34).next_to(total, RIGHT, buff=0.15)
+        if callable(spec["sum"]):       # the two curves add to a function (spec["sum_label"] names it)
+            total = DashedVMobject(gr.axes.plot(spec["sum"], x_range=[lo, hi]), num_dashes=40)
+            total.set_stroke(WHITE, 3)
+            peak = max(np.linspace(lo, hi, 101), key=spec["sum"])
+            total_label = MathTex(spec["sum_label"], font_size=34)
+            total_label.next_to(gr.axes.c2p(peak, spec["sum"](peak)), spec.get("label_side", UR), buff=0.15)
+        else:
+            total = DashedLine(gr.axes.c2p(lo, spec["sum"]), gr.axes.c2p(hi, spec["sum"]),
+                               color=WHITE, dash_length=0.12)
+            total_label = MathTex(f"{spec['sum']:g}", font_size=34).next_to(total, RIGHT, buff=0.15)
         scene.play(Create(total), FadeIn(total_label), run_time=1.2)
         caption(scene, says[1], key="reflection: result")
         scene.play(FadeOut(VGroup(gr.group, mirror, total, total_label)), run_time=1.0)
@@ -1311,6 +1344,7 @@ class IntegralVideo(MovingCameraScene):
     CURVE_LABEL = None          # eq(...) beside the curve; its parts glide into PROBLEM
     LABEL_AT = 0.0              # x where the curve label sits
     COLORS = {}
+    PROBLEM_X = (-3.9, 3.9)     # left and right edges of the problem line in the hook (clear of the badge)
     GRAPH = {}
     HOOK = cap("What is the green area?")
     HOOK_NOTE = None            # optional second hook caption (e.g. about a hole)
@@ -1374,7 +1408,7 @@ class IntegralVideo(MovingCameraScene):
                 self.play(Indicate(gr.hole, color=TRAP_COLOR, scale_factor=1.6), run_time=1.0)
             caption(self, self.HOOK_NOTE)
         problem = mt(self.PROBLEM, self.COLORS)
-        fit_into(problem, -3.9, 3.9, GRAPH_BOX[3] + 0.1, SAFE_TOP - 0.05, center=True)
+        fit_into(problem, *self.PROBLEM_X, GRAPH_BOX[3] + 0.1, SAFE_TOP - 0.05, center=True)
         if label is not None:
             self.play(TransformMatchingTex(label.copy(), problem), run_time=1.5)
         else:

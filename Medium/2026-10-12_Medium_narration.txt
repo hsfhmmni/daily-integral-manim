@@ -1,0 +1,22 @@
+Medium Integral - Monday 12 October 2026
+
+1. A lopsided curve on symmetric limits. Can a mirror even it out?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Only e to the minus x changes under x tends to minus x; cos and cos h are even.
+4. Reflecting the Variable
+5. _ minus a to the a f(x) dx equals _ minus a to the a f(minus x) dx
+6. Here f(minus x) equals e to the xcos xcos h x, since cos and cos h are even.
+7. Mirror x tends to minus x: same limits, same area, now with e to the x.
+8. Mirror the curve in the y-axis: the area stays the same.
+9. Together they make 2cos x: the lean cancels out.
+10. Add the original and its mirror: two copies of I.
+11. Hyperbolic Cosine
+12. cos h x equals e to the x plus e to the minus x2
+13. So e to the minus x plus e to the x equals 2cos h x.
+14. The bracket is exactly 2cos h x, so cos h x cancels.
+15. What is left is the even curve 2cos x.
+16. Integrate: 2cos x dx equals 2sine x.
+17. 2sine pi over 2 minus 2sine (minus pi over 2) equals 2 plus 2 equals 4.
+18. Halve it: I equals 2.
+19. Thin rectangles agree: the lopsided area is exactly 2.
+20. Takeaway: on symmetric limits, add f(x) and f(minus x).

@@ -1,0 +1,37 @@
+Easy Integral - Monday 12 October 2026
+
+1. Spin y equals e to the minus xcos x about the x-axis. What volume?
+2. Slice the solid into thin discs, each of area pi y squared.
+3. Plot each disc's area pi y squared: the volume becomes an area.
+4. Thin rectangles estimate the area; watch the gap shrink.
+5. Squaring makes cos squared x; a double angle will flatten it.
+6. Volume of Revolution
+7. V equals pi _a to the b y squared dx
+8. Here y equals e to the minus xcos x, from x equals 0 to infinity.
+9. Square the curve: y squared equals e to the minus 2xcos squared x.
+10. Double Angle Identities
+11. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+12. cos 2x equals cos squared x minus sine squared x, with our angle x.
+13. The Pythagorean Identity
+14. sine squared x plus cos squared x equals 1
+15. sine squared x equals 1 minus cos squared x, so cos 2x equals 2cos squared x minus 1.
+16. Swap cos squared x for 1 plus cos 2x over 2, and pull out 1 over 2.
+17. Improper Integrals
+18. _a to the infinity f(x) dx equals _b tends to infinity_a to the b f(x) dx
+19. Integrate to b; e to the minus 2b tends to 0 as b tends to infinity.
+20. Integral of e to the x
+21. e to the x dx equals e to the x plus C
+22. _0 to the b e to the minus 2x dx equals 1 over 2 minus 1 over 2e to the minus 2b tends to 1 over 2.
+23. The plain piece gives 1 over 2; call the other piece I.
+24. Integration by Parts
+25. u dv equals uv minus v du
+26. u equals cos 2x and dv equals e to the minus 2x dx, so v equals minus 1 over 2e to the minus 2x.
+27. The Chain Rule
+28. d over dxf (g(x)) equals f' (g(x)) g'(x)
+29. d over dxcos 2x equals minus 2sine 2x: the inside 2x gives 2.
+30. Parts with u equals cos 2x: the boundary term gives 1 over 2.
+31. Parts again on e to the minus 2xsine 2x brings back I itself.
+32. So 2I equals 1 over 2, giving I equals 1 over 4.
+33. V equals pi over 2 (1 over 2 plus 1 over 4) equals 3 pi over 8.
+34. Rectangles under pi y squared close in on 3 pi over 8 about 1.178.
+35. Takeaway: square first, then a double angle tames cos squared x.

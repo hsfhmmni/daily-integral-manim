@@ -32,27 +32,23 @@ reference manual (docs.manim.community, v0.21.0). No pi creatures, logos, music 
 | 15 | **Gentle easing everywhere.** Smooth starts and stops; there-and-back for pulses. | Motion feels physical, not mechanical. | `rate_functions.smooth` (default), `there_and_back` for pulses, `ease_out_cubic` for trackers; run times of 1 to 2 s. |
 
 ## Rule Cards
-Every rule, theorem, technique or identity a step uses is stated and explained on screen
-before the step, even "basic" ones such as the power rule or linearity. A step names it with
-`rule="key"` (or a list of keys; `rule="algebra"` for pure simplification) and gives
-`mapping=[cap(r"...")]` lines (or `{key: [...]}`) saying how the rule applies to this
-problem. Cards live in `rules.py` as `RULE_CARDS[key] = dict(name, statement, symbols, when,
-why)`: `statement` is a MathTex string; `symbols`, `when` and `why` are lists of `cap()`
-lines (12 words at most, maths in `$...$`). The `why` gives the actual reason, never just a
-restatement.
+From 2026-10-12 only rules worth teaching get a card (see README, Rule Cards): assumed basics
+get none, techniques and (in Beginner/Easy) standard integrals get a short card (name,
+statement, how it applies here), and rules beyond the syllabus get the full card (symbols,
+when, why too). Later uses show a small teal corner tag instead of a reminder card. Steps
+still name every rule they use (`rule=`), and the working itself shows the application:
+substitute, highlight what cancels, show the limits changing.
 
-On screen (`rule_cards()` / `show_rule_card()` in `common.py`): the working fades to 20%
-(technique 12, dim everything that is not the point), a bordered box with a teal title
-appears in the middle of the frame, and it reveals one beat at a time: name and statement,
-then the symbols, when to use it, why it works, and the mapping. The first use in a video
-gets the full card; later uses get a reminder (name, statement and the mapping). Teal is
-outside the maths colour code, so cards never borrow a meaning from the equations.
+On screen (`rule_cards()` / `show_rule_card()` / `show_rule_tag()` in `common.py`): the
+working fades to 20% (technique 12), a bordered box with a teal title appears in the middle
+of the frame and reveals one beat at a time. Teal is outside the maths colour code, so cards
+never borrow a meaning from the equations.
 
 ## Hold times
 Every caption and every card beat stays at least `read_time = max(2.0, words / 2.5)` s, with
 each `$...$` block counting as 2 words. This replaces the old 0.4 s per word (technique 10).
 `caption()` keeps it automatically and logs it; `check_frame.py` verifies every hold.
-Length limits: Beginner 90-270 s, Easy 90-240 s, Medium 90-300 s.
+Length limits: Beginner 90-180 s, Easy 90-180 s, Medium 90-210 s.
 
 ## Watermark
 `@d\_dxmercy` (Tex, size 24, white, 45% opacity) in the bottom-right corner, inside the safe
