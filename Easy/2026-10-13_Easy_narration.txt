@@ -1,0 +1,35 @@
+Easy Integral - Tuesday 13 October 2026
+
+1. Why can't we just drop this square root?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. log x hides inside the sine: make it the new variable.
+4. Split x cubed as x squared times x, keeping 1 over x dx aside.
+5. u-Substitution
+6. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+7. Here t equals log x, so dt equals 1 over x dx and x squared equals e squared t.
+8. Changing the Limits
+9. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+10. x equals 1 gives t equals 0; the top gives inverse 1 over 3.
+11. Let t equals log x: the limits become 0 and inverse 1 over 3.
+12. In x: the green area is about 0.200.
+13. In t: a new curve, the same area.
+14. The Pythagorean Identity
+15. sine squared x plus cos squared x equals 1
+16. Write the 1 as cos squared t plus sine squared t.
+17. Double Angle Identities
+18. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+19. sine 2t equals 2sine tcos t is the cross term.
+20. 1 minus sine 2t is the perfect square (cos t minus sine t) squared.
+21. Careful: w squared equals |w|, not w.
+22. Here t< pi over 4, so cos t>sine t: the bars drop.
+23. The Product Rule
+24. (f g)' equals f' g plus f g'
+25. Try e to the minus 2t(Asine t plus Bcos t): matching gives A equals 3 over 5, B equals minus 1 over 5.
+26. The Chain Rule
+27. d over dxf (g(x)) equals f' (g(x)) g'(x)
+28. d over dte to the minus 2t equals minus 2e to the minus 2t: the inside minus 2t gives minus 2.
+29. Check: this differentiates back to e to the minus 2t(cos t minus sine t).
+30. At the top t equals 1 over 3, so 3sine t equals cos t: zero.
+31. The bottom limit alone gives 1 over 5.
+32. Thin rectangles close in on exactly 1 over 5 equals 0.2.
+33. Takeaway: w squared equals |w|; check the sign before dropping bars.

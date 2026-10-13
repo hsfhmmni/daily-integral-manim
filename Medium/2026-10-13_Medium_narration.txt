@@ -1,0 +1,29 @@
+Medium Integral - Tuesday 13 October 2026
+
+1. Two unrelated-looking logarithms. Could most of them cancel?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. 1 plus sine 2x is a perfect square in disguise.
+4. root 24 equals 24root 2, so pull out 14root 2.
+5. The Pythagorean Identity
+6. sine squared x plus cos squared x equals 1
+7. Write the 1 as cos squared x plus sine squared x.
+8. Double Angle Identities
+9. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+10. sine 2x equals 2sine xcos x is the cross term.
+11. 1 plus sine 2x equals (cos x plus sine x) squared.
+12. Compound Angle Formula
+13. cos (A minus B) equals cos Acos B plus sine Asine B
+14. Here B equals pi over 4, and cos pi over 4 equals sine pi over 4 equals 1root 2.
+15. Merge into one cosine: cos x plus sine x equals root 2cos (x minus pi over 4).
+16. Log laws split off log 2 and bring the square down.
+17. Reflecting in the Middle
+18. _0 to the a f(x) dx equals _0 to the a f(a minus x) dx
+19. Here a equals pi over 4, and cosine is even.
+20. Mirror x tends to pi over 4 minus x: the shifted term becomes log (cos x).
+21. Mirror log cos (x minus pi over 4) in the line x equals pi over 8.
+22. It lands on log (cos x): the same area.
+23. The two terms cancel, leaving the constant log 2.
+24. Constant height log 2 over width pi over 4.
+25. Multiply: 4root 2 times 4 equals 16root 2.
+26. Thin rectangles close in on 0.09624.
+27. Takeaway: on 0 to a, try swapping x for a minus x.

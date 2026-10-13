@@ -1,0 +1,29 @@
+Beginner Integral - Tuesday 13 October 2026
+
+1. No power rule fits this curve. How big is the green area?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Complete the square: the bottom is a square plus 1.
+4. Completing the Square
+5. x squared plus 2bx plus c equals (x plus b) squared plus (c minus b squared)
+6. Here b equals 1: x squared plus 2x plus 2 equals (x plus 1) squared plus 1.
+7. Rewrite the bottom as (x plus 1) squared plus 1.
+8. u-Substitution
+9. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+10. Here u equals x plus 1, so du equals dx.
+11. Changing the Limits
+12. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+13. x equals 1 gives u equals 2; x equals e gives u equals e plus 1.
+14. Let u equals x plus 1: the limits 1 and e become 2 and e plus 1.
+15. In x: the green area is about 0.201.
+16. In u: the curve slides right by 1; the area stays.
+17. Integral of 11 plus x squared
+18. 11 plus x squared dx equals inverse x plus C
+19. inverse x is the angle, in radians, whose tangent is x.
+20. One over 1 plus a square, after completing the square.
+21. With y equals inverse x, dx over dy equals squared y equals 1 plus x squared.
+22. So dy over dx equals 11 plus x squared: undo it.
+23. Here the variable is u, so we get inverse u.
+24. 1u squared plus 1 integrates to inverse u.
+25. Top limit minus bottom limit.
+26. Thin rectangles close in on 0.2009.
+27. Takeaway: square plus 1 on the bottom means inverse tangent.

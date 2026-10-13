@@ -277,6 +277,35 @@ RULE_CARDS = {
         when=[cap(r"$\cosh x$ appears next to $e^{x}$ or $e^{-x}$.")],
         why=[cap(r"It is defined as the average of $e^{x}$ and $e^{-x}$.")],
     ),
+    "completing_the_square": dict(
+        name=r"Completing the Square",
+        statement=r"x^{2}+2bx+c=(x+b)^{2}+\big(c-b^{2}\big)",
+        symbols=[cap(r"$b$ is half the coefficient of $x$.")],
+        when=[cap(r"A quadratic that does not factorise nicely.")],
+        why=[cap(r"Expanding $(x+b)^{2}$ gives $x^{2}+2bx+b^{2}$; fix the constant.")],
+    ),
+    "arctan_integral": dict(
+        name=r"Integral of $\frac{1}{1+x^{2}}$",
+        statement=r"\int \frac{1}{1+x^{2}}\,dx=\tan^{-1}x+C",
+        symbols=[cap(r"$\tan^{-1}x$ is the angle, in radians, whose tangent is $x$.")],
+        when=[cap(r"One over $1$ plus a square, after completing the square.")],
+        why=[cap(r"With $y=\tan^{-1}x$, $\frac{dx}{dy}=\sec^{2}y=1+x^{2}$."),
+             cap(r"So $\frac{dy}{dx}=\frac{1}{1+x^{2}}$: undo it.")],
+    ),
+    "compound_angle": dict(
+        name=r"Compound Angle Formula",
+        statement=r"\cos(A-B)=\cos A\cos B+\sin A\sin B",
+        symbols=[cap(r"$A$ and $B$ are any two angles.")],
+        when=[cap(r"A sum like $\cos x+\sin x$, to merge into one cosine.")],
+        why=[cap(r"Rotating by $A$ then back by $B$ is rotating by $A-B$.")],
+    ),
+    "kings_rule": dict(
+        name=r"Reflecting in the Middle",
+        statement=r"\int_{0}^{a} f(x)\,dx=\int_{0}^{a} f(a-x)\,dx",
+        symbols=[cap(r"$f(a-x)$ is $f$ mirrored in the line $x=\frac{a}{2}$.")],
+        when=[cap(r"An integrand containing $a-x$, on limits $0$ to $a$.")],
+        why=[cap(r"The substitution $u=a-x$ swaps the ends; a mirror keeps area.")],
+    ),
 }
 
 
@@ -291,7 +320,7 @@ SILENT = {          # assumed known: no card and no tag; the step's caption carr
 }
 STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
-ADVANCED = {"laplace_transform", "nested_fixed_point"}     # always the full card
+ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral"}     # always the full card
 
 
 def card_kind(key, difficulty):

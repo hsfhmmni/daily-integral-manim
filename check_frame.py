@@ -185,14 +185,20 @@ def extract_frames(date, diff, pauses, low=False, folder=None, name=None):
     """Stills at each key moment (or pause), plus labelled contact sheets, plus the
     watermark check on a frame every 2 s. Returns False if the watermark check fails.
 
-    low=True reads the -ql review render in _media/videos/<script name>/480p15/.
+    low=True reads the -ql review render in _media_<Difficulty>/videos/<script name>/480p15/
+    (each difficulty renders into its own media folder so the three can run in parallel),
+    falling back to the older shared _media/ folder.
     folder: where the script and final video live (default the difficulty folder);
     name: the -o name of the review render (default DATE_Difficulty).
     """
     script_name = f"{date}_{diff}"
     name = name or script_name
-    video = (os.path.join(ROOT, "_media", "videos", script_name, "480p15", f"{name}.mp4") if low
-             else os.path.join(folder or os.path.join(ROOT, diff), f"{script_name}.mp4"))
+    if low:
+        video = os.path.join(ROOT, f"_media_{diff}", "videos", script_name, "480p15", f"{name}.mp4")
+        if not os.path.exists(video):
+            video = os.path.join(ROOT, "_media", "videos", script_name, "480p15", f"{name}.mp4")
+    else:
+        video = os.path.join(folder or os.path.join(ROOT, diff), f"{script_name}.mp4")
     ff = _ffmpeg()
     if not os.path.exists(video) or ff is None:
         print(f"  (skipping frames: {'no video yet at ' + video if ff else 'ffmpeg not found'})")
