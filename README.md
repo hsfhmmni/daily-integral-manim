@@ -47,21 +47,31 @@ A fixed colour code runs through every video: curve **blue**, area **green**, li
 
 ```mermaid
 flowchart LR
-  A[dailyintegral.com<br/>read the TeX] --> B[solve by hand<br/>+ mpmath check]
+  A[dailyintegral.com<br/>TeX saved by machine, read-only] --> B[solve by hand]
   B --> C[day script<br/>data only]
   C --> D{check_text.py<br/>LaTeX, captions, numbers}
   D --> E{check_frame.py<br/>frame guard, watermark, length}
-  E --> F[480p review render<br/>+ contact sheets]
+  E --> V{verify.py<br/>script vs the website's TeX}
+  V --> F[480p review render<br/>+ contact sheets]
   F -->|fix and repeat| C
   F --> G[1080p60 final render]
+  G --> R[review file<br/>+ verification log]
+  R --> H{human GO / NO-GO}
+  H -->|GO only| P[published]
 ```
 
 ## Quality gates
 
-Nothing is rendered until both automatic checks pass:
+Nothing is rendered until three automatic checks pass, and nothing is published until a person approves it.
 
-- **[`check_text.py`](check_text.py)**: no maths written as plain words, every caption has 12 words or fewer, every LaTeX string compiles, the stated answer matches an `mpmath` numerical integral, and the 64-rectangle estimate shown on screen is within 1%.
-- **[`check_frame.py`](check_frame.py)**: a dry run with a frame guard that fails on anything outside the safe area, overlapping text or text that is too small, plus a length check per difficulty (Beginner 90-270 s, Easy 90-240 s, Medium 90-300 s). With `--frames` it saves stills of every key moment as contact sheets for a final look.
+- **[`check_text.py`](check_text.py)**: no maths written as plain words, every caption has 12 words or fewer, every LaTeX string compiles, and the 64-rectangle estimate shown on screen is within 1% of the answer.
+- **[`check_frame.py`](check_frame.py)**: a dry run with a frame guard that fails on anything outside the safe area, overlapping text or text that is too small, plus a length check per difficulty (Beginner 90-180 s, Easy 90-180 s, Medium 90-210 s). With `--frames` it saves stills of every key moment as contact sheets for a final look.
+- **[`verify.py`](verify.py)**: checks each script against the problem's TeX **as copied from the website by a program**, not against itself. It checks the date, the integral shown on screen, the plotted function and the boxed answer as displayed (relative error below 10⁻¹⁰, so tiny answers cannot slip through). It also computes the website's integral two independent ways (mpmath tanh-sinh and SciPy QUADPACK), and checks every step it can evaluate against the step before it. Steps it cannot evaluate are listed for the human reviewer, never skipped silently.
+- **[`review.py`](review.py)**: re-runs all three on the finished video, writes a review file and logs every result.
+
+Then a person watches each video, answers a five-point checklist, and types GO. Only GO videos are published.
+
+**What makes this unusual, with the evidence and its limits: [docs/VERIFICATION.md](docs/VERIFICATION.md).**
 
 ## Repository layout
 
@@ -70,6 +80,8 @@ daily-integral-manim/
 ├── common.py            the story engine (IntegralVideo) and helpers
 ├── check_text.py        text, LaTeX and numeric checks
 ├── check_frame.py       frame guard, length check, key-moment stills
+├── verify.py            independent checks against the website's TeX
+├── review.py            re-runs every check and writes the review file
 ├── test_helpers.py      one tiny test scene per helper
 ├── render.bat           checks, then review or final renders
 ├── Beginner/  Easy/  Medium/
@@ -77,7 +89,8 @@ daily-integral-manim/
 │   ├── YYYY-MM-DD_Level.py              the day's script (mostly data)
 │   └── YYYY-MM-DD_Level_narration.txt   the captions as a read-aloud script
 ├── assets/              thumbnails and preview GIFs
-└── docs/STYLE_NOTES.md  the 3Blue1Brown techniques used, and how each is done in Manim CE
+├── docs/STYLE_NOTES.md  the 3Blue1Brown techniques used, and how each is done in Manim CE
+└── docs/VERIFICATION.md how every video is verified, the evidence, and what it cannot catch
 ```
 
 The videos themselves (1080p60 .mp4) are attached to one [GitHub Release per day](https://github.com/hsfhmmni/daily-integral-manim/releases), tagged with the date, so the repository stays small.
@@ -99,7 +112,7 @@ manim -ql Easy/2026-10-14_Easy.py EasyIntegral
 
 - Problems: [dailyintegral.com](https://dailyintegral.com) and the people who submit problems to it. This project is not affiliated with the site.
 - Style: inspired by Grant Sanderson's [3Blue1Brown](https://www.3blue1brown.com/) videos. The techniques are re-implemented from scratch in Manim Community Edition (see [docs/STYLE_NOTES.md](docs/STYLE_NOTES.md)); no 3Blue1Brown code or assets are used.
-- Built with [Manim Community Edition](https://www.manim.community/), NumPy and mpmath.
+- Built with [Manim Community Edition](https://www.manim.community/), NumPy, mpmath, SymPy and SciPy.
 
 ## License
 

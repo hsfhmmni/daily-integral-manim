@@ -1,8 +1,10 @@
 @echo off
-REM Usage:  render.bat 2026-10-08           checks, then final 1080p60 videos, frames, Drive copy
+REM Usage:  render.bat 2026-10-08           checks, then final 1080p60 videos, frames, review file
 REM         render.bat 2026-10-08 review    checks, then quick 480p review videos + key-moment frames
 REM The three videos render in parallel, each in its own media folder (_media_Beginner,
 REM _media_Easy, _media_Medium), with logs in _media_<Difficulty>\render.log.
+REM Finished videos go to pending\<Difficulty>\ and are NOT uploaded anywhere: only the
+REM user publishes, with publish.py, after reading review\DATE_READY_FOR_REVIEW.md.
 cd /d "%~dp0"
 if "%~1"=="" (
   echo Usage: render.bat YYYY-MM-DD [review]
@@ -29,6 +31,14 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
+REM 3. Independent checks against the website's own TeX in source\ (fetch_source.py saves it).
+.venv\Scripts\python verify.py %D%
+if errorlevel 1 (
+  echo.
+  echo Verification FAILED - the script disagrees with the website's TeX ^(see above^).
+  pause
+  exit /b 1
+)
 if /i "%MODE%"=="review" (
   call :parallel -ql
   if errorlevel 1 ( pause & exit /b 1 )
@@ -38,18 +48,20 @@ if /i "%MODE%"=="review" (
   pause
   exit /b 0
 )
-REM 3. The final render (the same frame guard runs inside it too), all three at once.
+REM 4. The final render (the same frame guard runs inside it too), all three at once.
 call :parallel -qh
 if errorlevel 1 ( pause & exit /b 1 )
+REM Finished videos wait in pending\<Difficulty>\ until the user approves them.
 for %%L in (Beginner Easy Medium) do (
-  copy /Y "_media_%%L\videos\%D%_%%L\1080p60\%D%_%%L.mp4" "%%L\%D%_%%L.mp4"
+  if not exist "pending\%%L" mkdir "pending\%%L"
+  copy /Y "_media_%%L\videos\%D%_%%L\1080p60\%D%_%%L.mp4" "pending\%%L\%D%_%%L.mp4"
 )
-REM Save a still of every key moment so the finished videos can be looked over quickly.
-.venv\Scripts\python check_frame.py %D% --frames
-REM Copy the videos and scripts into Google Drive (uploads automatically).
-call sync_to_drive.bat
+REM Re-run every check on the finished files (including the key-moment stills from
+REM check_frame.py --frames) and write review\DATE_READY_FOR_REVIEW.md. Nothing is uploaded.
+.venv\Scripts\python review.py %D%
 echo.
-echo Done. Videos are in the Beginner, Easy and Medium folders.
+echo Done. Videos are waiting in pending\Beginner, pending\Easy and pending\Medium.
+echo Read review\%D%_READY_FOR_REVIEW.md. Nothing has been published.
 echo Key-moment stills are in _media\frames\
 pause
 exit /b 0
