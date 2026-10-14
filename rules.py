@@ -306,6 +306,41 @@ RULE_CARDS = {
         when=[cap(r"An integrand containing $a-x$, on limits $0$ to $a$.")],
         why=[cap(r"The substitution $u=a-x$ swaps the ends; a mirror keeps area.")],
     ),
+    "interval_reflection": dict(
+        name=r"Reflecting the Interval",
+        statement=r"\int_{a}^{b} f(x)\,dx=\int_{a}^{b} f(a+b-x)\,dx",
+        symbols=[cap(r"$f(a+b-x)$ is $f$ mirrored in the midpoint $x=\frac{a+b}{2}$.")],
+        when=[cap(r"An integrand containing $a+b-x$, on limits $a$ to $b$.")],
+        why=[cap(r"The substitution $u=a+b-x$ swaps the ends; a mirror keeps area.")],
+    ),
+    "csc2_integral": dict(
+        name=r"Integral of $\csc^{2}x$",
+        statement=r"\int \csc^{2}x\,dx=-\cot x+C",
+        symbols=[cap(r"$\csc x=\frac{1}{\sin x}$, and $\cot x=\frac{\cos x}{\sin x}$.")],
+        when=[cap(r"The integrand is $\csc^{2}x$, or $\frac{1}{\sin^{2}x}$.")],
+        why=[cap(r"The quotient rule gives $\frac{d}{dx}\cot x=-\csc^{2}x$.")],
+    ),
+    "tan_substitution": dict(
+        name=r"Substituting $x=\tan\theta$",
+        statement=r"x=\tan\theta,\qquad dx=\sec^{2}\theta\,d\theta=(1+x^{2})\,d\theta",
+        symbols=[cap(r"$\theta$ is the new angle variable.")],
+        when=[cap(r"A factor $1+x^{2}$ in the integrand.")],
+        why=[cap(r"$\frac{d}{d\theta}\tan\theta=\sec^{2}\theta=1+\tan^{2}\theta$, so $1+x^{2}$ cancels.")],
+    ),
+    "tan_triple_angle": dict(
+        name=r"Triple Angle Formula for $\tan$",
+        statement=r"\tan 3\theta=\frac{3\tan\theta-\tan^{3}\theta}{1-3\tan^{2}\theta}",
+        symbols=[cap(r"$3\theta$ is three times the angle $\theta$.")],
+        when=[cap(r"A cubic over a quadratic in $\tan\theta$ of this shape.")],
+        why=[cap(r"Apply the $\tan$ angle-sum formula to $2\theta+\theta$.")],
+    ),
+    "tan_integral": dict(
+        name=r"Integral of $\tan x$",
+        statement=r"\int \tan x\,dx=-\ln|\cos x|+C",
+        symbols=[cap(r"$\tan x=\frac{\sin x}{\cos x}$.")],
+        when=[cap(r"The integrand is $\tan x$, or $\tan$ of a multiple of $x$.")],
+        why=[cap(r"The top $\sin x$ is minus the derivative of the bottom.")],
+    ),
 }
 
 

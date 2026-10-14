@@ -1,0 +1,28 @@
+Medium Integral - Wednesday 14 October 2026
+
+1. A rational function, but why does it stop at 2 minus root 3?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. The bottom factorises, and 1 plus x squared hints at x equals.
+4. Factor the bottom: a quadratic in x squared.
+5. Substituting x equals
+6. x equals , dx equals squared d equals (1 plus x squared) d
+7. Here x equals, so (1 plus x squared) dx leaves just d.
+8. Changing the Limits
+9. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+10. 0 equals 0 and pi over 12 equals 2 minus root 3.
+11. Let x equals: dx equals (1 plus x squared) d cancels that factor.
+12. Triple Angle Formula for
+13. 3 equals 3 minus cubed1 minus 3 squared
+14. Top 3 minus cubed over 1 minus 3 squared: the formula.
+15. The fraction is exactly 3.
+16. In x: the green area is about 0.693.
+17. In : the curve 6 3, the same area.
+18. Integral of x
+19. x dx equals minus log |cos x| plus C
+20. Inside is 3, so the chain rule divides by 3.
+21. Integrate 3; dividing by 3 turns 6 into 2.
+22. At equals pi over 12 the angle 3 is pi over 4.
+23. cos pi over 4 equals 1root 2, and log 1 equals 0 removes the second term.
+24. minus 2log 2 to the minus 1 over 2 equals log 2.
+25. Thin rectangles close in on log 2 about 0.6931.
+26. Takeaway: a factor 1 plus x squared invites x equals.

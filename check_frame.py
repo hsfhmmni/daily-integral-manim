@@ -188,7 +188,8 @@ def extract_frames(date, diff, pauses, low=False, folder=None, name=None):
     low=True reads the -ql review render in _media_<Difficulty>/videos/<script name>/480p15/
     (each difficulty renders into its own media folder so the three can run in parallel),
     falling back to the older shared _media/ folder.
-    folder: where the script and final video live (default the difficulty folder);
+    folder: where the script and final video live (default the difficulty folder, then
+    pending/<Difficulty>/ for a final video that is not approved yet);
     name: the -o name of the review render (default DATE_Difficulty).
     """
     script_name = f"{date}_{diff}"
@@ -199,6 +200,8 @@ def extract_frames(date, diff, pauses, low=False, folder=None, name=None):
             video = os.path.join(ROOT, "_media", "videos", script_name, "480p15", f"{name}.mp4")
     else:
         video = os.path.join(folder or os.path.join(ROOT, diff), f"{script_name}.mp4")
+        if folder is None and not os.path.exists(video):       # not approved yet: waiting in pending/
+            video = os.path.join(ROOT, "pending", diff, f"{script_name}.mp4")
     ff = _ffmpeg()
     if not os.path.exists(video) or ff is None:
         print(f"  (skipping frames: {'no video yet at ' + video if ff else 'ffmpeg not found'})")

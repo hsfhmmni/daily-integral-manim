@@ -1,0 +1,18 @@
+Beginner Integral - Wednesday 14 October 2026
+
+1. No antiderivative in sight. What symmetry does this curve have?
+2. Even four rectangles give exactly 1.0000. Why so exact?
+3. The second term is the top with x swapped for 6 minus x.
+4. Call the top g(x); the other term is g(6 minus x).
+5. Reflecting the Interval
+6. _a to the b f(x) dx equals _a to the b f(a plus b minus x) dx
+7. Here a equals 2 and b equals 4, so a plus b minus x equals 6 minus x.
+8. Swap x for 6 minus x: the ends 2 and 4 trade places.
+9. Mirror the curve in x equals 3: the area stays the same.
+10. Stacked, the two curves fill height 1: total area 2.
+11. Add the two forms of I: same bottom, so add tops.
+12. The top equals the bottom, so the integrand is 1.
+13. The area under y equals 1 from 2 to 4 is 2.
+14. Halve both sides.
+15. Thin rectangles close in on exactly 1.
+16. Takeaway: if a plus b minus x appears, swap x for it and add.

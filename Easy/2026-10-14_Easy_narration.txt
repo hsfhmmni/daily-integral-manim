@@ -1,0 +1,30 @@
+Easy Integral - Wednesday 14 October 2026
+
+1. A root inside a fraction. How big is this thin sliver?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. 1 minus x squared is a circle's height: let x equals sine.
+4. Trigonometric Substitution
+5. a squared minus x squared : x equals asine , dx equals acos d
+6. Here a equals 1, so x equals sine and dx equals cos d.
+7. The Pythagorean Identity
+8. sine squared x plus cos squared x equals 1
+9. 1 minus sine squared equals cos squared, and cos 0 here.
+10. Changing the Limits
+11. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+12. x equals root 32 gives pi over 3; x equals 1 gives pi over 2.
+13. Let x equals sine: then 1 minus x squared equals cos and dx equals cos d.
+14. In x: the green area is about 0.208.
+15. In : a wider, flatter curve with the same area.
+16. Write the top as 1 minus (1 minus cos), then split.
+17. Double Angle Identities
+18. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+19. With x equals over 2: cos equals 1 minus 2sine squared over 2.
+20. 1 minus cos equals 2sine squared over 2, so the fraction is 1 over 2 squared over 2.
+21. Integral of squared x
+22. squared x dx equals minus x plus C
+23. The inner over 2 supplies the 1 over 2 by the chain rule.
+24. 1 over 2 squared over 2 integrates to minus over 2.
+25. pi over 4 equals 1 and pi over 6 equals root 3.
+26. Collect the angles: pi over 3 minus pi over 2 equals minus pi over 6.
+27. Thin rectangles close in on 0.2085.
+28. Takeaway: 1 minus x squared suggests x equals sine, a circle's angle.
