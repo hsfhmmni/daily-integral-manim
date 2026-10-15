@@ -42,11 +42,16 @@ Reading TeX (normalise, to_sympy): spacing and sizing commands are dropped; a fu
 written without brackets takes only a plain argument (\\ln 2\\cdot\\ln 3 is ln 2 * ln 3,
 \\tan\\theta(1+x) is tan(theta) * (1+x), \\ln\\cos(x) is ln(cos x)); each \\int ... dx is
 bracketed so two integrals on one line stay apart; [F]_a^b is F(b) - F(a); \\pi, e and
-x(...) are a number and a product, not functions. A line is about the video's integral,
+x(...) are a number and a product, not functions. An expression ending in \\dots (a
+continued fraction, a tower of logs) is its limit: the pattern written out twice before the
+\\dots is the block that repeats, and the tail's value is the attracting solution of
+u = block(u) (nested_pattern). A line is about the video's integral,
 named "I" unless PROBLEM starts "V = ..." (then "V"); a line naming another quantity, or
 holding several statements, is unchecked.
 
-Numerical integrals (integrate): split at the corners of |...|; an integral oscillating
+Numerical integrals (integrate): split at the corners of |...| and where the inside of a
+square root reaches 0; for an expression with \\dots, mpmath also halves the range wherever
+its error estimate is large (corners it cannot find from the formula); an integral oscillating
 to infinity uses mpmath.quadosc, and scipy over half-periods with repeated averaging.
 A step fails only if both methods find it differs from the line before; if the two
 methods disagree with each other, the step is unchecked instead.
@@ -118,6 +123,7 @@ def normalise(tex):
     """Remove spacing and sizing commands sympy does not need."""
     t = re.sub(r"\\(?:Big|big|Bigg|bigg|left|right)(?![a-zA-Z])", "", tex)
     t = re.sub(r"\\[td]frac", r"\\frac", t)
+    t = re.sub(r"\\(?:cdots|ldots)(?![a-zA-Z])", r"\\dots", t)
     t = re.sub(r"\\(?:,|;|!|:|quad|qquad|displaystyle)", " ", t)
     t = t.replace(r"\mathrm{d}", "d").replace(r"\operatorname{d}", "d")
     # \tan\theta(3-\tan^2\theta) means tan(theta) times (3 - ...), as a reader takes it;
@@ -257,8 +263,108 @@ def to_mp(v):
     return mpmath.mpf(str(sp.N(sp.re(v), 30)))
 
 
+DOTS = sp.Symbol("dots")       # parse_latex reads \dots as this symbol
+NEST_ITERATIONS = 200
+NEST_STARTS = (0, 1, 10, 100)
+
+
+def _path_to(expr, sym):
+    """The nodes from the root of expr down to sym, each with a key describing it apart from
+    the branch that leads on to sym (its type and its other arguments)."""
+    nodes = []
+    while expr != sym:
+        branch = [i for i, a in enumerate(expr.args) if a.has(sym)]
+        if len(branch) != 1:
+            raise Unparseable(r"\dots appears more than once")
+        others = sorted(sp.srepr(a) for i, a in enumerate(expr.args) if i != branch[0])
+        nodes.append((expr, (expr.func, tuple(others))))
+        expr = expr.args[branch[0]]
+    return nodes
+
+
+def nested_pattern(expr):
+    """For an expression ending in \\dots (a continued fraction, a tower of logs, ...):
+    the block that repeats on the way down to \\dots, as (block, start). The \\dots stands
+    for the infinite tail that starts where the pattern next begins, so its value u solves
+    u = block(u), and the expression's value is expr with \\dots = u.
+
+    The pattern must be written out at least twice in full before the \\dots, so it is
+    read from the TeX itself, never guessed."""
+    if expr.count(DOTS) != 1:
+        raise Unparseable(r"\dots appears more than once")
+    nodes = _path_to(expr, DOTS)
+    keys = [k for _, k in nodes]
+    m = len(keys)                                        # depth of \dots
+    for p in range(1, m // 2 + 1):                       # shortest period first, then earliest start
+        for s in range(0, m - 2 * p + 1):
+            if all(keys[i] == keys[i + p] for i in range(s, m - p)):
+                r = s + (m - s) % p                      # the depth where the tail restarts the pattern
+                # one period: the subtree at depth r, with its copy one period down replaced by \dots
+                block = nodes[r][0].xreplace({nodes[r + p][0]: DOTS})
+                return block, r
+    raise Unparseable(r"no repeating pattern before \dots (it must be written out twice)")
+
+
+def _nested_value(block_f, x):
+    """The value u of the infinite tail at x: the attracting solution of u = block(x, u),
+    reached by iterating from several starts (NEST_STARTS). Starts that leave the real
+    numbers (e.g. ln 0) are dropped; if the others lead to different values, or the
+    solution is not attracting, it is not a clear limit."""
+    with mpmath.workdps(2 * mpmath.mp.dps):          # spare digits for where two solutions meet
+        found = _nested_values(block_f, x)
+    if not found:
+        raise ValueError(r"the expression with \dots has no clear limit here")
+    if any(not close(v, found[0], 1e-12, 1e-14) for v in found[1:]):
+        raise ValueError(r"the expression with \dots has two different limits here")
+    return found[0]
+
+
+def _nested_values(block_f, x):
+    """The limit of the iteration u -> block(x, u) from each start that works (see _nested_value)."""
+    found = []
+    for u in map(mpmath.mpf, NEST_STARTS):
+        try:
+            seq = [u]
+            for _ in range(NEST_ITERATIONS):
+                u = block_f(x, u)
+                if isinstance(u, mpmath.mpc):
+                    if abs(u.imag) > 1e-20 * max(1, abs(u.real)):
+                        raise ValueError("complex value")
+                    u = u.real
+                if not mpmath.isfinite(u):
+                    raise ValueError("not a finite number")
+                seq.append(u)
+                if abs(seq[-1] - seq[-2]) <= mpmath.mpf(10) ** (-mpmath.mp.dps + 5):
+                    break                                # converged
+            # iteration converges slowly where two solutions meet (a double root): finish with
+            # Newton's method for repeated roots, started from the last iterate so it keeps to
+            # the solution being approached
+            if abs(seq[-1] - seq[-2]) > mpmath.mpf(10) ** (-mpmath.mp.dps + 5):
+                # (at a double root, rounding can split it into a complex pair a hair apart:
+                # accept the root when it solves u = block(u) to a third of the working digits)
+                u = mpmath.findroot(lambda v: block_f(x, v) - v, u, solver="mnewton", verify=False)
+                if abs(block_f(x, u) - u) > mpmath.mpf(10) ** (-(mpmath.mp.dps // 3)):
+                    raise ValueError("no root found")
+                u = mpmath.re(u)
+            slope = abs(mpmath.diff(lambda v: block_f(x, v), u))
+            if slope > 1 + 1e-6:
+                raise ValueError("a repelling solution")
+            if not mpmath.isfinite(u):
+                raise ValueError("not a finite number")
+            found.append(mpmath.mpf(mpmath.re(u)))
+        except (ValueError, ZeroDivisionError, TypeError):
+            continue                                     # e.g. ln(0) from the start 0: try the next start
+    return found
+
+
 def mp_function(expr, var):
-    f = sp.lambdify(var, expr, modules="mpmath")
+    if expr.has(DOTS):
+        block, _ = nested_pattern(expr)
+        outer = sp.lambdify((var, DOTS), expr, modules="mpmath")
+        block_f = sp.lambdify((var, DOTS), block, modules="mpmath")
+        f = lambda x: outer(x, _nested_value(block_f, x))      # noqa: E731
+    else:
+        f = sp.lambdify(var, expr, modules="mpmath")
 
     def g(x):
         y = f(x)
@@ -279,12 +385,15 @@ def _no_unknown_functions(expr):
 
 
 def breakpoints(expr, var, a, b):
-    """Points inside (a, b) where |...| switches sign: corners that numerical methods
-    should not have to step across."""
+    r"""Points inside (a, b) where |...| switches sign, or where the inside of a square root
+    (or another fractional power) reaches 0 (\sqrt{1+\cos 2x} is \sqrt{2}|\cos x|): corners
+    that numerical methods should not have to step across."""
     pts = set()
-    for ab in expr.atoms(sp.Abs):
+    roots = [p.base for p in expr.atoms(sp.Pow)
+             if p.exp.is_Rational and not p.exp.is_integer and p.base.has(var)]
+    for inside in [ab.args[0] for ab in expr.atoms(sp.Abs)] + roots:
         try:
-            sol = sp.solveset(ab.args[0], var, domain=sp.Interval(a, b, True, True))
+            sol = sp.solveset(inside, var, domain=sp.Interval(a, b, True, True))
             if isinstance(sol, sp.FiniteSet):
                 for s in sol:
                     pts.add(to_mp(s))
@@ -320,11 +429,25 @@ def integrate(expr, var, a, b, method="mpmath", scale=1.0):
             pieces = [(lo, mpmath.mpf(0)), (mpmath.mpf(0), hi)] if lo == -mpmath.inf and hi == mpmath.inf else [(lo, hi)]
             for p, q in pieces:
                 total += _oscillating(f, p, q, omega, method)
+        elif method == "mpmath" and expr.has(DOTS) and mpmath.isfinite(lo) and mpmath.isfinite(hi):
+            total += _adaptive_quad(f, lo, hi)
         elif method == "mpmath":
             total += mpmath.quad(f, [lo, hi])
         else:
             total += mpmath.mpf(_scipy_quad(f, lo, hi, epsabs=1e-13 * max(scale, 1e-300))[0])
     return total
+
+
+def _adaptive_quad(f, lo, hi, tol=mpmath.mpf("1e-20"), depth=0):
+    r"""tanh-sinh, halving the range wherever its error estimate is too large. Used for an
+    expression with \dots: its corners (e.g. where a hidden |cos x| turns) cannot be found
+    from the formula, so they are isolated by bisection instead of split at in advance."""
+    value, err = mpmath.quad(f, [lo, hi], error=True, maxdegree=6)
+    if err <= tol or depth >= 40:
+        return value
+    mid = (lo + hi) / 2
+    return (_adaptive_quad(f, lo, mid, tol / 2, depth + 1) +
+            _adaptive_quad(f, mid, hi, tol / 2, depth + 1))
 
 
 def _oscillating(f, lo, hi, omega, method):
@@ -354,7 +477,7 @@ def quad_integral(integral, method="mpmath"):
         raise Unparseable("not a definite integral in one variable")
     var, a, b = integral.limits[0]
     _no_unknown_functions(integral.function)
-    extra = integral.function.free_symbols - {var}
+    extra = integral.function.free_symbols - {var, DOTS}
     if extra:
         raise Unparseable(f"unknown symbols {sorted(s.name for s in extra)}")
     return integrate(integral.function, var, to_mp(a), to_mp(b), method)
@@ -496,6 +619,19 @@ def line_values(tex, main="I", method="mpmath"):
     if len(split_top_level(normalise(tex), ",")) > 1:
         return [], ["several statements on one line"]
     sides = [s.strip() for s in split_top_level(tex, "=")]
+    if len(sides) > 1:
+        # an equation whose sides still hold letters (4y^2+4y-\cos 2x=0) relates other
+        # quantities; it does not state a value of the integral
+        letters = set()
+        for s in sides:
+            if re.fullmatch(r"(\d*)\s*([A-Za-z])", s):
+                continue
+            try:
+                letters |= {v.name for v in to_sympy(s).free_symbols if v != DOTS}
+            except Unparseable:
+                pass
+        if letters:
+            return [], [f"an equation in {', '.join(sorted(letters))}, not a value of the integral"]
     coeff = 1
     values, unread = [], []
     for s in sides:

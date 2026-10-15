@@ -1,0 +1,27 @@
+Easy Integral - Thursday 15 October 2026
+
+1. The limits run backwards. Is the answer positive or negative?
+2. Backwards limits flip the sign: the estimate is negative.
+3. Divide top and bottom by cos squared x: x appears.
+4. 1cos squared x equals squared x and sine x over cos x equals x.
+5. u-Substitution
+6. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+7. Here u equals x, the bottom of the fraction.
+8. Integral of squared x
+9. squared x dx equals x plus C
+10. So d over dx x equals squared x, giving du equals squared x dx.
+11. Changing the Limits
+12. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+13. (inverse 1 over e) equals 1 over e; likewise 1 over pi.
+14. Let u equals x: then du equals squared x dx replaces the top.
+15. In x: the signed area is about minus 0.145.
+16. In u: the curve 1 over u, with exactly the same area.
+17. Integral of 1 over x
+18. 1 over x dx equals log |x| plus C
+19. Here the variable is u, and u>0 throughout.
+20. The integral of 1 over u is log |u|.
+21. Upper limit minus lower limit.
+22. log 1 over a equals minus log a, and log e equals 1.
+23. Negative, because pi >e makes log pi >1.
+24. Thin rectangles close in on minus 0.1447.
+25. Takeaway: 1 over sine xcos x is squared x x, giving log | x|.

@@ -1,0 +1,15 @@
+Beginner Integral - Thursday 15 October 2026
+
+1. A strange power, yet the curve is flat. Why?
+2. At x equals 1, log x equals 0: undefined, but 1 is outside the limits.
+3. Every rectangle has height e, so the estimate never moves.
+4. A power of x with log x in the exponent.
+5. Write x as e to the log x, and watch the exponent.
+6. e and log undo each other, so x equals e to the log x.
+7. A power of a power: multiply the exponents.
+8. log x 0 on [2,5], so the exponent is 1.
+9. A constant e integrates to ex.
+10. Upper limit minus lower limit.
+11. A rectangle 3 wide and e tall.
+12. Thin rectangles agree: 3e about 8.155.
+13. Takeaway: a variable in the exponent? Rewrite the base as e to the log x.

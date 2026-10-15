@@ -1,0 +1,32 @@
+Medium Integral - Thursday 15 October 2026
+
+1. A fraction that never ends. Mostly below the axis: how far?
+2. Thin rectangles estimate the signed area; watch the gap shrink.
+3. After one 4 and one 1, the whole fraction restarts.
+4. Infinite Nested Expressions
+5. y equals g (g(g(times s))) y equals g(y)
+6. g is the step repeated forever.
+7. An expression that repeats inside itself.
+8. Peel one layer: the same tail, y, remains.
+9. Of two roots, the limit has |g'(y)|<1.
+10. Here g(y) equals cos 2x4 plus cos 2x over 1 plus y.
+11. Call the fraction y: the tail after 4 and 1 is y.
+12. Clear the fractions: a quadratic in y.
+13. Quadratic formula, plus root: when cos 2x equals 0, y equals 0.
+14. That root is the integrand.
+15. Double Angle Identities
+16. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+17. Here cos 2x equals cos squared x minus sine squared x.
+18. The Pythagorean Identity
+19. sine squared x plus cos squared x equals 1
+20. sine squared x equals 1 minus cos squared x, so cos 2x equals 2cos squared x minus 1.
+21. 1 plus cos 2x equals 2cos squared x. But is cos squared x really cos x?
+22. No: past pi over 2, cos x<0. The root is |cos x|.
+23. Splitting the Interval
+24. _a to the c f(x) dx equals _a to the b f(x) dx plus _b to the c f(x) dx
+25. Here b equals pi over 2: |cos x| equals cos x, then minus cos x.
+26. Split at pi over 2, where cos x changes sign.
+27. sine x goes 0 tends to 1, then 1 tends to 0.
+28. So the signed area is about minus 0.157.
+29. Thin rectangles close in on minus 0.1566.
+30. Takeaway: name the repeating tail, solve for it, mind cos squared x.

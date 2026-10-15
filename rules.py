@@ -341,6 +341,13 @@ RULE_CARDS = {
         when=[cap(r"The integrand is $\tan x$, or $\tan$ of a multiple of $x$.")],
         why=[cap(r"The top $\sin x$ is minus the derivative of the bottom.")],
     ),
+    "quadratic_formula": dict(
+        name=r"The Quadratic Formula",
+        statement=r"ay^{2}+by+c=0\quad\Longrightarrow\quad y=\frac{-b\pm\sqrt{b^{2}-4ac}}{2a}",
+        symbols=[cap(r"$a\neq 0$, $b$ and $c$ are the coefficients.")],
+        when=[cap(r"A quadratic equation that does not factorise nicely.")],
+        why=[cap(r"It is completing the square, done once for every quadratic.")],
+    ),
 }
 
 
@@ -352,6 +359,7 @@ RULE_CARDS = {
 SILENT = {          # assumed known: no card and no tag; the step's caption carries the working
     "power_rule", "linearity", "constant_of_integration", "ftc", "log_laws", "exponent_laws",
     "absolute_value", "log_values", "exp_log_inverse", "exp_derivative", "ln_derivative",
+    "quadratic_formula",
 }
 STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
