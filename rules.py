@@ -299,6 +299,13 @@ RULE_CARDS = {
         when=[cap(r"A sum like $\cos x+\sin x$, to merge into one cosine.")],
         why=[cap(r"Rotating by $A$ then back by $B$ is rotating by $A-B$.")],
     ),
+    "sine_addition": dict(
+        name=r"Sine of a Sum",
+        statement=r"\sin(A+B)=\sin A\cos B+\cos A\sin B",
+        symbols=[cap(r"$A$ and $B$ are any two angles.")],
+        when=[cap(r"$\sin$ of an angle plus a constant, like $x+\frac{\pi}{4}$.")],
+        why=[cap(r"Rotating by $B$ then by $A$ is rotating by $A+B$.")],
+    ),
     "kings_rule": dict(
         name=r"Reflecting in the Middle",
         statement=r"\int_{0}^{a} f(x)\,dx=\int_{0}^{a} f(a-x)\,dx",

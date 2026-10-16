@@ -1167,9 +1167,12 @@ def rule_cards(scene, step):
 
 
 def show_rule_tag(scene, keys):
-    """A small teal tag under the badge naming rules already carded in this video."""
-    names = ", ".join(RULE_CARDS[k]["name"] for k in keys)
-    tag = rich(r"Again: %s" % names, font_size=26, width=5.0, color=CARD_COLOR)
+    """A small teal tag under the badge naming rules already carded in this video,
+    one rule per line so a name never wraps in the middle."""
+    names = [re.sub(r"^The ", "", RULE_CARDS[k]["name"]) for k in keys]
+    lines = [rich(("Again: " if i == 0 else "") + n + ("," if i < len(names) - 1 else ""),
+                  font_size=26, width=5.0, color=CARD_COLOR) for i, n in enumerate(names)]
+    tag = VGroup(*lines).arrange(DOWN, aligned_edge=RIGHT, buff=0.08)
     badge = getattr(scene, "_badge", None)
     top = (badge.get_bottom()[1] if badge is not None else SAFE_TOP) - 0.12
     if tag.width > 5.0:
@@ -1272,6 +1275,7 @@ def close(scene, current, trail, answer_spec, colors, func, window, answer_value
     while n grows (for infinite limits).
     """
     scene._guard_section = "Close"
+    clear_caption(scene)        # the last step's caption must not linger under the answer
     answer = mt(eq(r"\text{Answer}", "=", *answer_spec), colors).scale(1.3)
     answer.set_color(AREA_COLOR)
     fit_into(answer, SAFE_LEFT, SAFE_RIGHT, 0.4, 2.6, center=True)

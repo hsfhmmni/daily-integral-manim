@@ -1,0 +1,32 @@
+Easy Integral - Friday 16 October 2026
+
+1. A monster fraction, yet a gentle curve. What survives?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. e undoes log. Every factor here shrinks on its own.
+4. The Pythagorean Identity
+5. sine squared x plus cos squared x equals 1
+6. A difference of squares leaves cos squared x plus sine squared x equals 1.
+7. Double Angle Identities
+8. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+9. Here cos squared x minus sine squared x equals cos 2x.
+10. Top: cos to the 4x minus sine to the 4x equals cos 2x, and (1 minus cos x)(1 plus cos x) equals sine squared x.
+11. Bottom: (sine x plus cos x) squared minus 1 equals sine 2x, and e to the log (sine squared x) equals sine squared x.
+12. Cancel sine squared x: only cos 2x over sine 2x is left.
+13. u-Substitution
+14. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+15. Here u equals sine 2x, the bottom of the fraction.
+16. The Chain Rule
+17. d over dxf (g(x)) equals f' (g(x)) g'(x)
+18. du equals 2cos 2x dx: the inside 2x gives the 2.
+19. Changing the Limits
+20. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+21. sine pi over 3 equals root 32 and sine pi over 2 equals 1.
+22. Let u equals sine 2x: the limits become root 32 and 1.
+23. Integral of 1 over x
+24. 1 over x dx equals log |x| plus C
+25. Here the variable is u, and u>0 throughout.
+26. The integral of 1 over u is log |u|.
+27. Upper limit minus lower limit, and log 1 equals 0.
+28. minus log root 32 equals log 2root 3 equals 1 over 2log 4 over 3.
+29. Thin rectangles close in on 0.0719.
+30. Takeaway: simplify each factor alone before integrating anything.

@@ -2,7 +2,7 @@
 
 **Every day, the [dailyintegral.com](https://dailyintegral.com) Beginner, Easy and Medium integrals, solved and turned into short 3Blue1Brown-style explainer videos with [Manim](https://www.manim.community/).**
 
-![Manim CE 0.21](https://img.shields.io/badge/Manim_CE-0.21-blue) ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB) ![LaTeX](https://img.shields.io/badge/LaTeX-MiKTeX-008080) ![videos](https://img.shields.io/badge/videos-24-brightgreen) ![minutes](https://img.shields.io/badge/minutes_of_animation-57-orange)
+![Manim CE 0.21](https://img.shields.io/badge/Manim_CE-0.21-blue) ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB) ![LaTeX](https://img.shields.io/badge/LaTeX-MiKTeX-008080) ![videos](https://img.shields.io/badge/videos-27-brightgreen) ![minutes](https://img.shields.io/badge/minutes_of_animation-64-orange)
 
 | Symmetry you can see | Rectangles closing in | Unwrapping nested absolute values |
 |:---:|:---:|:---:|
@@ -10,18 +10,19 @@
 
 Each video starts from the **picture** (the curve and the shaded area) and asks a question. Then it builds intuition with rectangles that get thinner, highlights the one key idea, **morphs** the equations line by line, and ends with the estimate meeting the exact answer.
 
-## Latest: Thursday 15 October 2026
+## Latest: Friday 16 October 2026
 
 | Beginner | Easy | Medium |
 |:---:|:---:|:---:|
-| [![Beginner 2026-10-15](assets/thumbs/2026-10-15_Beginner.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-15/2026-10-15_Beginner.mp4)<br>${POWER}\thinspace dx$<br>**Answer:** $3e$ | [![Easy 2026-10-15](assets/thumbs/2026-10-15_Easy.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-15/2026-10-15_Easy.mp4)<br>$\frac{1}{\sin x\cos x}\thinspace dx$<br>**Answer:** $1-\ln\pi$ | [![Medium 2026-10-15](assets/thumbs/2026-10-15_Medium.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-15/2026-10-15_Medium.mp4)<br>${REPEAT}}}\thinspace dx$<br>**Answer:** $\sqrt{2}-\frac{\pi}{2}$ |
+| [![Beginner 2026-10-16](assets/thumbs/2026-10-16_Beginner.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-16/2026-10-16_Beginner.mp4)<br>$\frac{({INSIDE})^{5}}{\sqrt{x}}\thinspace dx$<br>**Answer:** $\frac{1}{3}$ | [![Easy 2026-10-16](assets/thumbs/2026-10-16_Easy.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-16/2026-10-16_Easy.mp4)<br>$\frac{{N1}{N2}}{{D1}{D2}}\thinspace dx$<br>**Answer:** $\frac{1}{4}\ln\frac{4}{3}$ | [![Medium 2026-10-16](assets/thumbs/2026-10-16_Medium.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-16/2026-10-16_Medium.mp4)<br>$\frac{{SIN2}}{\sqrt{1+\sin 2x}}\thinspace dx$<br>**Answer:** $\frac{1+\sqrt{3}}{4}$ |
 
-Click a thumbnail for the video (1080p60, about 1.5 to 2 minutes, no sound: the captions carry the story). Every day's videos are also on its [release page](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-15).
+Click a thumbnail for the video (1080p60, about 1.5 to 2 minutes, no sound: the captions carry the story). Every day's videos are also on its [release page](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-16).
 
 ## All videos
 
 | Date | Beginner | Easy | Medium |
 |---|---|---|---|
+| **[2026-10-16](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-16)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-16/2026-10-16_Beginner.mp4) · [code](Beginner/2026-10-16_Beginner.py)<br>$\frac{({INSIDE})^{5}}{\sqrt{x}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-16/2026-10-16_Easy.mp4) · [code](Easy/2026-10-16_Easy.py)<br>$\frac{{N1}{N2}}{{D1}{D2}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-16/2026-10-16_Medium.mp4) · [code](Medium/2026-10-16_Medium.py)<br>$\frac{{SIN2}}{\sqrt{1+\sin 2x}}\thinspace dx$ |
 | **[2026-10-15](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-15)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-15/2026-10-15_Beginner.mp4) · [code](Beginner/2026-10-15_Beginner.py)<br>${POWER}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-15/2026-10-15_Easy.mp4) · [code](Easy/2026-10-15_Easy.py)<br>$\frac{1}{\sin x\cos x}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-15/2026-10-15_Medium.mp4) · [code](Medium/2026-10-15_Medium.py)<br>${REPEAT}}}\thinspace dx$ |
 | **[2026-10-14](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-14)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-14/2026-10-14_Beginner.mp4) · [code](Beginner/2026-10-14_Beginner.py)<br>$\frac{\ln(x^{3}-2)\thinspace e^{\sin x}}{\ln(x^{3}-2)\thinspace e^{\sin x}+\ln((6-x)^{3}-2)\thinspace e^{\sin(6-x)}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-14/2026-10-14_Easy.mp4) · [code](Easy/2026-10-14_Easy.py)<br>$\frac{1}{1-\sqrt{1-x^{2}}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-14/2026-10-14_Medium.mp4) · [code](Medium/2026-10-14_Medium.py)<br>$\frac{6x(3-x^{2})}{1-2x^{2}-3x^{4}}\thinspace dx$ |
 | **[2026-10-13](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-13)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-13/2026-10-13_Beginner.mp4) · [code](Beginner/2026-10-13_Beginner.py)<br>$\int_{1}^{e}\frac{1}{x^{2}+2x+2}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-13/2026-10-13_Easy.mp4) · [code](Easy/2026-10-13_Easy.py)<br>$\frac{\sqrt{1-\sin(2\ln x)}}{x^{3}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-13/2026-10-13_Medium.mp4) · [code](Medium/2026-10-13_Medium.py)<br>$\Big(\tfrac{1}{4\sqrt{2}}\ln(1+\sin 2x)-\tfrac{\sqrt{2}}{4}\ln(\cos x)\Big)\thinspace dx$ |
@@ -105,8 +106,8 @@ git clone https://github.com/hsfhmmni/daily-integral-manim.git
 cd daily-integral-manim
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
-python check_text.py 2026-10-15
-manim -ql Easy/2026-10-15_Easy.py EasyIntegral
+python check_text.py 2026-10-16
+manim -ql Easy/2026-10-16_Easy.py EasyIntegral
 ```
 
 ## Credits

@@ -1,0 +1,24 @@
+Medium Integral - Friday 16 October 2026
+
+1. A square root of 1 plus sine 2x. Can it simply disappear?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. 1 plus sine 2x is a perfect square in disguise.
+4. The Pythagorean Identity
+5. sine squared x plus cos squared x equals 1
+6. Write the 1 as sine squared x plus cos squared x.
+7. Double Angle Identities
+8. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+9. sine 2x equals 2sine xcos x is the cross term.
+10. 1 plus 2sine xcos x equals sine squared x plus 2sine xcos x plus cos squared x.
+11. Careful: w squared equals |w|, not w.
+12. On [ pi over 6, pi over 2 ], sine x and cos x are 0: bars drop.
+13. Sine of a Sum
+14. sine (A plus B) equals sine Acos B plus cos Asine B
+15. Here A equals x, B equals pi over 4, and cos B equals sine B equals 1root 2.
+16. sine (x plus pi over 4) equals sine x plus cos xroot 2, so its square halves.
+17. One factor cancels: just half of sine x plus cos x.
+18. sine x integrates to minus cos x, and cos x to sine x.
+19. Upper limit minus lower limit.
+20. So the area is exactly 1 plus root 34 about 0.683.
+21. Thin rectangles close in on 0.6830.
+22. Takeaway: 1 plus or minus sine 2x is a square; then mind the absolute value.

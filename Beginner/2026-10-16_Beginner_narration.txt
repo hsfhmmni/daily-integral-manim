@@ -1,0 +1,20 @@
+Beginner Integral - Friday 16 October 2026
+
+1. A fifth power over a root. Must we expand it?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. 1root x is nearly the derivative of root x minus 1.
+4. Keep 1root x dx together: it becomes 2 du.
+5. u-Substitution
+6. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+7. Here u equals root x minus 1, so du equals 12root x dx.
+8. Changing the Limits
+9. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+10. x equals 1 gives u equals 0; x equals 4 gives u equals 1.
+11. Let u equals root x minus 1: the limits 1 and 4 become 0 and 1.
+12. In x: the green area is about 0.333.
+13. In u: the curve 2u to the 5, with exactly the same area.
+14. Power rule: 2 times u to the 66 equals u to the 63.
+15. Top limit minus bottom limit.
+16. No expanding needed: exactly one third.
+17. Thin rectangles close in on 1 over 3 about 0.3333.
+18. Takeaway: spot an inside function whose derivative is also there.
