@@ -502,6 +502,8 @@ def value_of(expr, method="mpmath"):
 
 def close(x, y, rel, abs_tol=0.0):
     x, y = mpmath.mpf(x), mpmath.mpf(y)
+    if mpmath.isinf(x) or mpmath.isinf(y):     # inf - inf is nan: infinities match only themselves
+        return x == y
     return abs(x - y) <= max(rel * max(abs(x), abs(y)), abs_tol)
 
 

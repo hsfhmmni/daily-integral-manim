@@ -1,0 +1,30 @@
+Easy Integral - Saturday 17 October 2026
+
+1. Negative, then positive, out to infinity. Does the area settle?
+2. Thin rectangles estimate the signed area; watch the gap shrink.
+3. Tame the bottom: multiply top and bottom by e to the minus 2x.
+4. Now the top is exactly the derivative of the bottom.
+5. u-Substitution
+6. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+7. Here u equals 2 minus xe to the minus 2x, the new bottom.
+8. The Product Rule
+9. (f g)' equals f' g plus f g'
+10. Here f equals x and g equals e to the minus 2x.
+11. The Chain Rule
+12. d over dxf (g(x)) equals f' (g(x)) g'(x)
+13. d over dxe to the minus 2x equals minus 2e to the minus 2x: the inside minus 2x gives minus 2.
+14. Changing the Limits
+15. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+16. x equals log root 2 makes e to the minus 2x equals 1 over 2, so u equals 2 minus log 2 over 4.
+17. Improper Integrals
+18. _a to the infinity f(x) dx equals _b tends to infinity_a to the b f(x) dx
+19. As x tends to infinity, xe to the minus 2x tends to 0, so u tends to 2.
+20. Let u equals 2 minus xe to the minus 2x: then du equals (2x minus 1)e to the minus 2x dx.
+21. Integral of 1 over x
+22. 1 over x dx equals log |x| plus C
+23. Here the variable is u, and u>0 throughout.
+24. The integral of 1 over u is log |u|.
+25. Upper limit minus lower limit.
+26. Combine the logs, then multiply top and bottom by 4.
+27. Thin rectangles close in on 0.0906.
+28. Takeaway: rescale until the top is the bottom's derivative.

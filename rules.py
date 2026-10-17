@@ -355,6 +355,13 @@ RULE_CARDS = {
         when=[cap(r"A quadratic equation that does not factorise nicely.")],
         why=[cap(r"It is completing the square, done once for every quadratic.")],
     ),
+    "midpoint_symmetry": dict(
+        name=r"Symmetry About the Midpoint",
+        statement=r"f(a+b-x)=f(x)\quad\Longrightarrow\quad\int_{a}^{b} f(x)\,dx=2\int_{a}^{\frac{a+b}{2}} f(x)\,dx",
+        symbols=[cap(r"$\frac{a+b}{2}$ is the midpoint of $a$ and $b$.")],
+        when=[cap(r"The curve is its own mirror image about the midpoint.")],
+        why=[cap(r"Mirroring the left half gives the right half: equal areas.")],
+    ),
 }
 
 

@@ -878,6 +878,36 @@ def riemann_rectangles(scene, gr, a, b, true_value, counts=(4, 8, 16, 32, 64), k
 
 
 # ---- emphasis
+def _highlight_box(target, context, color, buff=0.1):
+    """A box around target, padded by buff on each side, but never drawn on top of the rest of
+    context: on a side where other ink (a fraction bar, a denominator) is closer than buff,
+    the padding shrinks to half the gap, so the box edge sits between the two."""
+    left, bottom = target.get_corner(DL)[:2]
+    right, top = target.get_corner(UR)[:2]
+    pad = {"l": buff, "r": buff, "b": buff, "t": buff}
+    if context is not None:
+        mine = {id(m) for m in target.get_family()}
+        for m in context.family_members_with_points():
+            if id(m) in mine:
+                continue
+            (ml, mb), (mr, mt) = m.get_corner(DL)[:2], m.get_corner(UR)[:2]
+            x_overlap = ml < right + buff and mr > left - buff
+            y_overlap = mb < top + buff and mt > bottom - buff
+            if x_overlap and mt <= bottom + 1e-6:
+                pad["b"] = min(pad["b"], (bottom - mt) / 2)
+            if x_overlap and mb >= top - 1e-6:
+                pad["t"] = min(pad["t"], (mb - top) / 2)
+            if y_overlap and mr <= left + 1e-6:
+                pad["l"] = min(pad["l"], (left - mr) / 2)
+            if y_overlap and ml >= right - 1e-6:
+                pad["r"] = min(pad["r"], (ml - right) / 2)
+    pad = {k: max(v, 0.02) for k, v in pad.items()}
+    w, h = right - left + pad["l"] + pad["r"], top - bottom + pad["b"] + pad["t"]
+    box = Rectangle(width=w, height=h, color=color, stroke_width=3)
+    box.move_to([left - pad["l"] + w / 2, bottom - pad["b"] + h / 2, 0])
+    return box
+
+
 def highlight(scene, target, label, side=DOWN, zoom=True, color=YELLOW, hold=2.0, context=None):
     """Point at the key idea: Circumscribe it, keep a box, add a short arrow with a
     label, zoom the camera onto it (MovingCameraScene) and hold at least 1.5 s.
@@ -886,7 +916,7 @@ def highlight(scene, target, label, side=DOWN, zoom=True, color=YELLOW, hold=2.0
     keeps all of it in view so nothing is cut off. Returns the box+arrow+label group;
     call unzoom(scene) afterwards if zoomed.
     """
-    box = SurroundingRectangle(target, color=color, buff=0.1, stroke_width=3)
+    box = _highlight_box(target, context, color)
     lab = rich(label, font_size=34, width=5.5, color=color)
     lab.set_stroke(BACKGROUND, width=6, background=True)
     lab.next_to(box, side, buff=0.8)
@@ -997,7 +1027,7 @@ def morph_steps(scene, current, steps, colors, trail, hooks=None):
             texs, label = step["highlight"]
             clear_caption(scene)        # the previous step's caption must not label this highlight
             extra = highlight(scene, parts_of(current, *texs), label, side=step.get("side", DOWN),
-                              zoom=False, hold=0.5)
+                              zoom=False, hold=0.5, context=current)
             caption(scene, step["say"])
             scene.play(FadeOut(extra), run_time=0.6)
         else:

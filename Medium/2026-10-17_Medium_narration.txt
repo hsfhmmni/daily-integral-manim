@@ -1,0 +1,47 @@
+Medium Integral - Saturday 17 October 2026
+
+1. Four terms blow up at the ends. What survives?
+2. Thinner rectangles; watch the gap shrink.
+3. All tied to sine squared x plus cos squared x equals 1.
+4. The Pythagorean Identity
+5. sine squared x plus cos squared x equals 1
+6. Divide by cos squared x or sine squared x.
+7. squared x equals 1 plus squared x and squared x equals 1 plus squared x.
+8. Double Angle Identities
+9. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+10. Here sine xcos x equals 1 over 2sine 2x.
+11. squared x plus squared x equals 1sine squared xcos squared x minus 2 equals 4sine squared 2x minus 2.
+12. Times sine squared 2x: both ends now give 0.
+13. Top: 8 minus (8 minus sine squared 2x).
+14. Symmetry About the Midpoint
+15. f(a plus b minus x) equals f(x) _a to the b f(x) dx equals 2_a to the a plus b over 2 f(x) dx
+16. Here sine squared 2(pi over 2 minus x) equals sine squared (pi minus 2x) equals sine squared 2x.
+17. 2x blows up at pi over 4: halve first.
+18. Mirror the left half in x equals pi over 4.
+19. It lands on the right half.
+20. Divide by cos squared 2x: 8 squared 2x minus squared 2x equals 8 plus 7 squared 2x.
+21. u-Substitution
+22. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+23. Here u equals 2x, so du equals 2 squared 2x dx.
+24. The Chain Rule
+25. d over dxf (g(x)) equals f' (g(x)) g'(x)
+26. The inside 2x gives the 2.
+27. Changing the Limits
+28. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+29. x equals 0 gives u equals 0; x tends to pi over 4 gives u tends to infinity.
+30. Improper Integrals
+31. _a to the infinity f(x) dx equals _b tends to infinity_a to the b f(x) dx
+32. Integrate to b, then let b tends to infinity.
+33. Let u equals 2x: the limits become 0 and infinity.
+34. Integral of 11 plus x squared
+35. 11 plus x squared dx equals inverse x plus C
+36. inverse x is the angle, in radians, whose tangent is x.
+37. One over 1 plus a square, after completing the square.
+38. With y equals inverse x, dx over dy equals squared y equals 1 plus x squared.
+39. So dy over dx equals 11 plus x squared: undo it.
+40. Here x equals root 7 over 8 u.
+41. 88 plus 7u squared equals 11 plus 7 over 8u squared: an inverse tangent.
+42. inverse u climbs from 0 to pi over 2.
+43. root 8 over 7 equals 2root 147.
+44. Thin rectangles close in on 0.1085.
+45. Takeaway: identities first, then halve before explodes.
