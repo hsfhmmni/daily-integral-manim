@@ -55,6 +55,9 @@ REM Finished videos wait in pending\<Difficulty>\ until the user approves them.
 for %%L in (Beginner Easy Medium) do (
   if not exist "pending\%%L" mkdir "pending\%%L"
   copy /Y "_media_%%L\videos\%D%_%%L\1080p60\%D%_%%L.mp4" "pending\%%L\%D%_%%L.mp4"
+  REM The pieces Manim joined into the video are not needed once it is copied (they only
+  REM take disk space); deleted only after a successful copy.
+  if not errorlevel 1 if exist "_media_%%L\videos\%D%_%%L\1080p60\partial_movie_files" rmdir /s /q "_media_%%L\videos\%D%_%%L\1080p60\partial_movie_files"
 )
 REM Re-run every check on the finished files (including the key-moment stills from
 REM check_frame.py --frames) and write review\DATE_READY_FOR_REVIEW.md. Nothing is uploaded.

@@ -187,7 +187,10 @@ def main(argv):
             m = re.search(r"length ([\d.]+) s", out)
             hold = re.search(r"Hold times: .*", out)
             wm = re.search(r"Watermark.*|.*watermark.*score.*", out, re.I)
+            cached = re.search(r"\(cached: identical inputs to the dry run of ([^;]+);", out)
             for x in (m and f"Planned length (dry run): {m.group(1)} s", hold and hold.group(0),
+                      cached and f"Dry run: result reused from {cached.group(1)} (script, project code, "
+                                 f"settings, package and LaTeX versions all unchanged)",
                       wm and wm.group(0).strip()):
                 if x:
                     info.append(x)

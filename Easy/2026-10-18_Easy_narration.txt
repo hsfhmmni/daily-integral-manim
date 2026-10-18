@@ -1,0 +1,19 @@
+Easy Integral - Sunday 18 October 2026
+
+1. Logarithm over logarithm, from 0 to 1. Any symmetry?
+2. Even four rectangles give exactly 0.5: a hint of symmetry.
+3. Swapping x for 1 minus x swaps 1 plus x and 2 minus x.
+4. log (ab) equals log a plus log b splits the bottom in two.
+5. Reflecting in the Middle
+6. _0 to the a f(x) dx equals _0 to the a f(a minus x) dx
+7. Here a equals 1: 1 plus (1 minus x) equals 2 minus x and 2 minus (1 minus x) equals 1 plus x.
+8. Swap x for 1 minus x: the two logs trade places.
+9. Mirror the area in x equals 1 over 2: its size is unchanged.
+10. Now turn the mirrored area upside down.
+11. It fills the gap exactly: together, area 1.
+12. Add the two forms: the tops sum to the bottom.
+13. The fraction is exactly 1 everywhere.
+14. Height 1 over width 1: area 1.
+15. Halve it: exactly one half.
+16. Thin rectangles close in on 1 over 2 equals 0.5.
+17. Takeaway: if a minus x swaps the pieces, add both forms.

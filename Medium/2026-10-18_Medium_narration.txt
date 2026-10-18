@@ -1,0 +1,35 @@
+Medium Integral - Sunday 18 October 2026
+
+1. Out to infinity, a tangle of roots. Does the area settle?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. The bottom factors, so the fraction splits in two.
+4. e squared x minus 1 equals (e to the x minus 1)(e to the x plus 1), a difference of squares.
+5. Improper Integrals
+6. _a to the infinity f(x) dx equals _b tends to infinity_a to the b f(x) dx
+7. Each piece shrinks like e to the minus x over 2, so each converges.
+8. Each root cancels once; both pieces converge, so split.
+9. u-Substitution
+10. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+11. Here u equals e to the x minus 1, so dx equals 2uu squared plus 1 du.
+12. Changing the Limits
+13. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+14. x equals log 2 gives u equals 1; x tends to infinity gives u tends to infinity.
+15. Let u equals e to the x minus 1: then e to the x equals u squared plus 1.
+16. The u cancels, leaving 2u squared plus 1.
+17. Likewise v equals e to the x plus 1: the limits become root 3 and infinity.
+18. Partial Fractions
+19. 1 over (x minus a)(x minus b) equals A over x minus a plus B over x minus b
+20. Here 2 over (v minus 1)(v plus 1) equals 1 over v minus 1 minus 1 over v plus 1.
+21. v squared minus 1 equals (v minus 1)(v plus 1): split into partial fractions.
+22. Integral of 11 plus x squared
+23. 11 plus x squared dx equals inverse x plus C
+24. inverse x is the angle, in radians, whose tangent is x.
+25. One over 1 plus a square, after completing the square.
+26. With y equals inverse x, dx over dy equals squared y equals 1 plus x squared.
+27. So dy over dx equals 11 plus x squared: undo it.
+28. Here the variable is u, times the constant 2.
+29. An inverse tangent, then two logs combined into one.
+30. As they grow, inverse u tends to pi over 2 and v minus 1 over v plus 1 tends to 1.
+31. root 3 plus 1root 3 minus 1 equals (root 3 plus 1) squared 2 equals 2 plus root 3.
+32. Thin rectangles close in on 2.8878.
+33. Takeaway: factor the bottom, split, then substitute each root.

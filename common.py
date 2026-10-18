@@ -194,6 +194,43 @@ def _view(scene):
     return c[0] - w / 2, c[0] + w / 2, c[1] - h / 2, c[1] + h / 2, w / config.frame_width
 
 
+class _Boxes:
+    """Bounding boxes, point counts and visibility of mobjects, each worked out once per check.
+
+    A box is (left, right, bottom, top): the min and max of the mobject's boundary points, the
+    very numbers get_left() / get_right() / get_bottom() / get_top() return, but computed once
+    instead of on every comparison (the old pairwise checks were most of the guard's time).
+    Valid only while nothing moves, i.e. within one frame_problems call."""
+
+    def __init__(self):
+        self.box, self.pts, self.vis = {}, {}, {}
+
+    def __call__(self, m):
+        k = id(m)
+        if k not in self.box:
+            p = m.get_points_defining_boundary()
+            self.box[k] = ((0.0, 0.0, 0.0, 0.0) if len(p) == 0 else
+                           (np.min(p[:, 0]), np.max(p[:, 0]), np.min(p[:, 1]), np.max(p[:, 1])))
+        return self.box[k]
+
+    def has_points(self, m):
+        k = id(m)
+        if k not in self.pts:
+            self.pts[k] = _has_points(m)
+        return self.pts[k]
+
+    def visible(self, m):
+        k = id(m)
+        if k not in self.vis:
+            self.vis[k] = _visible(m)
+        return self.vis[k]
+
+    def overlap(self, a, b, pad=0.0):
+        al, ar, ab, at = self(a)
+        bl, br, bb, bt = self(b)
+        return not (ar + pad <= bl or br + pad <= al or at + pad <= bb or bt + pad <= ab)
+
+
 def frame_problems(scene):
     """Every layout problem on screen right now, as readable strings.
 
@@ -202,9 +239,10 @@ def frame_problems(scene):
     text is the failure); camera-following HUD items (badge, captions) must stay inside.
     """
     out = []
+    bx = _Boxes()
     frame = getattr(getattr(scene, "camera", None), "frame", None)
     tops = [m for m in scene.mobjects
-            if _has_points(m) and m is not frame and not isinstance(m, ValueTracker) and _visible(m)]
+            if bx.has_points(m) and m is not frame and not isinstance(m, ValueTracker) and bx.visible(m)]
     reserved = [m for m in getattr(scene, "_guard_reserved", []) if m in tops]
     vl, vr, vb, vt, zoom = _view(scene)
     margin = SAFE_MARGIN * zoom
@@ -212,40 +250,41 @@ def frame_problems(scene):
     zoomed = zoom < 0.999
 
     def in_view(m):
-        return not (m.get_right()[0] < vl or m.get_left()[0] > vr
-                    or m.get_top()[1] < vb or m.get_bottom()[1] > vt)
+        l, r, b, t = bx(m)
+        return not (r < vl or l > vr or t < vb or b > vt)
 
+    leaves = {id(top): list(_texty_leaves(top)) for top in tops}
     for top in tops:
         hud = getattr(top, "_hud", False)
-        items = list(_texty_leaves(top))
+        items = list(leaves[id(top)])
         if not isinstance(top, TEXTY):
             items.append(top)                    # diagrams, axes, boxes too
         for m in items:
-            if not _has_points(m):
+            if not bx.has_points(m):
                 continue
             texty = isinstance(m, TEXTY)
+            l, r, b, t = bx(m)
             if zoomed and not hud:
                 if not texty or not in_view(m):
                     continue                     # off-view on purpose while zoomed
-                if (m.get_left()[0] < vl - _TOL or m.get_right()[0] > vr + _TOL
-                        or m.get_bottom()[1] < vb - _TOL or m.get_top()[1] > vt + _TOL):
+                if l < vl - _TOL or r > vr + _TOL or b < vb - _TOL or t > vt + _TOL:
                     out.append(f"{_label(m)} is cut off by the edge of the zoomed view")
                 continue
             over = []
-            if m.get_left()[0] < sl - _TOL:
-                over.append(f"left by {sl - m.get_left()[0]:.2f}")
-            if m.get_right()[0] > sr + _TOL:
-                over.append(f"right by {m.get_right()[0] - sr:.2f}")
-            if m.get_bottom()[1] < sb - _TOL:
-                over.append(f"bottom by {sb - m.get_bottom()[1]:.2f}")
-            if m.get_top()[1] > st + _TOL:
-                over.append(f"top by {m.get_top()[1] - st:.2f}")
+            if l < sl - _TOL:
+                over.append(f"left by {sl - l:.2f}")
+            if r > sr + _TOL:
+                over.append(f"right by {r - sr:.2f}")
+            if b < sb - _TOL:
+                over.append(f"bottom by {sb - b:.2f}")
+            if t > st + _TOL:
+                over.append(f"top by {t - st:.2f}")
             if over:
                 out.append(f"{_label(m)} crosses the safe area ({SAFE_MARGIN} from the edge): "
                            + ", ".join(over))
-        for m in _texty_leaves(top):
+        for m in leaves[id(top)]:
             floor = MIN_FONT_TEXT if isinstance(m, (Text, MarkupText)) else MIN_FONT_TEX
-            if _has_points(m) and _visible(m) and in_view(m) and m.font_size / zoom < floor - 0.5:
+            if bx.has_points(m) and bx.visible(m) and in_view(m) and m.font_size / zoom < floor - 0.5:
                 out.append(f"{_label(m)} is too small to read: font {m.font_size / zoom:.0f} on screen "
                            f"< {floor} (the group was shrunk to fit; shorten the wording)")
 
@@ -255,23 +294,25 @@ def frame_problems(scene):
     elif wm is not None and scene.mobjects[-1] is not wm and wm not in scene.foreground_mobjects:
         out.append("the watermark is not in the foreground")
 
+    # text pieces that can overlap at all: with points, visible and in view (checked once each)
+    live = {id(top): [a for a in leaves[id(top)] if bx.has_points(a) and bx.visible(a) and in_view(a)]
+            for top in tops}
     for i, A in enumerate(tops):
         if getattr(A, "_guard_dimmed", False):
             continue                              # dimmed working behind a Rule Card
         for B in tops[i + 1:]:
             if getattr(B, "_guard_dimmed", False):
                 continue
-            for a in _texty_leaves(A):
-                for b in _texty_leaves(B):
-                    if (_has_points(a) and _has_points(b) and _visible(a) and _visible(b)
-                            and in_view(a) and in_view(b) and _boxes_overlap(a, b)):
+            for a in live[id(A)]:
+                for b in live[id(B)]:
+                    if bx.overlap(a, b):
                         out.append(f"{_label(a)} overlaps {_label(b)}")
 
     for r in reserved:                            # badge and problem line: nothing may touch them
         for t in tops:
             if t is r or (t in reserved and tops.index(t) < tops.index(r)):
                 continue
-            if _boxes_overlap(r, t, pad=0.05):
+            if bx.overlap(r, t, pad=0.05):
                 out.append(f"{_label(t) if not isinstance(t, VGroup) else type(t).__name__} "
                            f"touches the reserved {_label(list(_texty_leaves(r))[0])}")
     return out
@@ -822,6 +863,18 @@ def midpoint_sum(func, a, b, n):
     return float(np.sum(np.vectorize(func, otypes=[float])(xs)) * (b - a) / n)
 
 
+def _show_value(m, value):
+    """Update a live number (DecimalNumber / Integer) only when the digits it shows change.
+
+    set_value rebuilds every glyph; done each frame it was about 16% of a render (profiled
+    2026-10-17), although the digits mostly stay the same, and the same digits draw the same
+    pixels. The stored value is still kept exact."""
+    if m._get_num_string(value) != m._get_num_string(m.number):
+        m.set_value(value)
+    else:
+        m.number = value
+
+
 def _readout(rows, box=READOUT_BOX):
     """Rows of (label tex, number mobject) stacked in the readout column."""
     group = VGroup()
@@ -839,7 +892,7 @@ def _readout(rows, box=READOUT_BOX):
 def riemann_rectangles(scene, gr, a, b, true_value, counts=(4, 8, 16, 32, 64), keyframes=(0, 2, 4)):
     """Rectangles that get thinner (ValueTracker for n), with a live estimate and gap.
 
-    Uses midpoint rectangles from Axes.get_riemann_rectangles inside always_redraw, and
+    Uses midpoint rectangles from Axes.get_riemann_rectangles (rebuilt when n changes), and
     DecimalNumber updaters. Leaves rectangles and readout on screen; returns
     (rects, readout, tracker, final_estimate).
     """
@@ -856,15 +909,25 @@ def riemann_rectangles(scene, gr, a, b, true_value, counts=(4, 8, 16, 32, 64), k
                                               stroke_color=WHITE, fill_opacity=0.6,
                                               color=AREA_COLOR, show_signed_area=False)
 
-    rects = always_redraw(make_rects)
+    # Like always_redraw(make_rects), but rebuilt only when the count changes: the same count
+    # gives the same rectangles, and rebuilding them every frame was about 8% of a render.
+    rects = make_rects()
+    rects._count = count()
+
+    def redraw(m):
+        k = count()
+        if k != m._count:
+            m.become(make_rects())
+            m._count = k
+    rects.add_updater(redraw)
     n_num = Integer(counts[0], font_size=34, group_with_commas=False)
     est = DecimalNumber(midpoint_sum(gr.func, a, b, counts[0]), num_decimal_places=4, font_size=34)
     gap = DecimalNumber(abs(midpoint_sum(gr.func, a, b, counts[0]) - true_value), num_decimal_places=4,
                         font_size=34, color=TRAP_COLOR)
     readout = _readout([(r"n=", n_num), (r"\text{estimate}\approx", est), (r"\text{gap}=", gap)])
-    n_num.add_updater(lambda m: m.set_value(count()))
-    est.add_updater(lambda m: m.set_value(midpoint_sum(gr.func, a, b, count())))
-    gap.add_updater(lambda m: m.set_value(abs(midpoint_sum(gr.func, a, b, count()) - true_value)))
+    n_num.add_updater(lambda m: _show_value(m, count()))
+    est.add_updater(lambda m: _show_value(m, midpoint_sum(gr.func, a, b, count())))
+    gap.add_updater(lambda m: _show_value(m, abs(midpoint_sum(gr.func, a, b, count()) - true_value)))
     scene.play(FadeOut(gr.area), FadeIn(rects, lag_ratio=0.1), FadeIn(readout, lag_ratio=0.2), run_time=1.5)
     if 0 in keyframes:
         mark(scene, f"rectangles n={counts[0]}")
@@ -1076,26 +1139,102 @@ def _card_area(scene):
     return SAFE_LEFT + 0.05, SAFE_RIGHT - 0.05, watermark_box()[3] + 0.15, top
 
 
+_COLOUR_ATTRS = ("fill_rgbas", "stroke_rgbas", "background_stroke_rgbas", "stroke_width",
+                 "background_stroke_width", "sheen_direction", "sheen_factor")
+
+
+def _state(s):
+    """The points and colours of one family member (what a fade changes and Transform blends)."""
+    st = {k: (v.copy() if isinstance(v, np.ndarray) else v) for k, v in
+          ((k, getattr(s, k)) for k in _COLOUR_ATTRS)}
+    st["points"] = s.points.copy()
+    return st
+
+
+def _put_state(s, st):
+    for k in _COLOUR_ATTRS:
+        v = st[k]
+        setattr(s, k, v.copy() if isinstance(v, np.ndarray) else v)
+    s.points = st["points"].copy()
+
+
+class _Blend(Animation):
+    """Move each point and colour of a mobject from where it is now to `ends` (one state per
+    family member with points), with exactly the arithmetic Transform uses, (1-a)*start + a*end,
+    snapping to the end values at a = 1, but without copying the mobject. The fade behind a
+    Rule Card used to copy every mobject on screen four times (save_state, the animate target,
+    Transform's start and target); that was about 20% of a Medium dry run (profiled 2026-10-17).
+    compare_renders.py checks the frames are unchanged."""
+
+    def __init__(self, mobject, ends, **kwargs):
+        self._ends = ends
+        super().__init__(mobject, **kwargs)
+
+    def create_starting_mobject(self):
+        return self.mobject                     # nothing is copied: the start is kept in _starts
+
+    def begin(self):
+        self._fam = self.mobject.family_members_with_points()
+        self._starts = [_state(s) for s in self._fam]
+        super().begin()
+
+    def interpolate_mobject(self, alpha):
+        a = self.get_sub_alpha(alpha, 0, 1)
+        for s, st, en in zip(self._fam, self._starts, self._ends):
+            s.points = interpolate(st["points"], en["points"], a)
+            for k in _COLOUR_ATTRS:
+                setattr(s, k, interpolate(st[k], en[k], a))
+                if a == 1.0:
+                    v = en[k]
+                    setattr(s, k, v.copy() if isinstance(v, np.ndarray) else v)
+
+
+def _blendable(m, ends):
+    fam = m.family_members_with_points()
+    return len(fam) == len(ends) and all(
+        np.shape(getattr(s, k)) == np.shape(e[k]) for s, e in zip(fam, ends) for k in _COLOUR_ATTRS + ("points",))
+
+
 def _dim_working(scene):
     """Fade everything on screen (except watermark, badge, camera) to 20%. Returns the
-    dimmed mobjects; the frame guard ignores them for text overlaps until restored."""
+    dimmed mobjects; the frame guard ignores them for text overlaps until restored.
+
+    Each mobject's points and colours are remembered, faded in place to read off the dimmed
+    values, put back, and then blended (_Blend) to the dimmed values; _undim_working blends
+    them back to the remembered ones. A mobject whose fade would change the shape of its
+    colour arrays (never seen so far) falls back to save_state / animate / Restore."""
     keep = {id(getattr(scene, "_watermark", None)), id(getattr(scene, "_badge", None)),
             id(getattr(getattr(scene, "camera", None), "frame", None))}
     targets = [m for m in scene.mobjects if id(m) not in keep and not isinstance(m, ValueTracker)
                and _has_points(m) and _visible(m)]
+    anims = []
     for m in targets:
-        m.save_state()
         m._guard_dimmed = True
-    if targets:
-        scene.play(*[m.animate.fade(CARD_DIM) for m in targets], run_time=0.6)
+        fam = m.family_members_with_points()
+        before = [_state(s) for s in fam]
+        m.fade(CARD_DIM)
+        dimmed = [_state(s) for s in fam]
+        for s, st in zip(fam, before):
+            _put_state(s, st)
+        if _blendable(m, dimmed):
+            m._dim_saved = before
+            anims.append(_Blend(m, dimmed))
+        else:
+            m._dim_saved = None
+            m.save_state()
+            anims.append(m.animate.fade(CARD_DIM))
+    if anims:
+        scene.play(*anims, run_time=0.6)
     return targets
 
 
 def _undim_working(scene, targets):
-    if targets:
-        scene.play(*[Restore(m) for m in targets], run_time=0.6)
+    anims = [_Blend(m, m._dim_saved) if m._dim_saved is not None else Restore(m) for m in targets]
+    if anims:
+        scene.play(*anims, run_time=0.6)
     for m in targets:
         m._guard_dimmed = False
+        m._dim_saved = None
 
 
 def _hold_beat(scene, lines):
@@ -1137,13 +1276,11 @@ def show_rule_card(scene, key, mapping=(), full=True):
             sections.append((lines, VGroup(head, _card_lines(lines, inner_w - 0.2)).arrange(
                 DOWN, aligned_edge=LEFT, buff=0.18)))
     body_h = max([s.height for _, s in sections], default=0)
-    if full:
-        box = Rectangle(width=right - left, height=top - bottom)
-        box.move_to([(left + right) / 2, (bottom + top) / 2, 0])
-    else:
-        h = header.height + (body_h + 0.5 if sections else 0) + 2 * pad + 0.2
-        box = Rectangle(width=right - left, height=min(h, top - bottom))
-        box.move_to([(left + right) / 2, min(0.4, top - box.height / 2), 0])
+    # full and short cards alike: as tall as the header plus the tallest beat (from 2026-10-18;
+    # full cards used to fill the whole card area, leaving empty space under short beats)
+    h = header.height + (body_h + 0.5 if sections else 0) + 2 * pad + 0.2
+    box = Rectangle(width=right - left, height=min(h, top - bottom))
+    box.move_to([(left + right) / 2, min(0.4, top - box.height / 2), 0])
     box.set_stroke(CARD_COLOR, 3).set_fill(BACKGROUND, 0.92)
     fit_into(header, box.get_left()[0] + pad, box.get_right()[0] - pad, box.get_bottom()[1] + pad,
              box.get_top()[1] - pad)
@@ -1332,9 +1469,9 @@ def close(scene, current, trail, answer_spec, colors, func, window, answer_value
     gap = DecimalNumber(abs(estimate() - answer_value), num_decimal_places=5, font_size=34, color=TRAP_COLOR)
     readout = _readout([(r"\text{rectangles}=", n_num), (r"\text{estimate}\approx", est),
                         (r"\text{gap}=", gap)], box=(-3.5, 3.5, CAPTION_TOP + 0.15, -0.1))
-    n_num.add_updater(lambda m: m.set_value(state()[2]))
-    est.add_updater(lambda m: m.set_value(estimate()))
-    gap.add_updater(lambda m: m.set_value(abs(estimate() - answer_value)))
+    n_num.add_updater(lambda m: _show_value(m, state()[2]))
+    est.add_updater(lambda m: _show_value(m, estimate()))
+    gap.add_updater(lambda m: _show_value(m, abs(estimate() - answer_value)))
     scene.play(FadeIn(readout, lag_ratio=0.2), run_time=1.0)
     scene.play(t.animate.set_value(1), run_time=2.5, rate_func=smooth)
     caption(scene, says[0], key="estimate meets answer")
@@ -1361,6 +1498,39 @@ def speakable(text):
             s = re.sub(pat, rep, s)
         return s.strip()
     return re.sub(r"\s+", " ", re.sub(r"(?<!\\)\$([^$]*)\$", speak_math, text)).strip()
+
+
+def seed_tex_cache(source=None):
+    """Copy the LaTeX already compiled by the checks (_media/Tex) into this render's own media
+    folder, so a render in _media_<Difficulty> does not compile every equation again (about
+    12% of a render, profiled 2026-10-17). Manim names each .svg after a hash of its TeX and
+    template, and reuses an .svg only when that name exists, so a copied file is the very file
+    a compile would make. Only missing, non-empty .svg files untouched for a minute are copied
+    (so a file a check is still writing is never taken), each through a temporary name, so a
+    render never reads a half-copied file. Returns the number copied."""
+    import time
+    source = source or _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "_media", "Tex")
+    try:
+        target = str(config.get_dir("tex_dir"))
+    except Exception:
+        return 0
+    if not _os.path.isdir(source) or _os.path.normcase(_os.path.abspath(target)) == _os.path.normcase(source):
+        return 0
+    import shutil
+    _os.makedirs(target, exist_ok=True)
+    have = set(_os.listdir(target))
+    copied = 0
+    for name in _os.listdir(source):
+        if not name.endswith(".svg") or name in have:
+            continue
+        src = _os.path.join(source, name)
+        if _os.path.getsize(src) == 0 or time.time() - _os.path.getmtime(src) < 60:
+            continue
+        tmp = _os.path.join(target, name + ".part")
+        shutil.copyfile(src, tmp)
+        _os.replace(tmp, _os.path.join(target, name))
+        copied += 1
+    return copied
 
 
 # ---- the video
@@ -1396,6 +1566,7 @@ class IntegralVideo(MovingCameraScene):
 
     def __init__(self, *args, **kwargs):
         config.background_color = BACKGROUND
+        seed_tex_cache()
         super().__init__(*args, **kwargs)
 
     @staticmethod

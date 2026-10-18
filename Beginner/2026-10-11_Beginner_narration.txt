@@ -3,34 +3,13 @@ Beginner Integral - Sunday 11 October 2026
 1. How big is the green area from x equals 0 to x equals 1?
 2. Thin rectangles estimate the area; watch the gap shrink.
 3. Both terms are sixth powers, so the power rule handles each.
-4. Linearity of the Integral
-5. (a f plus b g) dx equals a\! f dx plus b\! g dx
-6. f, g are functions; a, b are constants.
-7. A sum, or a constant factor.
-8. Scaling heights scales area; stacking heights adds areas.
-9. Here f equals (x plus 1) to the 6 and g equals x to the 6, with a equals 1, b equals minus 1.
-10. Split the difference into two separate integrals.
-11. u-Substitution
-12. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
-13. u equals g(x) is the inside; du equals g'(x) dx.
-14. An inside function appears with its derivative.
-15. It is the chain rule in reverse.
-16. Let u equals x plus 1, so du equals dx and u to the 6 du remains.
-17. The Power Rule
-18. x to the n dx equals x to the n plus 1n plus 1 plus C, n minus 1
-19. n is fixed; C is any constant.
-20. A power of the variable, like t cubed.
-21. Differentiating x to the n plus 1n plus 1 gives back x to the n.
-22. With n equals 6: u to the 6 du equals u to the 77; put back u equals x plus 1.
-23. Raise each power by one, then divide by 7.
-24. The Fundamental Theorem of Calculus
-25. _a to the b f(x) dx equals F(b) minus F(a), F' equals f
-26. F is any antiderivative of f.
-27. A definite integral, once an antiderivative is known.
-28. Area grows at the rate of the curve's height.
-29. At x equals 1: 2 to the 77 minus 1 over 7. At x equals 0: 1 over 7 minus 0.
-30. Upper limit minus lower limit.
-31. 2 to the 7 equals 128, and the two 1 over 7 terms combine.
-32. 128 minus 2 over 7 equals 126 over 7 equals 18.
-33. More, thinner rectangles close in on 18.
-34. Takeaway: a shifted power like (x plus 1) to the 6 integrates like x to the 6.
+4. Split the difference into two separate integrals.
+5. u-Substitution
+6. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+7. Let u equals x plus 1, so du equals dx and u to the 6 du remains.
+8. Raise each power by one, then divide by 7.
+9. Upper limit minus lower limit.
+10. 2 to the 7 equals 128, and the two 1 over 7 terms combine.
+11. 128 minus 2 over 7 equals 126 over 7 equals 18.
+12. More, thinner rectangles close in on 18.
+13. Takeaway: a shifted power like (x plus 1) to the 6 integrates like x to the 6.

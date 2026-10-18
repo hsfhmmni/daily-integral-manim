@@ -4,6 +4,7 @@ Usage (from this folder, with the .venv):
     .venv\\Scripts\\python check_frame.py 2026-10-07                  # all three difficulties
     .venv\\Scripts\\python check_frame.py 2026-10-07 Easy             # just one
     .venv\\Scripts\\python check_frame.py 2026-10-07 --frames         # also grab still frames
+    .venv\\Scripts\\python check_frame.py 2026-10-07 --fresh          # never reuse a cached dry run
     .venv\\Scripts\\python check_frame.py 2026-10-10 Medium --dir _upgrade_test --name 2026-10-10_Medium_v2
         (a script in another folder; --name is the -o name of its review render)
 
@@ -25,6 +26,13 @@ every pause, into _media/frames/<Difficulty>/, plus 2x2 contact sheets, so a per
 is visible in each (compared with a reference crop rendered from common.make_watermark).
 Run this after rendering.
 
+The dry run is deterministic, so its result is saved in _media/dryrun_cache.json under a
+fingerprint of everything that can change it: the script, every .py file and manim.cfg in
+this folder, the Python and package versions and the LaTeX version. While none of these has
+changed, the same report is printed again with a "(cached: ...)" line instead of a new dry
+run (about 1-2 minutes per video saved each time). --fresh always runs it. --frames always
+reads the video itself and checks the watermark again.
+
 Exit code is 0 when every checked video passes, 1 otherwise.
 """
 import glob
@@ -45,8 +53,92 @@ import common  # noqa: E402
 DIFFICULTIES = ["Beginner", "Easy", "Medium", "Hard"]
 
 
-def check_scene(date, diff, folder=None):
-    """Dry-run one scene and return (passed, list of (pause time, section))."""
+# ---- result cache: the dry run is deterministic, so identical inputs give an identical result
+CACHE_PATH = os.path.join(ROOT, "_media", "dryrun_cache.json")
+CACHE_KEEP = 300                                   # newest entries kept
+PACKAGES = ("manim", "numpy", "scipy", "sympy", "mpmath", "pycairo", "manimpango", "pillow", "networkx",
+            "skia-pathops", "svgelements", "watchdog", "decorator", "isosurfaces", "moderngl", "srt", "typing-extensions")
+
+
+def fingerprint(date, diff, script):
+    """SHA-256 of everything that can change a dry run's result: the script, every .py file in
+    the project folder (common.py, rules.py, this file, ...), manim.cfg, the Python and package
+    versions, and the LaTeX version. Any change to any of them gives a new fingerprint."""
+    import hashlib
+    import importlib.metadata as md
+    h = hashlib.sha256()
+
+    def add(label, data):
+        data = data if isinstance(data, bytes) else data.encode()
+        h.update(f"{label}:{len(data)}:".encode() + data)       # length-prefixed: no two inputs can blur
+    add("job", f"{date}|{diff}|{os.path.relpath(script, ROOT)}")
+    add("script", open(script, "rb").read())
+    for path in sorted(glob.glob(os.path.join(ROOT, "*.py")) + glob.glob(os.path.join(ROOT, "*.cfg"))):
+        add(os.path.basename(path), open(path, "rb").read())
+    add("python", sys.version)
+    for pkg in PACKAGES:
+        try:
+            add(pkg, md.version(pkg))
+        except md.PackageNotFoundError:
+            add(pkg, "-")
+    try:
+        latex = subprocess.run(["latex", "--version"], capture_output=True, text=True).stdout.splitlines()[:2]
+    except OSError:
+        latex = ["no latex"]
+    add("latex", " / ".join(latex))
+    return h.hexdigest()
+
+
+def _read_cache():
+    try:
+        return json.load(open(CACHE_PATH, encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_cache(cache):
+    os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
+    newest = sorted(cache.items(), key=lambda kv: kv[1]["saved_at"])[-CACHE_KEEP:]
+    tmp = CACHE_PATH + ".part"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(dict(newest), fh, indent=1)
+    os.replace(tmp, CACHE_PATH)
+
+
+def check_scene(date, diff, folder=None, fresh=False):
+    """Dry-run one scene and return (passed, list of (pause time, section)).
+
+    The dry run is deterministic, so its result is saved under fingerprint() and reused while
+    nothing that could change it has changed: the same report is printed again, with a line
+    saying it was reused. fresh=True (--fresh) always runs it."""
+    import datetime as dt
+    script = os.path.join(folder or os.path.join(ROOT, diff), f"{date}_{diff}.py")
+    key = fingerprint(date, diff, script)
+    cache = _read_cache()
+    hit = None if fresh else cache.get(key)
+    if hit is not None:
+        lines = hit["lines"]
+        for i, line in enumerate(lines):
+            print(line)
+            if i == 0:
+                print(f"(cached: identical inputs to the dry run of {hit['saved_at']}; use --fresh to re-run)")
+        return hit["passed"], [tuple(p) for p in hit["pauses"]]
+    lines = []
+
+    def say(*parts):
+        text = " ".join(str(p) for p in parts)      # like print(): say("RESULT:", "PASS")
+        print(text)
+        lines.append(text)
+    passed, pauses = _dry_run(date, diff, folder, say)
+    cache = _read_cache()                         # re-read: another check may have saved meanwhile
+    cache[key] = dict(lines=lines, passed=bool(passed), pauses=[list(p) for p in pauses],
+                      saved_at=dt.datetime.now().astimezone().isoformat(timespec="seconds"))
+    _write_cache(cache)
+    return passed, pauses
+
+
+def _dry_run(date, diff, folder, say):
+    """Dry-run one scene, reporting through say(); returns (passed, list of (pause time, section))."""
     script = os.path.join(folder or os.path.join(ROOT, diff), f"{date}_{diff}.py")
     spec = importlib.util.spec_from_file_location(f"{date}_{diff}", script)
     mod = importlib.util.module_from_spec(spec)
@@ -73,34 +165,34 @@ def check_scene(date, diff, folder=None):
     for section, n, msg in common.GUARD_LOG:
         unique.setdefault(msg, (section, n))
     length = scene.renderer.time
-    print(f"\n=== {diff} ({date}): {getattr(scene, '_guard_count', 0)} animations checked, "
+    say(f"\n=== {diff} ({date}): {getattr(scene, '_guard_count', 0)} animations checked, "
           f"length {length:.1f} s ===")
-    print(f"Layout problems: {len(unique)}")
+    say(f"Layout problems: {len(unique)}")
     for msg, (section, n) in sorted(unique.items(), key=lambda kv: kv[1][1]):
-        print(f"  [{section}] after animation #{n}: {msg}")
+        say(f"  [{section}] after animation #{n}: {msg}")
     passed = not unique and getattr(scene, "_guard_installed", False)
     if not getattr(scene, "_guard_installed", False):
-        print("  The frame guard was not installed (scene does not call solve()).")
+        say("  The frame guard was not installed (scene does not call solve()).")
     if isinstance(scene, common.IntegralVideo):     # the new story format also has a length target
         lo, hi = common.TARGET_LENGTHS.get(diff, common.TARGET_LENGTH)
         if not lo <= length <= hi:
-            print(f"  Length {length:.1f} s is outside the target {lo}-{hi} s.")
+            say(f"  Length {length:.1f} s is outside the target {lo}-{hi} s.")
             passed = False
         short = [(t, a, b, need) for t, a, b, need in getattr(scene, "_caption_log", [])
                  if b is not None and b - a < need - 0.05]
         log = getattr(scene, "_caption_log", [])
-        print(f"Hold times: {len(log) - len(short)} of {len(log)} captions and card beats held "
+        say(f"Hold times: {len(log) - len(short)} of {len(log)} captions and card beats held "
               f"for their read time")
         for t, a, b, need in short:
-            print(f"  held {b - a:.1f} s < {need:.1f} s at t={a:.1f}: {t[:70]!r}")
+            say(f"  held {b - a:.1f} s < {need:.1f} s at t={a:.1f}: {t[:70]!r}")
             passed = False
         if getattr(scene, "_watermark", None) is None:
-            print("  No watermark: IntegralVideo.construct must call add_watermark().")
+            say("  No watermark: IntegralVideo.construct must call add_watermark().")
             passed = False
         keys = getattr(scene, "_keyframes", [])
         if keys:
             pauses = keys                            # key moments: hook, rectangles, insight, morph, answer
-    print("RESULT:", "PASS" if passed else "FAIL")
+    say("RESULT:", "PASS" if passed else "FAIL")
     return passed, pauses
 
 
@@ -251,7 +343,7 @@ def main(argv):
         return 1
     all_ok = True
     for diff in wanted:
-        ok, pauses = check_scene(date, diff, folder)
+        ok, pauses = check_scene(date, diff, folder, fresh="--fresh" in argv)
         all_ok &= ok
         if "--frames" in argv:
             all_ok &= extract_frames(date, diff, pauses, low="--low" in argv, folder=folder, name=name)

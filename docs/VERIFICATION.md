@@ -78,7 +78,9 @@ verified, or it was already published. Otherwise the reviewer answers five quest
 follows; captions and cards have no maths errors) and must type exactly `GO`. Anything else,
 including `go` or `GO ` with a space, holds it back with a reason and an error type. Only
 approved videos move to the folders that are synced and released, so a rejected video
-cannot travel with an approved one. Every check and decision is logged, and `summary.py`
+cannot travel with an approved one. After publishing, the Drive copy and every GitHub
+Release asset are compared with the approved file by SHA-256 (GitHub reports each asset's
+digest), so what is online is byte for byte what was reviewed. Every check and decision is logged, and `summary.py`
 reports the first-attempt pass rate and the most common error types, which show where the
 next automatic check is needed.
 
