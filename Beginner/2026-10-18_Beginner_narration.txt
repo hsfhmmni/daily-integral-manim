@@ -1,0 +1,27 @@
+Beginner Integral - Sunday 18 October 2026
+
+1. A tangle of exponents and roots. What is really underneath?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Under the root hides a perfect square: (1 plus x squared) squared.
+4. Square the top; the root of (1 plus x squared) squared is 1 plus x squared.
+5. Exponents combine to x cubede to the x squared; write x cubed equals 1 over 2x squared times 2x.
+6. u-Substitution
+7. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+8. Here u equals x squared, so du equals 2x dx.
+9. Changing the Limits
+10. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+11. x equals 0 gives u equals 0; x equals 1 gives u equals 1.
+12. Let u equals x squared: the limits 0 and 1 stay put.
+13. In x: the green area is about 0.5.
+14. In u: the curve 1 over 2ue to the u, with the same area.
+15. Integration by Parts
+16. u dv equals uv minus v du
+17. Differentiate u to 1; integrate e to the u to e to the u.
+18. Integral of e to the x
+19. e to the x dx equals e to the x plus C
+20. So e to the u du equals e to the u finishes it.
+21. By parts: ue to the u du equals ue to the u minus e to the u du.
+22. Top limit minus bottom limit.
+23. Exactly one half.
+24. Thin rectangles close in on 1 over 2 equals 0.5.
+25. Takeaway: simplify first; the real integral is often small.
