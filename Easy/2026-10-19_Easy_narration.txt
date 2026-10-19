@@ -1,0 +1,27 @@
+Easy Integral - Monday 19 October 2026
+
+1. As n shrinks to 0, the curve settles. What area remains?
+2. Thin rectangles estimate the limiting area; watch the gap shrink.
+3. Sort the top by sine n and cos n: two famous limits appear.
+4. Reciprocal Trig Functions
+5. x equals 1 over cos x, 1 over x equals cos x
+6. Here 1 over n x equals cos x over n.
+7. Dividing by x is multiplying by cos x.
+8. Group the top: cos x (1 minus cos n) plus sine xsine n.
+9. Anything with only n is a constant: pull it out.
+10. Small Angle Limits
+11. _n tends to 0sine n over n equals 1, _n tends to 01 minus cos n over n equals 0
+12. Here 1 minus cos n over n tends to 0 and sine n over n tends to 1.
+13. As n tends to 0: the first term vanishes, the second keeps weight 1.
+14. Double Angle Identities
+15. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+16. Here sine 2x equals 2sine xcos x, so halve it.
+17. Only one integral is left: write sine xcos x equals 1 over 2sine 2x.
+18. Integral of sine x
+19. sine x dx equals minus cos x plus C
+20. With 2x inside, divide by 2: minus 1 over 2cos 2x.
+21. Integrate: 2x dx equals minus 1 over 2cos 2x.
+22. cos pi equals minus 1 and cos 0 equals 1: each end gives 1 over 4.
+23. Exactly one half.
+24. Thin rectangles close in on 1 over 2 equals 0.5.
+25. Takeaway: pull out sine n over n before taking the limit.

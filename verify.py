@@ -45,7 +45,14 @@ bracketed so two integrals on one line stay apart; [F]_a^b is F(b) - F(a); \\pi,
 x(...) are a number and a product, not functions. An expression ending in \\dots (a
 continued fraction, a tower of logs) is its limit: the pattern written out twice before the
 \\dots is the block that repeats, and the tail's value is the attracting solution of
-u = block(u) (nested_pattern). A line is about the video's integral,
+u = block(u) (nested_pattern); a solution with slope -1 is not a limit (the layers swing,
+as y = x/y does), and the expression is undefined there. \\cfrac is \\frac and \\ddots is
+\\dots; a constant outside the integral (\\frac{1}{2}\\int ...) is moved inside it
+(single_integral). A limit outside the integral (\\lim_{n\\to 0}\\int_{n}^{...}) is worked out
+from the integral itself at points approaching the limit (limit_value: mpmath Richardson and
+scipy with polynomial extrapolation, from both sides if two-sided), never by moving the limit
+inside; FUNC and exact_integral() are compared with the integrand's pointwise limit, which
+is what the video draws (from 2026-10-19). A line is about the video's integral,
 named "I" unless PROBLEM starts "V = ..." (then "V"); a line naming another quantity, or
 holding several statements, is unchecked.
 
@@ -122,8 +129,8 @@ def _group(s, i):
 def normalise(tex):
     """Remove spacing and sizing commands sympy does not need."""
     t = re.sub(r"\\(?:Big|big|Bigg|bigg|left|right)(?![a-zA-Z])", "", tex)
-    t = re.sub(r"\\[td]frac", r"\\frac", t)
-    t = re.sub(r"\\(?:cdots|ldots)(?![a-zA-Z])", r"\\dots", t)
+    t = re.sub(r"\\[tdc]frac", r"\\frac", t)          # \cfrac: a continued fraction's display form
+    t = re.sub(r"\\(?:cdots|ldots|ddots|vdots)(?![a-zA-Z])", r"\\dots", t)
     t = re.sub(r"\\(?:,|;|!|:|quad|qquad|displaystyle)", " ", t)
     t = t.replace(r"\mathrm{d}", "d").replace(r"\operatorname{d}", "d")
     # \tan\theta(3-\tan^2\theta) means tan(theta) times (3 - ...), as a reader takes it;
@@ -238,6 +245,19 @@ def to_sympy(tex):
     return expr
 
 
+def single_integral(expr):
+    r"""expr as one sympy Integral: an Integral, or a constant times one (\frac{1}{2}\int ...),
+    with the constant moved inside. Anything else is not a single integral."""
+    if isinstance(expr, sp.Integral):
+        return expr
+    if isinstance(expr, sp.Mul):
+        ints = [f for f in expr.args if isinstance(f, sp.Integral)]
+        rest = [f for f in expr.args if not isinstance(f, sp.Integral)]
+        if len(ints) == 1 and not any(f.free_symbols or f.has(sp.Integral) for f in rest):
+            return sp.Integral(sp.Mul(*rest) * ints[0].function, *ints[0].limits)
+    raise Unparseable("not a single integral")
+
+
 def split_top_level(tex, ch="="):
     """Split on ch outside braces and brackets."""
     parts, depth, cur = [], 0, ""
@@ -313,7 +333,7 @@ def _nested_value(block_f, x):
     with mpmath.workdps(2 * mpmath.mp.dps):          # spare digits for where two solutions meet
         found = _nested_values(block_f, x)
     if not found:
-        raise ValueError(r"the expression with \dots has no clear limit here")
+        raise ValueError(rf"the expression with \dots has no clear limit at x = {mpmath.nstr(x, 6)}")
     if any(not close(v, found[0], 1e-12, 1e-14) for v in found[1:]):
         raise ValueError(r"the expression with \dots has two different limits here")
     return found[0]
@@ -346,9 +366,13 @@ def _nested_values(block_f, x):
                 if abs(block_f(x, u) - u) > mpmath.mpf(10) ** (-(mpmath.mp.dps // 3)):
                     raise ValueError("no root found")
                 u = mpmath.re(u)
-            slope = abs(mpmath.diff(lambda v: block_f(x, v), u))
-            if slope > 1 + 1e-6:
+            d = mpmath.diff(lambda v: block_f(x, v), u)
+            if abs(d) > 1 + 1e-6:
                 raise ValueError("a repelling solution")
+            # slope -1: the layers swing from side to side around it and never settle (y = x/y
+            # gives x, 1, x, 1, ...). Slope +1, where two solutions meet, still converges slowly.
+            if d < -1 + 1e-6:
+                raise ValueError("an oscillating solution")
             if not mpmath.isfinite(u):
                 raise ValueError("not a finite number")
             found.append(mpmath.mpf(mpmath.re(u)))
@@ -488,6 +512,11 @@ def value_of(expr, method="mpmath"):
     Returns (value, exact) where exact says no numerical integration was needed."""
     _no_unknown_functions(expr)
     expr = expr.replace(lambda e: isinstance(e, sp.Derivative), lambda e: e.doit())
+    if expr.has(sp.Limit):                       # \lim_{n\to 0} ... : done numerically (limit_value)
+        expr = expr.replace(lambda e: isinstance(e, sp.Limit),
+                            lambda e: sp.Float(mpmath.nstr(limit_value(e, method), 28), 30))
+        if not expr.has(sp.Integral):
+            return value_of(expr, method)[0], False
     exact = not expr.has(sp.Integral)
     if not exact:
         expr = expr.replace(lambda e: isinstance(e, sp.Integral),
@@ -498,6 +527,86 @@ def value_of(expr, method="mpmath"):
     if not math.isfinite(z.real) or abs(z.imag) > 1e-20 * max(1.0, abs(z.real)):
         raise Unparseable("not a finite real number")
     return mpmath.mpf(str(sp.N(sp.re(expr), 30))), exact
+
+
+LIMIT_STEP = mpmath.mpf("0.1")      # mpmath: the expression at z0 + 0.1/2^k (mpmath.limit, exp=True)
+SCIPY_LIMIT_STEPS = 6               # scipy: at z0 + 0.02/2^k, k = 0..5, then a polynomial through them at 0
+
+
+def limit_value(lim, method="mpmath"):
+    r"""The value of a sympy Limit such as \lim_{n\to 0}\int_{n}^{\pi/2} f(x, n)\,dx, from the
+    expression itself at points approaching the limit point: never by moving the limit inside
+    an integral, which is not always allowed.
+    method "mpmath": mpmath.limit with exp=True (Richardson extrapolation from z0 + 0.1/2^k;
+                     the plain 0.1/k points were only good to 5 digits on 2026-10-19 Easy),
+                     each value with mpmath.quad at 30 digits.
+    method "scipy":  values with scipy at z0 + 0.02/2^k (k = 0..5), extrapolated to z0 by the
+                     polynomial through them (Neville).
+    A two-sided limit is done from both sides, which must agree."""
+    body, z, z0, direction = lim.args
+    if z0 in (sp.oo, -sp.oo):
+        raise Unparseable("a limit at infinity")
+    z0 = to_mp(z0)
+
+    def at(h):                                   # the expression at z0 + h
+        return value_of(body.subs(z, sp.Float(mpmath.nstr(z0 + h, 40), 40)), method)[0]
+
+    sides = {"+": [1], "-": [-1]}.get(str(direction), [1, -1])
+    values = []
+    for s in sides:
+        if method == "mpmath":
+            values.append(mpmath.limit(at, 0, direction=s * LIMIT_STEP, exp=True))
+        else:
+            hs = [s * mpmath.mpf("0.02") / 2 ** k for k in range(SCIPY_LIMIT_STEPS)]
+            values.append(_extrapolate_to_zero(hs, [at(h) for h in hs]))
+    if len(values) == 2 and not close(values[0], values[1], QUAD_REL_TOL, QUAD_ABS_TOL):
+        raise ValueError(f"the limits from the two sides differ ({mpmath.nstr(values[0], 10)}, "
+                         f"{mpmath.nstr(values[1], 10)})")
+    return values[0]
+
+
+LIMIT_SAMPLES = ("0.3", "0.1", "0.03")      # distances from the limit point where two limits are compared
+
+
+def compare_limit_problems(src, p):
+    """Compare two limits of integrals (the website's and PROBLEM): the same limit point and
+    direction, and at each distance in LIMIT_SAMPLES (on each side the limit uses) the same
+    limits of integration and the same integrand at random points. Returns a list of problems."""
+    if not isinstance(p, sp.Limit):
+        return ["PROBLEM is not a limit of an integral, but the website's is"]
+    (sb, sz, sz0, sd), (pb, pz, pz0, pd) = src.args, p.args
+    if sz0 != pz0:
+        return [f"limit point {pz0}, website {sz0}"]
+    if str(sd) != str(pd):
+        return [f"limit from side {pd}, website {sd}"]
+    si, pi_ = single_integral(sb), single_integral(pb)
+    if len(si.limits) != 1 or len(pi_.limits) != 1 or len(si.limits[0]) != 3 or len(pi_.limits[0]) != 3:
+        return ["not a definite integral in one variable"]
+    (svar, sa, sb_), (pvar, pa, pb_) = si.limits[0], pi_.limits[0]
+    problems = []
+    for side in {"+": [1], "-": [-1]}.get(str(sd), [1, -1]):
+        for h in LIMIT_SAMPLES:
+            zv = sp.Float(mpmath.nstr(to_mp(sz0) + side * mpmath.mpf(h), 40), 40)
+            lo, hi = to_mp(sa.subs(sz, zv)), to_mp(sb_.subs(sz, zv))
+            plo, phi = to_mp(pa.subs(pz, zv)), to_mp(pb_.subs(pz, zv))
+            if not (close(plo, lo, 1e-15, 1e-15) and close(phi, hi, 1e-15, 1e-15)):
+                problems.append(f"at {sz} = {mpmath.nstr(zv, 4)}: limits {mpmath.nstr(plo, 8)} to "
+                                f"{mpmath.nstr(phi, 8)}, website {mpmath.nstr(lo, 8)} to {mpmath.nstr(hi, 8)}")
+                continue
+            r, d = compare_on_points(mp_function(si.function.subs(sz, zv), svar),
+                                     mp_function(pi_.function.subs(pz, zv), pvar), lo, hi,
+                                     rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
+            if r != "pass":
+                problems.append(f"at {sz} = {mpmath.nstr(zv, 4)}: integrand: {d}")
+    return problems
+
+
+def _extrapolate_to_zero(hs, vs):
+    """The polynomial through the points (hs[i], vs[i]), evaluated at 0 (Neville's scheme)."""
+    p = list(vs)
+    for m in range(1, len(hs)):
+        p = [(hs[i + m] * p[i] - hs[i] * p[i + 1]) / (hs[i + m] - hs[i]) for i in range(len(p) - 1)]
+    return p[0]
 
 
 def close(x, y, rel, abs_tol=0.0):
@@ -675,7 +784,7 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
     out["script"] = script
 
     # --- the website's integral
-    integrand = var = a = b = None
+    integrand = var = a = b = src_limit = None
     if not os.path.exists(src_path):
         set_("source_file", "fail", f"{os.path.relpath(src_path, root)} is missing (run fetch_source.py)")
         source = None
@@ -683,13 +792,36 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
         source = json.load(open(src_path, encoding="utf-8"))
         try:
             expr = to_sympy(source["problem_tex"])
-            if not isinstance(expr, sp.Integral) or len(expr.limits) != 1:
+            if isinstance(expr, sp.Limit):               # a limit outside the integral, e.g. lim n->0 of int_n^(pi/2) f(x, n) dx
+                src_limit = expr
+                expr = single_integral(expr.args[0])
+            expr = single_integral(expr)                 # a constant factor outside moves inside
+            if len(expr.limits) != 1:
                 raise Unparseable("not a single integral")
             integrand, lim = expr.function, expr.limits[0]
             var = lim[0]
-            if len(lim) == 3:
+            note = ""
+            if src_limit is not None:
+                # the value is the limit of the integral (limit_value). FUNC and exact_integral()
+                # are compared with the integrand's pointwise limit on the limiting interval,
+                # which is what the video draws; if sympy cannot find it, those are unchecked
+                if len(lim) != 3:
+                    raise Unparseable("a limit of an indefinite integral")
+                z, z0, zdir = src_limit.args[1], src_limit.args[2], str(src_limit.args[3])
+                a = to_mp(sp.limit(lim[1], z, z0, dir=zdir))
+                b = to_mp(sp.limit(lim[2], z, z0, dir=zdir))
+                try:
+                    g = sp.limit(integrand, z, z0, dir=zdir)
+                    if g.has(z, sp.Limit, sp.nan, sp.zoo, sp.oo, -sp.oo):
+                        raise ValueError
+                    integrand = g
+                    note = f" (as {z} -> {z0}: integrand {g}, from {lim[1]} to {lim[2]} -> {a} to {b})"
+                except Exception:                        # sympy raises several error types
+                    integrand = None
+                    note = f" (as {z} -> {z0}: the integrand's pointwise limit could not be found)"
+            elif len(lim) == 3:
                 a, b = to_mp(lim[1]), to_mp(lim[2])
-            set_("source_file", "pass", f"{source['problem_tex']}")
+            set_("source_file", "pass", f"{source['problem_tex']}{note}")
         except Unparseable as exc:
             set_("source_file", "fail", f"the website's TeX could not be read: {exc}")
             source = None
@@ -722,10 +854,23 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
     main_name = m.group(1) if m else "I"
 
     # --- PROBLEM (what the viewer sees) vs the website
-    if ref_f is not None:
+    if src_limit is not None:
         try:
-            p = to_sympy(problem_sides[-1])
-            if not isinstance(p, sp.Integral) or len(p.limits) != 1:
+            problems = compare_limit_problems(src_limit, to_sympy(problem_sides[-1]))
+            set_("problem_matches_source", "fail" if problems else "pass",
+                 "; ".join(problems) or "same limit; same limits of integration and integrand at "
+                                        f"{len(LIMIT_SAMPLES)} values of {src_limit.args[1]}")
+        except Unparseable as exc:
+            set_("problem_matches_source", "unchecked", f"PROBLEM could not be read: {exc}")
+        if ref_f is not None:
+            r, d = compare_on_points(ref_f, lambda x: cls.FUNC(float(x)), *lo_hi)
+            set_("func_matches_source", r, d + " (with the integrand's pointwise limit)")
+        else:
+            set_("func_matches_source", "unchecked", "the integrand's pointwise limit could not be found")
+    elif ref_f is not None:
+        try:
+            p = single_integral(to_sympy(problem_sides[-1]))
+            if len(p.limits) != 1:
                 raise Unparseable("PROBLEM is not a single integral")
             pvar, plim = p.limits[0][0], p.limits[0]
             problems = []
@@ -794,7 +939,27 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
     # --- the reference value, two independent ways, from the website's integrand only
     ref_value = None
     abs_tol = QUAD_ABS_TOL
-    if definite and ref_f is not None:
+    if definite and src_limit is not None:
+        # the limit of the integral itself, two ways (limit_value); never the integral of the
+        # pointwise limit, since swapping a limit and an integral is not always allowed
+        try:
+            v_mp = limit_value(src_limit, "mpmath")
+            if integrand is not None:
+                lo_s, hi_s = max(a, mpmath.mpf(-50)), min(b, mpmath.mpf(50))
+                size = abs(integrate(sp.Abs(integrand), var, lo_s, hi_s, "mpmath"))
+            else:
+                size = abs(v_mp)
+            abs_tol = QUAD_ABS_TOL * size
+            v_sp = limit_value(src_limit, "scipy")
+            agree = close(v_mp, v_sp, QUAD_REL_TOL, abs_tol)
+            set_("quadratures_agree", "pass" if agree else "fail",
+                 f"limit of the integral: mpmath {mpmath.nstr(v_mp, 15)} (Richardson), "
+                 f"scipy {mpmath.nstr(v_sp, 15)} (polynomial extrapolation)")
+            if agree:
+                ref_value = v_mp
+        except Exception as exc:
+            set_("quadratures_agree", "fail", f"the limit could not be computed: {type(exc).__name__}: {exc}")
+    elif definite and ref_f is not None:
         try:
             # the absolute allowance scales with the size of the integral (the area under |f|),
             # so a very small integral gets a very small allowance and cannot slip through
