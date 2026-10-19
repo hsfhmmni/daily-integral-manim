@@ -45,8 +45,8 @@ bracketed so two integrals on one line stay apart; [F]_a^b is F(b) - F(a); \\pi,
 x(...) are a number and a product, not functions. An expression ending in \\dots (a
 continued fraction, a tower of logs) is its limit: the pattern written out twice before the
 \\dots is the block that repeats, and the tail's value is the attracting solution of
-u = block(u) (nested_pattern); a solution with slope -1 is not a limit (the layers swing,
-as y = x/y does), and the expression is undefined there. \\cfrac is \\frac and \\ddots is
+u = block(u) (nested_pattern); at a solution with slope -1 the layers swing between two
+values (as y = x/y does), and the value is the solution lying between them. \\cfrac is \\frac and \\ddots is
 \\dots; a constant outside the integral (\\frac{1}{2}\\int ...) is moved inside it
 (single_integral). A limit outside the integral (\\lim_{n\\to 0}\\int_{n}^{...}) is worked out
 from the integral itself at points approaching the limit (limit_value: mpmath Richardson and
@@ -359,7 +359,14 @@ def _nested_values(block_f, x):
             # iteration converges slowly where two solutions meet (a double root): finish with
             # Newton's method for repeated roots, started from the last iterate so it keeps to
             # the solution being approached
-            if abs(seq[-1] - seq[-2]) > mpmath.mpf(10) ** (-mpmath.mp.dps + 5):
+            tiny = mpmath.mpf(10) ** (-mpmath.mp.dps + 5)
+            swing = None
+            if (abs(seq[-1] - seq[-2]) > tiny and len(seq) > 3 and abs(seq[-1] - seq[-3]) <= tiny):
+                # stuck swinging between two values p, q (block(p) = q, block(q) = p): block(v) - v
+                # changes sign between them, so bracket the solution there
+                swing = tuple(sorted(seq[-2:]))
+                u = _bisect(lambda v: block_f(x, v) - v, *swing)
+            elif abs(seq[-1] - seq[-2]) > tiny:
                 # (at a double root, rounding can split it into a complex pair a hair apart:
                 # accept the root when it solves u = block(u) to a third of the working digits)
                 u = mpmath.findroot(lambda v: block_f(x, v) - v, u, solver="mnewton", verify=False)
@@ -369,16 +376,44 @@ def _nested_values(block_f, x):
             d = mpmath.diff(lambda v: block_f(x, v), u)
             if abs(d) > 1 + 1e-6:
                 raise ValueError("a repelling solution")
-            # slope -1: the layers swing from side to side around it and never settle (y = x/y
-            # gives x, 1, x, 1, ...). Slope +1, where two solutions meet, still converges slowly.
-            if d < -1 + 1e-6:
-                raise ValueError("an oscillating solution")
+            # slope -1: the layers swing between two values and never settle (y = x/y gives
+            # x, 1, x, 1, ...). Read as the solution lying strictly between the two values they
+            # swing between (+sqrt(x) for x/(x/(x/...)), never -sqrt(x)); a start whose swing
+            # does not surround that solution is dropped (user, 2026-10-19). Slope +1, where two
+            # solutions meet, still converges slowly and needs nothing extra.
+            if d < -1 + 1e-6 and (swing is None or not swing[0] < u < swing[1]):
+                raise ValueError("an oscillating solution outside the swing")
             if not mpmath.isfinite(u):
                 raise ValueError("not a finite number")
             found.append(mpmath.mpf(mpmath.re(u)))
         except (ValueError, ZeroDivisionError, TypeError):
             continue                                     # e.g. ln(0) from the start 0: try the next start
     return found
+
+
+def _bisect(h, lo, hi):
+    """A root of h between lo and hi, where h changes sign, by bisection: halving at the
+    geometric mean when lo and hi have the same sign (so a swing from 1e-22 to 1 is resolved
+    in about 200 steps), at the midpoint otherwise. mpmath's bracketing solvers give up on
+    such lopsided ranges (2026-10-19)."""
+    h_lo = h(lo)
+    if h_lo == 0:
+        return lo
+    if mpmath.sign(h_lo) == mpmath.sign(h(hi)):
+        raise ValueError("no sign change in the swing")
+    tiny = mpmath.mpf(10) ** (-mpmath.mp.dps + 5)
+    for _ in range(4 * mpmath.mp.prec):
+        if hi - lo <= tiny * max(abs(lo), abs(hi)):
+            break
+        mid = (mpmath.sign(lo) * mpmath.sqrt(lo * hi)) if lo * hi > 0 else (lo + hi) / 2
+        h_mid = h(mid)
+        if h_mid == 0:
+            return mid
+        if mpmath.sign(h_mid) == mpmath.sign(h_lo):
+            lo, h_lo = mid, h_mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
 
 
 def mp_function(expr, var):

@@ -1,0 +1,27 @@
+Medium Integral - Monday 19 October 2026
+
+1. Floors inside an endless fraction, yet the curve is smooth. Why?
+2. Near 0 the curve shoots up; the gap shrinks slowly.
+3. Below each 2 x, the same fraction starts over.
+4. Call the fraction y, and write k equals x.
+5. Infinite Nested Expressions
+6. y equals g (g(g(times s))) y equals g(y)
+7. g is the step repeated forever.
+8. An expression that repeats inside itself.
+9. Peel one layer: the same tail, y, remains.
+10. Of two roots, the limit has |g'(y)|<1.
+11. Here g(y) equals k plus x minus k squared k plus y.
+12. The tail after 2k is y minus k, so the bottom is k plus y.
+13. Multiply both sides by k plus y and expand.
+14. The ky terms and the k squared terms cancel.
+15. Take the positive root: the floor has vanished completely.
+16. For x<1, k equals 0 and the fraction never settles.
+17. Improper Integrals
+18. _a to the infinity f(x) dx equals _b tends to infinity_a to the b f(x) dx
+19. Here x to the minus 1 over 2 blows up at the lower limit 0.
+20. On [0,1) we take its fixed point root x too.
+21. Power rule: x to the minus 1 over 2 dx equals 2root x.
+22. As x tends to 0, 2root x tends to 0: the area is finite.
+23. About 1.7725.
+24. Even 2048 rectangles fall short: the spike at 0 resists.
+25. Takeaway: call the endless tail y, then solve y equals g(y).
