@@ -362,6 +362,20 @@ RULE_CARDS = {
         when=[cap(r"The curve is its own mirror image about the midpoint.")],
         why=[cap(r"Mirroring the left half gives the right half: equal areas.")],
     ),
+    "sec_reciprocal": dict(
+        name=r"Reciprocal Trig Functions",
+        statement=r"\sec x=\frac{1}{\cos x},\qquad \frac{1}{\sec x}=\cos x",
+        symbols=[cap(r"$\sec x$ is the secant of the angle $x$.")],
+        when=[cap(r"$\sec x$ appears, especially in a denominator.")],
+        why=[cap(r"$\sec$ is defined as one over $\cos$.")],
+    ),
+    "small_angle_limits": dict(
+        name=r"Small Angle Limits",
+        statement=r"\lim_{n\to 0}\frac{\sin n}{n}=1,\qquad \lim_{n\to 0}\frac{1-\cos n}{n}=0",
+        symbols=[cap(r"$n$ is an angle in radians, shrinking to $0$.")],
+        when=[cap(r"$\sin n$ or $1-\cos n$ divided by a small $n$.")],
+        why=[cap(r"For small $n$, $\sin n\approx n$ and $1-\cos n\approx\frac{n^{2}}{2}$.")],
+    ),
 }
 
 

@@ -1,0 +1,15 @@
+Beginner Integral - Monday 19 October 2026
+
+1. A parabola times a logarithm. How do we undo a product?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Differentiating log x gives 1 over x: simpler, not harder.
+4. Integration by Parts
+5. u dv equals uv minus v du
+6. Here u equals log x and dv equals x squared dx, so v equals x cubed3.
+7. Differentiate log x to 1 over x; integrate x squared to x cubed3.
+8. One x cancels: x cubed3 times 1 over x equals x squared 3.
+9. Power rule: x squared 3 dx equals x cubed9.
+10. Top limit minus bottom; log 1 equals 0 removes one term.
+11. So the area is about 1.0706.
+12. Thin rectangles close in on 1.0706.
+13. Takeaway: in parts, let u be the logarithm.
