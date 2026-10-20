@@ -1,0 +1,31 @@
+Medium Integral - Tuesday 20 October 2026
+
+1. At pi over 2, x and x blow up. Is the area finite?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Its derivative is u x: the bracket reproduces itself.
+4. u-Substitution
+5. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+6. Here u equals x plus x, the bracket.
+7. Derivatives of x and x
+8. d over dx x equals squared x, d over dx x equals x x
+9. So du over dx equals x x plus squared x.
+10. Differentiate: du equals (x x plus squared x) dx equals u x dx.
+11. The and Identity
+12. squared x minus squared x equals 1
+13. Factorise: squared x minus squared x equals (x plus x)(x minus x).
+14. (x plus x)(x minus x) equals 1, so this is 1 over u.
+15. Add u and 1 over u: the x terms cancel.
+16. squared x dx equals x times du over u: one x from each.
+17. Changing the Limits
+18. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+19. x equals 0 gives u equals 1; x tends to pi over 2 gives u tends to infinity.
+20. Improper Integrals
+21. _a to the infinity f(x) dx equals _b tends to infinity_a to the b f(x) dx
+22. Integrate to b, then let b tends to infinity.
+23. The bracket becomes u to the 9 over 2; the limits move to 1 and infinity.
+24. Multiply out: u to the minus 2 times u to the minus 9 over 2 equals u to the minus 13 over 2.
+25. Power rule; both terms shrink to 0 as u tends to infinity.
+26. Only the bottom limit u equals 1 is left, with signs flipped.
+27. So the area is 1 over 7 plus 1 over 11 equals 18 over 77 about 0.2338.
+28. Thin rectangles close in on 18 over 77 about 0.2338.
+29. Takeaway: x plus x and x minus x are reciprocals.

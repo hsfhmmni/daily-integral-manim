@@ -376,6 +376,41 @@ RULE_CARDS = {
         when=[cap(r"$\sin n$ or $1-\cos n$ divided by a small $n$.")],
         why=[cap(r"For small $n$, $\sin n\approx n$ and $1-\cos n\approx\frac{n^{2}}{2}$.")],
     ),
+    "straight_line": dict(
+        name=r"Equation of a Straight Line",
+        statement=r"m=\frac{y_{2}-y_{1}}{x_{2}-x_{1}},\qquad y-y_{1}=m\,(x-x_{1})",
+        symbols=[cap(r"$m$ is the gradient; $(x_{1},y_{1})$ is a point on the line.")],
+        when=[cap(r"A line given by two points on it.")],
+        why=[cap(r"A straight line rises by $m$ for every $1$ across.")],
+    ),
+    "area_between_curves": dict(
+        name=r"Area Between Two Graphs",
+        statement=r"A=\int_{a}^{b}\big(\text{top}-\text{bottom}\big)\,dx",
+        symbols=[cap(r"Top and bottom are the upper and lower boundaries.")],
+        when=[cap(r"A region bounded above and below by two graphs.")],
+        why=[cap(r"Each thin strip has height top minus bottom.")],
+    ),
+    "washer_method": dict(
+        name=r"Volume With a Hole: Washers",
+        statement=r"V=\pi\int_{a}^{b}\big(R^{2}-r^{2}\big)\,dx",
+        symbols=[cap(r"$R$ is the outer radius; $r$ is the inner radius.")],
+        when=[cap(r"A region between two curves spun about the $x$-axis.")],
+        why=[cap(r"Each slice is a disc of radius $R$ minus a hole.")],
+    ),
+    "trig_derivatives": dict(
+        name=r"Derivatives of $\tan x$ and $\sec x$",
+        statement=r"\frac{d}{dx}\tan x=\sec^{2}x,\qquad \frac{d}{dx}\sec x=\sec x\tan x",
+        symbols=[cap(r"$\sec x=\frac{1}{\cos x}$, and $\tan x=\frac{\sin x}{\cos x}$.")],
+        when=[cap(r"Differentiating $\tan x$ or $\sec x$.")],
+        why=[cap(r"The quotient rule on $\frac{\sin x}{\cos x}$ and $\frac{1}{\cos x}$.")],
+    ),
+    "sec_tan_identity": dict(
+        name=r"The $\sec$ and $\tan$ Identity",
+        statement=r"\sec^{2}x-\tan^{2}x=1",
+        symbols=[cap(r"$\sec^{2}x$ means $(\sec x)^{2}$.")],
+        when=[cap(r"$\sec x$ and $\tan x$ appear together.")],
+        why=[cap(r"Divide $\sin^{2}x+\cos^{2}x=1$ by $\cos^{2}x$.")],
+    ),
 }
 
 

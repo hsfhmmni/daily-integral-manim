@@ -2,7 +2,7 @@
 
 **Every day, the [dailyintegral.com](https://dailyintegral.com) Beginner, Easy and Medium integrals, solved and turned into short 3Blue1Brown-style explainer videos with [Manim](https://www.manim.community/).**
 
-![Manim CE 0.21](https://img.shields.io/badge/Manim_CE-0.21-blue) ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB) ![LaTeX](https://img.shields.io/badge/LaTeX-MiKTeX-008080) ![videos](https://img.shields.io/badge/videos-36-brightgreen) ![minutes](https://img.shields.io/badge/minutes_of_animation-85-orange)
+![Manim CE 0.21](https://img.shields.io/badge/Manim_CE-0.21-blue) ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB) ![LaTeX](https://img.shields.io/badge/LaTeX-MiKTeX-008080) ![videos](https://img.shields.io/badge/videos-37-brightgreen) ![minutes](https://img.shields.io/badge/minutes_of_animation-88-orange)
 
 | Symmetry you can see | Rectangles closing in | Unwrapping nested absolute values |
 |:---:|:---:|:---:|
@@ -10,18 +10,19 @@
 
 Each video starts from the **picture** (the curve and the shaded area) and asks a question. Then it builds intuition with rectangles that get thinner, highlights the one key idea, **morphs** the equations line by line, and ends with the estimate meeting the exact answer.
 
-## Latest: Monday 19 October 2026
+## Latest: Tuesday 20 October 2026
 
 | Beginner | Easy | Medium |
 |:---:|:---:|:---:|
-| [![Beginner 2026-10-19](assets/thumbs/2026-10-19_Beginner.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-19/2026-10-19_Beginner.mp4)<br>$x^{2}{LN}\thinspace dx$<br>**Answer:** $\frac{8}{3}\ln 2-\frac{7}{9}$ | [![Easy 2026-10-19](assets/thumbs/2026-10-19_Easy.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-19/2026-10-19_Easy.mp4)<br>${LIM}\frac{{NUM}}{n\sec(x)}\thinspace dx$<br>**Answer:** $\frac{1}{2}$ | [![Medium 2026-10-19](assets/thumbs/2026-10-19_Medium.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-19/2026-10-19_Medium.mp4)<br>$\frac{1}{2}\Bigg({A}+\cfrac{{R}}{2{A}+{REP}}\Bigg)^{-1}\thinspace dx$<br>**Answer:** $\sqrt{\pi}$ |
+|  |  | [![Medium 2026-10-20](assets/thumbs/2026-10-20_Medium.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-20/2026-10-20_Medium.mp4)<br>$\frac{\sec^{2}x}{({ST})^{\frac{9}{2}}}\thinspace dx$<br>**Answer:** $\frac{18}{77}$ |
 
-Click a thumbnail for the video (1080p60, about 1.5 to 2 minutes, no sound: the captions carry the story). Every day's videos are also on its [release page](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-19).
+Click a thumbnail for the video (1080p60, about 1.5 to 2 minutes, no sound: the captions carry the story). Every day's videos are also on its [release page](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-20).
 
 ## All videos
 
 | Date | Beginner | Easy | Medium |
 |---|---|---|---|
+| **[2026-10-20](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-20)** |  |  | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-20/2026-10-20_Medium.mp4) · [code](Medium/2026-10-20_Medium.py)<br>$\frac{\sec^{2}x}{({ST})^{\frac{9}{2}}}\thinspace dx$ |
 | **[2026-10-19](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-19)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-19/2026-10-19_Beginner.mp4) · [code](Beginner/2026-10-19_Beginner.py)<br>$x^{2}{LN}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-19/2026-10-19_Easy.mp4) · [code](Easy/2026-10-19_Easy.py)<br>${LIM}\frac{{NUM}}{n\sec(x)}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-19/2026-10-19_Medium.mp4) · [code](Medium/2026-10-19_Medium.py)<br>$\frac{1}{2}\Bigg({A}+\cfrac{{R}}{2{A}+{REP}}\Bigg)^{-1}\thinspace dx$ |
 | **[2026-10-18](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-18)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-18/2026-10-18_Beginner.mp4) · [code](Beginner/2026-10-18_Beginner.py)<br>$\frac{{TOP}}{e^{\sqrt{{SQ}}}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-18/2026-10-18_Easy.mp4) · [code](Easy/2026-10-18_Easy.py)<br>$\frac{{L1}}{{PROD}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-18/2026-10-18_Medium.mp4) · [code](Medium/2026-10-18_Medium.py)<br>$\frac{{A}+{B}}{{BOT}}\thinspace dx$ |
 | **[2026-10-17](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-17)** | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-17/2026-10-17_Beginner.mp4) · [code](Beginner/2026-10-17_Beginner.py)<br>$\frac{e^{x}}{({INSIDE})^{2}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-17/2026-10-17_Easy.mp4) · [code](Easy/2026-10-17_Easy.py)<br>$\frac{2x-1}{2e^{2x}-x}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-17/2026-10-17_Medium.mp4) · [code](Medium/2026-10-17_Medium.py)<br>$\frac{1}{{SC}+\tan^{2}x+\cot^{2}x+\sec^{2}x+\csc^{2}x}\thinspace dx$ |
@@ -109,8 +110,8 @@ git clone https://github.com/hsfhmmni/daily-integral-manim.git
 cd daily-integral-manim
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
-python check_text.py 2026-10-19
-manim -ql Easy/2026-10-19_Easy.py EasyIntegral
+python check_text.py 2026-10-20
+manim -ql Easy/2026-10-20_Easy.py EasyIntegral
 ```
 
 ## Credits
