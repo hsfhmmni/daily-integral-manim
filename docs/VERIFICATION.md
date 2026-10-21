@@ -33,6 +33,14 @@ turns the words into the integral: the area between two graphs (a line may be gi
 points, the walls are x = a and x = b or else where the graphs meet) or that region rotated
 about the x-axis. A statement it cannot read is never guessed: the video is flagged.
 
+Harder problems (from 2026-10-21) can use floors, `mod` and infinite sums, for example
+the binary digits of x summed inside a logarithm. `verify.py` reads `\lfloor x\rfloor`,
+`\lceil x\rceil` and `\operatorname{mod}(a, b)` as the real functions, and adds up a sum term
+by term until it stops changing. A sum with floors or `mod` in it is never extrapolated,
+because its terms jump about. Notation that SymPy used to misread without complaint is now
+refused instead: `\{x\}` (it read `\{2.5\}` as 2.5), `a \bmod b` and any unknown
+`\operatorname{...}`. Infinite products (`\prod`) are refused too.
+
 ### 2. Every check compares the script with that source, not with itself
 `verify.py` reads the saved TeX with SymPy and checks, independently:
 
@@ -52,7 +60,7 @@ The reference value is computed twice: by mpmath (tanh-sinh quadrature) and by S
 (QUADPACK, adaptive Gauss-Kronrod). They choose their sample points in unrelated ways, so a
 silent failure of one (a missed spike, an oscillating tail) shows up as a disagreement and the
 video is flagged. Both are built for the hard cases seen in past problems: the range is split
-at the corners of nested `|...|`, and integrals that oscillate to infinity use methods made
+at the corners of nested `|...|` and at the jumps of floor, `mod` and sign, and integrals that oscillate to infinity use methods made
 for them (`mpmath.quadosc`; SciPy over half-periods with repeated averaging).
 
 ### 4. Tolerances that cannot be gamed by a small answer

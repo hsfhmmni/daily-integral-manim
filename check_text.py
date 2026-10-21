@@ -280,10 +280,15 @@ def main(argv):
         extra = [argv[argv.index("--dir") + 1]]
         dates = [d for d in dates if d not in extra]
     files = [os.path.join(ROOT, "common.py"), os.path.join(ROOT, "rules.py")]
+    sys.path.insert(0, ROOT)
+    from levels import levels_for
     for folder in FOLDERS + extra:
         base = folder if os.path.isabs(folder) else os.path.join(ROOT, folder)
         for f in sorted(glob.glob(os.path.join(base, "*.py"))):
             if not dates or any(os.path.basename(f).startswith(d) for d in dates):
+                # a level not made that day (levels.py) is an unused draft: leave it out
+                if dates and folder in FOLDERS and folder not in levels_for(os.path.basename(f)[:10]):
+                    continue
                 files.append(f)
 
     problems, to_compile = [], []

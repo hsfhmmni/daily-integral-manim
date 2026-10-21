@@ -1,6 +1,6 @@
 # Beginner integrals
 
-Beginner: one clean technique, shown from the picture up. Newest first; click a thumbnail to watch.
+Beginner: one clean technique, shown from the picture up (until 20 October 2026). Newest first; click a thumbnail to watch.
 
 | Video | Integral and answer | Key idea | Files |
 |:---:|---|---|---|

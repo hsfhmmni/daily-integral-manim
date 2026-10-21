@@ -1,6 +1,6 @@
 # Easy integrals
 
-Easy: a twist on a standard method (symmetry, a substitution in disguise). Newest first; click a thumbnail to watch.
+Easy: a twist on a standard method (symmetry, a substitution in disguise; until 20 October 2026). Newest first; click a thumbnail to watch.
 
 | Video | Integral and answer | Key idea | Files |
 |:---:|---|---|---|

@@ -1,0 +1,35 @@
+Medium Integral - Wednesday 21 October 2026
+
+1. No antiderivative in sight. How can this area be exact?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Split the fraction: one easy integral, one with a twist.
+4. x squared 1 plus x squared equals 1 minus 11 plus x squared: split into two integrals.
+5. Integration by Parts
+6. u dv equals uv minus v du
+7. Here u equals log (1 plus x) and dv equals dx; pick v equals 1 plus x.
+8. The Chain Rule
+9. d over dxf (g(x)) equals f' (g(x)) g'(x)
+10. d over dxlog (1 plus x) equals 1 over 1 plus x, so v du equals dx.
+11. By parts, choosing v equals 1 plus x so that v du equals dx.
+12. At x equals 1: 2log 2 minus 1. At x equals 0: log 1 equals 0.
+13. Substituting x equals
+14. x equals , dx equals squared d equals (1 plus x squared) d
+15. Here dx equals (1 plus x squared) d, which cancels the bottom.
+16. Changing the Limits
+17. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+18. x equals 0 gives equals 0; x equals 1 gives equals pi over 4.
+19. Let x equals: the factor 1 plus x squared cancels.
+20. Reflecting in the Middle
+21. _0 to the a f(x) dx equals _0 to the a f(a minus x) dx
+22. Here a equals pi over 4: a mirror in equals pi over 8.
+23. Tangent of a Difference
+24. (A minus B) equals A minus B over 1 plus A B
+25. 1 plus (pi over 4 minus) equals 1 plus 1 minus over 1 plus equals 2 over 1 plus.
+26. Replace by pi over 4 minus: the area stays the same.
+27. Mirror log (1 plus) in the middle line equals pi over 8.
+28. The curve and its mirror always add up to log 2.
+29. Both forms equal the same integral, so take their average.
+30. log a plus log 2 over a equals log 2: the cancels.
+31. Half of log 2 times the width pi over 4 is pi over 8log 2.
+32. Thin rectangles close in on 0.1141.
+33. Takeaway: after x equals, try reflecting in the middle.

@@ -1,7 +1,7 @@
 """Independent checks: compare each day's script with the website's own TeX, not with itself.
 
 Usage (from this folder, with the .venv):
-    .venv\\Scripts\\python verify.py 2026-10-15              # all three levels
+    .venv\\Scripts\\python verify.py 2026-10-15              # every level of that day (levels.py)
     .venv\\Scripts\\python verify.py 2026-10-15 Medium       # one level
     .venv\\Scripts\\python verify.py 2026-10-15 --log        # also append rows to verification_log.csv
 
@@ -60,12 +60,19 @@ the x-axis as y = 0; or that region rotated about the x-axis, by washers) and re
 else, so the video is flagged instead of checked against a guess. Its PROBLEM may be written
 in the problem's own names (y - (-2), R^2 - r^2): then only its limits are compared
 (problem_matches_source unchecked) and FUNC carries the integrand check; a constant such as
-the pi of a volume may stay outside mpmath.quad in exact_integral(). A line is about the video's integral,
+the pi of a volume may stay outside mpmath.quad in exact_integral(). Floor, mod and sums (from
+2026-10-21): \\lfloor x\\rfloor, \\lceil x\\rceil, \\operatorname{mod}(a, b) (never negative, as
+a - b floor(a/b)), \\operatorname{floor}, ceil and sgn are read as sympy's own functions; any
+other \\operatorname, a \\bmod b, \\pmod and \\{x\\} are refused, since sympy used to misread them
+without complaint (\\{2.5\\} as 2.5). A \\sum is added up term by term (series_value) until 60
+terms in a row no longer change it; a smooth sum that is slow to settle is finished by
+mpmath.nsum, but one with floor, mod or sign never is (it is refused if it does not settle);
+\\prod is refused. A line is about the video's integral,
 named "I" unless PROBLEM starts "V = ..." (then "V"); a line naming another quantity, or
 holding several statements, is unchecked.
 
-Numerical integrals (integrate): split at the corners of |...| and where the inside of a
-square root reaches 0; for an expression with \\dots, mpmath also halves the range wherever
+Numerical integrals (integrate): split at the corners of |...|, where the inside of a
+square root reaches 0, and where floor, ceiling, mod or sign jumps (jumps, outside any sum); for an expression with \\dots, mpmath also halves the range wherever
 its error estimate is large (corners it cannot find from the formula); an integral oscillating
 to infinity uses mpmath.quadosc, and scipy over half-periods with repeated averaging.
 A step fails only if both methods find it differs from the line before; if the two
@@ -87,7 +94,8 @@ import mpmath
 import sympy as sp
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-LEVELS = ["Beginner", "Easy", "Medium"]
+sys.path.insert(0, ROOT)
+from levels import ALL_LEVELS as LEVELS, levels_for  # noqa: E402
 SOURCE_DIR = os.path.join(ROOT, "source")
 LOG_PATH = os.path.join(ROOT, "verification_log.csv")
 
@@ -141,6 +149,7 @@ def normalise(tex):
     t = re.sub(r"\\(?:cdots|ldots|ddots|vdots)(?![a-zA-Z])", r"\\dots", t)
     t = re.sub(r"\\(?:,|;|!|:|quad|qquad|displaystyle)", " ", t)
     t = t.replace(r"\mathrm{d}", "d").replace(r"\operatorname{d}", "d")
+    t = _named_operators(t)
     # \tan\theta(3-\tan^2\theta) means tan(theta) times (3 - ...), as a reader takes it;
     # sympy would otherwise read tan(theta(3 - ...)).
     t = FUNC_ARG.sub(lambda m: f"{m.group(1)}({m.group(2)})\\cdot(", t)
@@ -148,6 +157,32 @@ def normalise(tex):
     # numbers, letters and Greek letters ends where something else starts.
     t = FUNC_ATOM.sub(lambda m: f"{m.group(1)}({m.group(2)})", t)
     return _wrap_integrals(t).strip()
+
+
+# \operatorname{mod}(a, b) and friends (from 2026-10-21): sympy reads \operatorname{mod} as the
+# product o*p*e*r*... without complaint, so a known name becomes a command sympy reads as a
+# function (turned into sympy's own in _fix), and any other \operatorname is refused.
+# \lfloor x\rfloor and \lceil x\rceil sympy already reads as floor and ceiling.
+NAMED_OPERATORS = {"mod": r"\mod", "floor": r"\floor", "ceil": r"\ceil", "sgn": r"\sgn", "sign": r"\sgn"}
+NAMED_FUNCTIONS = {"mod": (2, sp.Mod), "floor": (1, sp.floor), "ceil": (1, sp.ceiling), "sgn": (1, sp.sign)}
+# notation sympy misreads without complaint: refused rather than guessed
+MISREAD = [(r"\\[bp]mod(?![a-zA-Z])", r"\bmod or \pmod (written a \bmod b)"),
+           (r"\\\{", r"\{...\} (a fractional part or a set)")]
+
+
+def _named_operators(t):
+    def named(m):
+        name = m.group(2)
+        if name in NAMED_OPERATORS:
+            return NAMED_OPERATORS[name] + " "
+        if m.group(1) == "operatorname":
+            raise Unparseable(f"\\operatorname{{{name}}} is not a function verify.py knows")
+        return m.group(0)                                # \mathrm{e} and the like: left as before
+    t = re.sub(r"\\(operatorname|mathrm)\s*\{\s*([A-Za-z]+)\s*\}", named, t)
+    for pattern, what in MISREAD:
+        if re.search(pattern, t):
+            raise Unparseable(f"{what} is not read")
+    return t
 
 
 FUNCS = r"\\(?:sinh|cosh|tanh|sin|cos|tan|sec|csc|cot|ln|log|arcsin|arccos|arctan)(?![a-zA-Z])"
@@ -197,6 +232,10 @@ def _fix(expr):
     from sympy.core.function import AppliedUndef
     expr = expr.replace(lambda e: isinstance(e, AppliedUndef) and e.func.__name__ in VARIABLES + ("pi", "e")
                         and len(e.args) == 1, lambda e: sp.Symbol(e.func.__name__) * e.args[0])
+    # mod(a, b), floor(a), ... from _named_operators: sympy's own functions
+    expr = expr.replace(lambda e: isinstance(e, AppliedUndef) and e.func.__name__ in NAMED_FUNCTIONS
+                        and len(e.args) == NAMED_FUNCTIONS[e.func.__name__][0],
+                        lambda e: NAMED_FUNCTIONS[e.func.__name__][1](*e.args))
     expr = expr.subs({sp.Symbol("e"): sp.E, sp.Symbol("pi"): sp.pi})
     expr = expr.replace(lambda e: isinstance(e, sp.log) and len(e.args) == 2,
                         lambda e: sp.log(e.args[0]) / sp.log(e.args[1]))
@@ -543,12 +582,77 @@ def _bisect(h, lo, hi):
     return (lo + hi) / 2
 
 
+SERIES_SETTLE = 60          # this many terms in a row too small to change the sum: it has settled
+SERIES_SMOOTH_TERMS = 500   # a smooth sum not settled by then (1/n^2) is finished by mpmath.nsum
+SERIES_MAX_TERMS = 5000     # a sum with floor, mod or sign must settle within this many terms
+SERIES_FINITE_MAX = 100000  # the longest finite sum added term by term
+JUMPS = (sp.floor, sp.ceiling, sp.Mod, sp.sign)
+
+
+def series_value(term, lo, hi, smooth):
+    r"""The value of \sum_{k=lo}^{hi} term(k) (hi may be infinity), added term by term.
+
+    An infinite sum is finished once SERIES_SETTLE terms in a row are each below the working
+    precision relative to the sum so far (so it assumes later terms do not grow back: true for
+    the decaying series in integrals, such as binary digits over 2^n). A smooth sum that has not
+    settled after SERIES_SMOOTH_TERMS terms is finished by mpmath.nsum (Richardson /
+    Euler-Maclaurin extrapolation); one with floor, mod or sign is never extrapolated, since its
+    terms jump around: if it has not settled after SERIES_MAX_TERMS it is refused (ValueError).
+    A sum whose terms are all exactly 0 that far is 0."""
+    if hi != sp.oo:
+        if int(hi) - lo > SERIES_FINITE_MAX:
+            raise ValueError("a finite sum with too many terms")
+        return mpmath.fsum(term(k) for k in range(lo, int(hi) + 1))
+    total, quiet, tol = mpmath.mpf(0), 0, 4 * mpmath.eps
+    for k in range(lo, lo + SERIES_MAX_TERMS):
+        t = term(k)
+        total += t
+        quiet = quiet + 1 if total != 0 and abs(t) <= tol * abs(total) else 0
+        if quiet >= SERIES_SETTLE:
+            return total
+        if smooth and k - lo + 1 >= SERIES_SMOOTH_TERMS:
+            return mpmath.nsum(term, [lo, mpmath.inf])
+    if total == 0:
+        return total
+    raise ValueError(f"the sum has not settled after {SERIES_MAX_TERMS} terms")
+
+
+def _series_functions(expr):
+    r"""expr with each \sum replaced by a function that adds it up (series_value), plus the
+    implementations for lambdify. sympy's lambdify would loop to infinity instead."""
+    impl = {}
+
+    def replace(e):
+        sums = e.atoms(sp.Sum, sp.Product)
+        for s in [s for s in sums if not any(o != s and o.has(s) for o in sums)]:      # outermost first
+            if isinstance(s, sp.Product):
+                raise Unparseable(r"a product (\prod) is not read")
+            if len(s.limits) != 1 or len(s.limits[0]) != 3:
+                raise Unparseable("a sum over several indices")
+            k, lo, hi = s.limits[0]
+            if lo.free_symbols or hi.free_symbols or not lo.is_integer or not (hi == sp.oo or hi.is_integer):
+                raise Unparseable("a sum whose limits are not whole numbers")
+            args = sorted(s.function.free_symbols - {k}, key=str)
+            term = sp.lambdify(args + [k], replace(s.function), modules=[impl, "mpmath"])
+            name = f"Series{len(impl)}"
+            smooth = not s.function.has(*JUMPS)
+            impl[name] = (lambda term, lo, hi, smooth:
+                          lambda *a: series_value(lambda j: term(*a, j), lo, hi, smooth))(term, int(lo), hi, smooth)
+            e = e.xreplace({s: sp.Function(name)(*args)})
+        return e
+
+    return replace(expr), impl
+
+
 def mp_function(expr, var):
     if expr.has(DOTS):
         block, _ = nested_pattern(expr)
         outer = sp.lambdify((var, DOTS), expr, modules="mpmath")
         block_f = sp.lambdify((var, DOTS), block, modules="mpmath")
         f = lambda x: outer(x, _nested_value(block_f, x))      # noqa: E731
+    elif expr.has(sp.Sum, sp.Product):
+        body, impl = _series_functions(expr)
+        f = sp.lambdify(var, body, modules=[impl, "mpmath"])
     else:
         f = sp.lambdify(var, expr, modules="mpmath")
 
@@ -583,6 +687,53 @@ def breakpoints(expr, var, a, b):
             if isinstance(sol, sp.FiniteSet):
                 for s in sol:
                     pts.add(to_mp(s))
+        except Exception:                                  # anything sympy cannot solve: no extra points
+            pass
+    pts.update(jumps(expr, var, a, b))
+    return sorted(pts)
+
+
+JUMP_MAX = 200      # more jumps than this in the range: not split (the integral is left to the methods)
+
+
+def jumps(expr, var, a, b):
+    r"""Points inside (a, b) where floor, ceiling, mod or sign jumps (from 2026-10-21): where
+    the inside of a floor or ceiling, or a over b in mod(a, b), is a whole number, and where the
+    inside of sign is 0. Jumps inside a \sum are not listed: a sum such as the binary digits
+    of x over 2^n jumps at every dyadic point, and its jumps may cancel (that one is just x)."""
+    if not (mpmath.isfinite(a) and mpmath.isfinite(b)):
+        return []
+    in_sums = set()
+    for s in expr.atoms(sp.Sum):
+        in_sums |= s.function.atoms(*JUMPS)
+    pieces, zeros = [], []
+    for e in expr.atoms(*JUMPS) - in_sums:
+        if not e.has(var):
+            continue
+        if isinstance(e, sp.Mod):
+            if e.args[1].has(var):
+                continue
+            pieces.append(e.args[0] / e.args[1])
+        elif isinstance(e, sp.sign):
+            zeros.append(e.args[0])
+        else:
+            pieces.append(e.args[0])
+    pts = set()
+    for g in pieces + zeros:
+        try:
+            gf = sp.lambdify(var, g, modules="mpmath")
+            if g in zeros:
+                levels = [0]
+            else:                                          # the whole numbers g passes through
+                vals = [gf(a + (b - a) * mpmath.mpf(i) / 400) for i in range(401)]
+                vals = [mpmath.re(v) for v in vals if mpmath.isfinite(v)]
+                levels = range(int(mpmath.floor(min(vals))), int(mpmath.ceil(max(vals))) + 1)
+            if len(levels) > JUMP_MAX:
+                continue
+            for k in levels:
+                sol = sp.solveset(g - k, var, domain=sp.Interval(a, b, True, True))
+                if isinstance(sol, sp.FiniteSet):
+                    pts.update(to_mp(s) for s in sol)
         except Exception:                                  # anything sympy cannot solve: no extra points
             pass
     return sorted(pts)
@@ -685,6 +836,14 @@ def value_of(expr, method="mpmath"):
                             lambda e: sp.Float(mpmath.nstr(quad_integral(e, method), 28), 30))
     if expr.free_symbols:
         raise Unparseable(f"unknown symbols {sorted(s.name for s in expr.free_symbols)}")
+    if expr.has(sp.Sum, sp.Product):             # added up term by term (series_value), not by sympy
+        try:
+            v = mp_function(expr, sp.Dummy())(0)
+        except ValueError as exc:
+            raise Unparseable(f"the sum could not be added up: {exc}") from None
+        if not mpmath.isfinite(v):
+            raise Unparseable("not a finite real number")
+        return v, exact
     z = complex(sp.N(expr, 30))
     if not math.isfinite(z.real) or abs(z.imag) > 1e-20 * max(1.0, abs(z.real)):
         raise Unparseable("not a finite real number")
@@ -1167,7 +1326,7 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
             agree = close(v_mp, v_sp, QUAD_REL_TOL, abs_tol)
             how = []
             if breakpoints(integrand, var, a, b):
-                how.append("split at the corners of |...|")
+                how.append("split at the corners of |...| and the jumps of floor, mod and sign")
             if oscillation(integrand, var, a, b):
                 how.append("oscillating to infinity: mpmath quadosc, scipy per half-period")
             set_("quadratures_agree", "pass" if agree else "fail",
@@ -1347,7 +1506,8 @@ def main(argv):
     if not args or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args[0]):
         print(__doc__)
         return 2
-    date, levels = args[0], [a for a in args[1:] if a in LEVELS] or LEVELS
+    date = args[0]
+    levels = [a for a in args[1:] if a in LEVELS] or levels_for(date)
     all_ok = True
     for level in levels:
         if not os.path.exists(os.path.join(ROOT, level, f"{date}_{level}.py")):

@@ -35,7 +35,8 @@ reference manual (docs.manim.community, v0.21.0). No pi creatures, logos, music 
 From 2026-10-12 only rules worth teaching get a card (see README, Rule Cards): assumed basics
 get none, techniques and (in Beginner/Easy) standard integrals get a short card (name,
 statement, how it applies here), and rules beyond the syllabus get the full card (symbols,
-when, why too). Later uses show a small teal corner tag instead of a reminder card. Steps
+when, why too). Hard (from 2026-10-22) shows fewer cards: techniques get only a "Using: ..."
+corner tag on first use, and only advanced rules get a (full) card. Later uses show a small teal corner tag instead of a reminder card. Steps
 still name every rule they use (`rule=`), and the working itself shows the application:
 substitute, highlight what cancels, show the limits changing.
 
@@ -48,7 +49,7 @@ never borrow a meaning from the equations.
 Every caption and every card beat stays at least `read_time = max(2.0, words / 2.5)` s, with
 each `$...$` block counting as 2 words. This replaces the old 0.4 s per word (technique 10).
 `caption()` keeps it automatically and logs it; `check_frame.py` verifies every hold.
-Length limits: Beginner 90-180 s, Easy 90-180 s, Medium 90-210 s.
+Length limits: Medium 90-210 s, Hard 90-210 s (Beginner and Easy, until 2026-10-20: 90-180 s).
 
 ## Watermark
 `@d\_dxmercy` (Tex, size 24, white, 45% opacity) in the bottom-right corner, inside the safe

@@ -1103,8 +1103,9 @@ def morph_steps(scene, current, steps, colors, trail, hooks=None):
 
 
 # ---- Rule Cards: a card the first time a rule is used (rules.card_kind decides full,
-# short or none by difficulty), a small corner tag on later uses
-from rules import ALGEBRA, RULE_CARDS, card_kind          # noqa: E402  (rules.py has no Manim imports)
+# short or none by difficulty), a small corner tag on later uses; in Hard a technique's
+# first use is a corner tag too (rules.first_use_tag)
+from rules import ALGEBRA, RULE_CARDS, card_kind, first_use_tag   # noqa: E402  (rules.py has no Manim imports)
 
 CARD_SECTIONS = (("symbols", r"What the symbols mean"), ("when", r"When to use it"),
                  ("why", r"Why it works"), ("mapping", r"In this problem"))
@@ -1313,7 +1314,8 @@ def show_rule_card(scene, key, mapping=(), full=True):
 
 def rule_cards(scene, step):
     """Before a step: for each rule used for the first time in this video, dim the working
-    and show its card (full or short, from rules.card_kind; none for assumed rules). A rule
+    and show its card (full or short, from rules.card_kind; none for assumed rules; in Hard a
+    technique gets a "Using:" corner tag instead, from rules.first_use_tag). A rule
     already carded gets a small corner tag instead. Returns the tag (or None); the caller
     fades it out after the step."""
     keys = step_rules(step)
@@ -1323,6 +1325,8 @@ def rule_cards(scene, step):
     diff = getattr(scene, "DIFFICULTY", "Easy")
     new = [k for k in keys if k not in seen and card_kind(k, diff)]
     again = [k for k in keys if k in seen]
+    using = [k for k in keys if k not in seen and first_use_tag(k, diff)]
+    seen.update(using)
     if new:
         clear_caption(scene)
         dimmed = _dim_working(scene)
@@ -1330,15 +1334,18 @@ def rule_cards(scene, step):
             show_rule_card(scene, k, step_mapping(step, k, keys), full=card_kind(k, diff) == "full")
             seen.add(k)
         _undim_working(scene, dimmed)
-    return show_rule_tag(scene, again) if again else None
+    return show_rule_tag(scene, again, using) if again or using else None
 
 
-def show_rule_tag(scene, keys):
-    """A small teal tag under the badge naming rules already carded in this video,
+def show_rule_tag(scene, keys, using=()):
+    """A small teal tag under the badge naming rules already carded in this video
+    ("Again: ..."), and in Hard the techniques used for the first time ("Using: ..."),
     one rule per line so a name never wraps in the middle."""
-    names = [re.sub(r"^The ", "", RULE_CARDS[k]["name"]) for k in keys]
-    lines = [rich(("Again: " if i == 0 else "") + n + ("," if i < len(names) - 1 else ""),
-                  font_size=26, width=5.0, color=CARD_COLOR) for i, n in enumerate(names)]
+    entries = ([("Using: " if i == 0 else "", k) for i, k in enumerate(using)]
+               + [("Again: " if i == 0 else "", k) for i, k in enumerate(keys)])
+    lines = [rich(p + re.sub(r"^The ", "", RULE_CARDS[k]["name"]) + ("," if j < len(entries) - 1 else ""),
+                  font_size=26, width=5.0, color=CARD_COLOR) for j, (p, k) in enumerate(entries)]
+    keys = list(using) + list(keys)
     tag = VGroup(*lines).arrange(DOWN, aligned_edge=RIGHT, buff=0.08)
     badge = getattr(scene, "_badge", None)
     top = (badge.get_bottom()[1] if badge is not None else SAFE_TOP) - 0.12

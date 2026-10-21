@@ -5,7 +5,8 @@ Usage (from this folder, with the .venv):
     .venv\\Scripts\\python review.py 2026-10-15 --out somewhere\\test.md   (write elsewhere)
     .venv\\Scripts\\python review.py 2026-10-15 --log somewhere\\log.csv   (log elsewhere)
 
-It never publishes anything. For each level (Beginner, Easy, Medium) it:
+It never publishes anything. For each level of that day (levels.py: Medium and Hard from
+2026-10-22) it:
   * finds the script and narration in <Level>/ and the finished video in pending/<Level>/
     (or in <Level>/ if it was already approved), and checks none is missing or empty
   * reads the video's real length with ffprobe
@@ -19,7 +20,7 @@ It never publishes anything. For each level (Beginner, Easy, Medium) it:
 It also lists what is NOT checked automatically, so the review knows what to look at.
 
 The checks use the shared _media folder, so do not run this while another check or dry run
-is using it. Exit code 0 when all three videos are READY, 1 otherwise.
+is using it. Exit code 0 when every video is READY, 1 otherwise.
 """
 import glob
 import os
@@ -32,7 +33,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 import verify  # noqa: E402
 
-LEVELS = ["Beginner", "Easy", "Medium"]
+from levels import levels_for  # noqa: E402
 NOT_YET_CHECKED = [
     "Captions, mapping lines and Rule Cards contain no maths errors (only their wording and "
     "LaTeX are checked).",
@@ -152,6 +153,7 @@ def main(argv):
     text_code, text_out = run_check(["check_text.py", date], os.path.join(log_dir, "check_text.txt"))
     text_pass = text_code == 0 and "CHECK_TEXT: PASS" in text_out
 
+    LEVELS = levels_for(date)
     results = {}
     for level in LEVELS:
         script, narration, video, where = files_for(date, level)
@@ -222,7 +224,7 @@ def main(argv):
 
     approved = [lv for lv in LEVELS if results[lv]["files"][0].startswith(lv)]
     if len(approved) == len(LEVELS):
-        top = ("**All three videos are already in the level folders (approved or published before "
+        top = ("**All the videos are already in the level folders (approved or published before "
                "this review).** Nothing here is waiting for a decision.")
     elif approved:
         top = (f"**Already in the level folder (approved or published before this review): "

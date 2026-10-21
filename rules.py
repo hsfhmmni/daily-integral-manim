@@ -438,7 +438,9 @@ RULE_CARDS = {
 
 # ---- Which cards are shown (from 2026-10-12)
 # Beginner and Easy follow the Pure Year 1 syllabus, Medium the Further Pure syllabus (never
-# named on screen). A rule taught before the syllabus gets no card; techniques get a short
+# named on screen). Hard (from 2026-10-22, user 2026-10-21) shows fewer cards: only rules
+# beyond the syllabus (ADVANCED) get a card, a full one; a technique's first use gets a corner
+# tag ("Using: ...") instead of a short card, and assumed rules and standard integrals nothing. A rule taught before the syllabus gets no card; techniques get a short
 # card (name, statement, how it applies here); rules beyond the syllabus get the full card.
 # A rule's later uses in the same video show a small corner tag instead of a card.
 SILENT = {          # assumed known: no card and no tag; the step's caption carries the working
@@ -448,6 +450,7 @@ SILENT = {          # assumed known: no card and no tag; the step's caption carr
 }
 STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
+TAG_ONLY_LEVELS = ("Hard",)                     # techniques get a corner tag, not a short card
 ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value"}     # always the full card
 
 
@@ -459,4 +462,12 @@ def card_kind(key, difficulty):
         return "full"
     if key in STANDARD and difficulty not in STANDARD_CARD_LEVELS:
         return None
+    if difficulty in TAG_ONLY_LEVELS:
+        return None
     return "short"
+
+
+def first_use_tag(key, difficulty):
+    """True when a rule's first use shows a corner tag instead of a card (techniques in Hard)."""
+    return (difficulty in TAG_ONLY_LEVELS and key != ALGEBRA and key not in SILENT
+            and key not in STANDARD and card_kind(key, difficulty) is None)

@@ -16,7 +16,7 @@ the first problem it lists every one. The guard checks, after every animation:
   * nothing touches the corner badge or the problem line at the top
   * no text was shrunk below a readable size
   * the watermark is on screen, in the foreground, and nothing touches it
-It also checks the length (Beginner 90-180 s, Easy 90-180 s, Medium 90-210 s) and that
+It also checks the length (Beginner 90-180 s, Easy 90-180 s, Medium and Hard 90-210 s) and that
 every caption and Rule Card beat stayed on screen for its read time.
 During a real render the same guard runs in "raise" mode and stops the render.
 
@@ -336,7 +336,8 @@ def main(argv):
         args = [a for a in args if a != name]
     date, wanted = args[0], args[1:]
     if not wanted:
-        wanted = [d for d in DIFFICULTIES
+        from levels import levels_for
+        wanted = [d for d in levels_for(date)
                   if os.path.exists(os.path.join(folder or os.path.join(ROOT, d), f"{date}_{d}.py"))]
     if not wanted:
         print(f"No scripts found for {date}. Check the date (YYYY-MM-DD).")
