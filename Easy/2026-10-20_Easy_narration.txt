@@ -1,0 +1,22 @@
+Easy Integral - Tuesday 20 October 2026
+
+1. The curves meet where x equals x squared: at x equals 0 and x equals 1.
+2. Spin this region about the x-axis. What volume?
+3. Each slice is a washer: a disc with a hole.
+4. Each washer has area pi (R squared minus r squared). Add them: what volume?
+5. Thin rectangles estimate the area; watch the gap shrink.
+6. Square both radii, then subtract: the hole has its own radius.
+7. Volume of Revolution
+8. V equals pi _a to the b y squared dx
+9. Tempting: take y equals x minus x squared, the height of the gap.
+10. Tempting: spin the gap x minus x squared as one solid disc?
+11. Volume With a Hole: Washers
+12. V equals pi _a to the b (R squared minus r squared) dx
+13. Outer R equals x, inner r equals x squared, since x squared <x on (0,1).
+14. No: that gives pi over 30. Each slice has a hole of radius x squared.
+15. Square the inner radius: (x squared) squared equals x to the 4.
+16. Power rule on each term.
+17. At x equals 1 both powers are 1; at x equals 0 both vanish.
+18. 1 over 3 minus 1 over 5 equals 2 over 15, so the volume is about 0.419.
+19. Rectangles under the washer areas close in on 0.419.
+20. Takeaway: square each radius, then subtract. Never square the gap.

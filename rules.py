@@ -411,6 +411,28 @@ RULE_CARDS = {
         when=[cap(r"$\sec x$ and $\tan x$ appear together.")],
         why=[cap(r"Divide $\sin^{2}x+\cos^{2}x=1$ by $\cos^{2}x$.")],
     ),
+    "average_value": dict(
+        name=r"Average Value of a Function",
+        statement=r"\bar{y}=\frac{1}{b-a}\int_{a}^{b} f(x)\,dx",
+        symbols=[cap(r"$\bar{y}$ is the average height of $f$ on $[a,b]$.")],
+        when=[cap(r"The mean value of a function over an interval.")],
+        why=[cap(r"A rectangle of height $\bar{y}$ and width $b-a$ has the same area."),
+             cap(r"So the area divided by the width is the average height.")],
+    ),
+    "reversing_limits": dict(
+        name=r"Swapping the Limits",
+        statement=r"\int_{b}^{a} f(x)\,dx=-\int_{a}^{b} f(x)\,dx",
+        symbols=[cap(r"$a$ is the lower limit and $b$ the upper limit.")],
+        when=[cap(r"A substitution leaves the limits upside down.")],
+        why=[cap(r"$F(a)-F(b)$ is minus $F(b)-F(a)$.")],
+    ),
+    "tan_subtraction": dict(
+        name=r"Tangent of a Difference",
+        statement=r"\tan(A-B)=\frac{\tan A-\tan B}{1+\tan A\tan B}",
+        symbols=[cap(r"$A$ and $B$ are any angles where $\tan$ is defined.")],
+        when=[cap(r"$\tan$ of an angle minus a constant, like $\frac{\pi}{4}-\theta$.")],
+        why=[cap(r"Divide the $\sin(A-B)$ formula by the $\cos(A-B)$ formula.")],
+    ),
 }
 
 
@@ -426,7 +448,7 @@ SILENT = {          # assumed known: no card and no tag; the step's caption carr
 }
 STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
-ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral"}     # always the full card
+ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value"}     # always the full card
 
 
 def card_kind(key, difficulty):

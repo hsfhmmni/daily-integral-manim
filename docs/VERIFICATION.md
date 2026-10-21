@@ -27,6 +27,12 @@ flowchart LR
 LaTeX and date, once, read-only, with a SHA-256 fingerprint. A copying mistake cannot enter,
 because no person copies anything, and an edit made later is detected.
 
+Some days the problem is a word problem with no integral on the page ("find the area of the
+region bounded by ..."). Then the saved source is the statement itself, and `verify.py`
+turns the words into the integral: the area between two graphs (a line may be given by two
+points, the walls are x = a and x = b or else where the graphs meet) or that region rotated
+about the x-axis. A statement it cannot read is never guessed: the video is flagged.
+
 ### 2. Every check compares the script with that source, not with itself
 `verify.py` reads the saved TeX with SymPy and checks, independently:
 

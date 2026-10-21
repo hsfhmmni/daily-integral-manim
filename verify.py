@@ -9,7 +9,8 @@ The website's TeX, saved once by fetch_source.py in source/DATE_Level.json, is t
 source of truth. sympy reads it into an integrand and limits, and every check below
 compares the script with THAT, not with something else in the same script:
 
-  source_file                  source/DATE_Level.json exists and holds an integral
+  source_file                  source/DATE_Level.json exists and holds an integral, or a word
+                               problem that word_problem understands
   source_unchanged             its SHA-256 still matches source/hashes.csv (never edited)
   date_matches                 the script's DATE is the date printed on the website
   problem_matches_source       PROBLEM (the integral shown on screen) has the same limits
@@ -52,7 +53,14 @@ values (as y = x/y does), and the value is the solution lying between them. \\cf
 from the integral itself at points approaching the limit (limit_value: mpmath Richardson and
 scipy with polynomial extrapolation, from both sides if two-sided), never by moving the limit
 inside; FUNC and exact_integral() are compared with the integrand's pointwise limit, which
-is what the video draws (from 2026-10-19). A line is about the video's integral,
+is what the video draws (from 2026-10-19). A word problem (kind "word", from 2026-10-20)
+has no integral on the page: word_problem turns its statement into one (the area between two
+graphs, with a line given by two points, walls x = a and x = b or else where the graphs meet,
+the x-axis as y = 0; or that region rotated about the x-axis, by washers) and refuses anything
+else, so the video is flagged instead of checked against a guess. Its PROBLEM may be written
+in the problem's own names (y - (-2), R^2 - r^2): then only its limits are compared
+(problem_matches_source unchecked) and FUNC carries the integrand check; a constant such as
+the pi of a volume may stay outside mpmath.quad in exact_integral(). A line is about the video's integral,
 named "I" unless PROBLEM starts "V = ..." (then "V"); a line naming another quantity, or
 holding several statements, is unchecked.
 
@@ -269,6 +277,125 @@ def split_top_level(tex, ch="="):
         else:
             cur += c
     return parts + [cur]
+
+
+# ---------------------------------------------------------------- word problems (from 2026-10-20)
+WP_POINT = re.compile(r"([A-Z])\s*\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)")
+WP_SAMPLES = 64
+
+
+def _word_pieces(lines):
+    """A statement's TeX lines -> (the plain text with the maths inline, the maths pieces).
+    Prose is inside \\text{...}; everything else on a line is maths."""
+    text, maths = [], []
+    for line in lines:
+        i = 0
+        while i < len(line):
+            k = line.find(r"\text{", i)
+            chunk = line[i:k if k >= 0 else len(line)].strip()
+            if chunk:
+                text.append(chunk)
+                maths.append(chunk.rstrip(" ,.;:"))
+            if k < 0:
+                break
+            prose, i = _group(line, k + len(r"\text"))
+            text.append(prose)
+    plain = re.sub(r"\s+", " ", " ".join(text)).replace("\\", "")
+    return plain, [m for m in maths if m]
+
+
+def _sign_on(expr, var, a, b):
+    """+1 or -1 if expr keeps one sign (zeros allowed) at the sample points inside (a, b), else 0."""
+    f = sp.lambdify(var, expr, "mpmath")
+    vals = [f(a + (b - a) * mpmath.mpf(k + 0.5) / WP_SAMPLES) for k in range(WP_SAMPLES)]
+    if all(v >= 0 for v in vals):
+        return 1
+    if all(v <= 0 for v in vals):
+        return -1
+    return 0
+
+
+def word_problem(lines):
+    """The integral a word problem describes, from the website's own statement lines.
+
+    Understood: the area of a region bounded by two graphs y = f(x) (a line may be given by
+    two points it passes through; the x-axis counts as y = 0), between two vertical lines
+    x = a and x = b or else between the two points where the graphs meet; and the volume
+    when such a region is rotated about the x-axis (washers: pi (f^2 - g^2), only when the
+    region does not cross the axis). Anything else raises Unparseable, so the video is
+    flagged rather than checked against a guess.
+    Returns dict(integrand, var, a, b, description)."""
+    x = sp.Symbol("x")
+    plain, maths = _word_pieces(lines)
+    low = plain.lower()
+    if "volume" in low:
+        what = "volume"
+        if not re.search(r"(rotat|revolv)\w* (about|around) the x ?- ?axis", low):
+            raise Unparseable("a volume, but not of a rotation about the x-axis")
+    elif "area" in low:
+        what = "area"
+    else:
+        raise Unparseable("the word problem asks for neither an area nor a volume")
+
+    curves, walls, points = [], [], []
+    for m in maths:
+        points += [(n, sp.Rational(px), sp.Rational(py)) for n, px, py in WP_POINT.findall(m)]
+        side = re.fullmatch(r"\s*([xy])\s*=\s*(.+)", m)
+        if not side:
+            continue
+        value = to_sympy(side.group(2))
+        if not value.free_symbols <= {x}:
+            raise Unparseable(f"cannot read {m!r} as a graph of x")
+        if side.group(1) == "x":
+            if value.free_symbols:
+                raise Unparseable(f"{m!r} is not a vertical line")
+            walls.append(value)
+        else:
+            curves.append(value)
+    if points:
+        pts = list(dict.fromkeys((px, py) for _, px, py in points))
+        if not ("line" in low and "through" in low) or len(pts) != 2:
+            raise Unparseable("points given, but not as the two points of one line")
+        (x1, y1), (x2, y2) = pts
+        if x1 == x2:
+            raise Unparseable("the line through the two points is vertical")
+        curves.append(sp.nsimplify(y1 + (y2 - y1) / (x2 - x1) * (x - x1)))
+    if re.search(r"x ?- ?axis", re.sub(r"(rotat|revolv)\w* (about|around) the x ?- ?axis", "", low)):
+        curves.append(sp.Integer(0))                       # the x-axis as a boundary
+    elif what == "volume" and len(curves) == 1:
+        curves.append(sp.Integer(0))                       # one curve spun: discs, bounded by the axis
+    if len(curves) != 2:
+        raise Unparseable(f"expected two boundary graphs, found {len(curves)}")
+    f, g = curves
+
+    if len(walls) == 2:
+        a, b = sorted(walls, key=lambda v: float(v))
+        how = f"for {a} <= x <= {b}"
+    elif not walls:
+        meet = sp.solveset(sp.simplify(f - g), x, domain=sp.S.Reals)
+        if not isinstance(meet, sp.FiniteSet) or len(meet) != 2:
+            raise Unparseable(f"the graphs y = {f} and y = {g} do not meet at exactly two points")
+        a, b = sorted(meet, key=lambda v: float(v))
+        how = f"between where they meet, x = {a} and x = {b}"
+    else:
+        raise Unparseable(f"{len(walls)} vertical lines; expected 0 or 2")
+    if not float(a) < float(b):
+        raise Unparseable("the interval is empty")
+
+    if what == "area":
+        s = _sign_on(f - g, x, mpmath.mpf(float(a)), mpmath.mpf(float(b)))
+        integrand = sp.expand(s * (f - g)) if s else sp.Abs(f - g)
+        desc = f"area between y = {f} and y = {g} {how}: integral of {integrand}"
+    else:
+        lo_, hi_ = mpmath.mpf(float(a)), mpmath.mpf(float(b))
+        if _sign_on(f * g, x, lo_, hi_) < 0 or not _sign_on(f * g, x, lo_, hi_):
+            raise Unparseable("the region crosses the x-axis; washers do not apply")
+        s = _sign_on(f ** 2 - g ** 2, x, lo_, hi_)
+        if not s:
+            raise Unparseable("the outer and inner radii swap inside the interval")
+        integrand = sp.expand(sp.pi * s * (f ** 2 - g ** 2))
+        desc = f"volume of the region between y = {f} and y = {g} {how}, rotated about the x-axis: integral of {integrand}"
+    return dict(integrand=integrand, var=x, a=a, b=b, description=desc)
 
 
 # ---------------------------------------------------------------- numbers
@@ -720,13 +847,17 @@ def trap_parts(spec, colors):
     return out
 
 
-def capture_exact(cls):
-    """Call exact_integral() while recording what it passes to mpmath.quad."""
+def capture_exact(cls, results=None):
+    """Call exact_integral() while recording what it passes to mpmath.quad (and, if a list is
+    given as results, what each call returned)."""
     calls, orig, orig_ctx = [], mpmath.quad, mpmath.mp.quad
 
     def spy(f, *args, **kwargs):
         calls.append((f, args[0] if args else kwargs.get("intervals")))
-        return orig(f, *args, **kwargs)
+        value = orig(f, *args, **kwargs)
+        if results is not None:
+            results.append(value)
+        return value
     mpmath.quad = spy
     mpmath.mp.quad = spy
     try:
@@ -820,45 +951,54 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
 
     # --- the website's integral
     integrand = var = a = b = src_limit = None
+    word = False
     if not os.path.exists(src_path):
         set_("source_file", "fail", f"{os.path.relpath(src_path, root)} is missing (run fetch_source.py)")
         source = None
     else:
         source = json.load(open(src_path, encoding="utf-8"))
         try:
-            expr = to_sympy(source["problem_tex"])
-            if isinstance(expr, sp.Limit):               # a limit outside the integral, e.g. lim n->0 of int_n^(pi/2) f(x, n) dx
-                src_limit = expr
-                expr = single_integral(expr.args[0])
-            expr = single_integral(expr)                 # a constant factor outside moves inside
-            if len(expr.limits) != 1:
-                raise Unparseable("not a single integral")
-            integrand, lim = expr.function, expr.limits[0]
-            var = lim[0]
-            note = ""
-            if src_limit is not None:
-                # the value is the limit of the integral (limit_value). FUNC and exact_integral()
-                # are compared with the integrand's pointwise limit on the limiting interval,
-                # which is what the video draws; if sympy cannot find it, those are unchecked
-                if len(lim) != 3:
-                    raise Unparseable("a limit of an indefinite integral")
-                z, z0, zdir = src_limit.args[1], src_limit.args[2], str(src_limit.args[3])
-                a = to_mp(sp.limit(lim[1], z, z0, dir=zdir))
-                b = to_mp(sp.limit(lim[2], z, z0, dir=zdir))
-                try:
-                    g = sp.limit(integrand, z, z0, dir=zdir)
-                    if g.has(z, sp.Limit, sp.nan, sp.zoo, sp.oo, -sp.oo):
-                        raise ValueError
-                    integrand = g
-                    note = f" (as {z} -> {z0}: integrand {g}, from {lim[1]} to {lim[2]} -> {a} to {b})"
-                except Exception:                        # sympy raises several error types
-                    integrand = None
-                    note = f" (as {z} -> {z0}: the integrand's pointwise limit could not be found)"
-            elif len(lim) == 3:
-                a, b = to_mp(lim[1]), to_mp(lim[2])
-            set_("source_file", "pass", f"{source['problem_tex']}{note}")
+            if source.get("kind") == "word":
+                # a word problem: its statement, not the script, says which integral it is
+                w = word_problem(source.get("statement_tex") or [])
+                word, integrand, var = True, w["integrand"], w["var"]
+                a, b = to_mp(w["a"]), to_mp(w["b"])
+                set_("source_file", "pass", f"word problem, read as the {w['description']}")
+            else:
+                expr = to_sympy(source["problem_tex"])
+                if isinstance(expr, sp.Limit):               # a limit outside the integral, e.g. lim n->0 of int_n^(pi/2) f(x, n) dx
+                    src_limit = expr
+                    expr = single_integral(expr.args[0])
+                expr = single_integral(expr)                 # a constant factor outside moves inside
+                if len(expr.limits) != 1:
+                    raise Unparseable("not a single integral")
+                integrand, lim = expr.function, expr.limits[0]
+                var = lim[0]
+                note = ""
+                if src_limit is not None:
+                    # the value is the limit of the integral (limit_value). FUNC and exact_integral()
+                    # are compared with the integrand's pointwise limit on the limiting interval,
+                    # which is what the video draws; if sympy cannot find it, those are unchecked
+                    if len(lim) != 3:
+                        raise Unparseable("a limit of an indefinite integral")
+                    z, z0, zdir = src_limit.args[1], src_limit.args[2], str(src_limit.args[3])
+                    a = to_mp(sp.limit(lim[1], z, z0, dir=zdir))
+                    b = to_mp(sp.limit(lim[2], z, z0, dir=zdir))
+                    try:
+                        g = sp.limit(integrand, z, z0, dir=zdir)
+                        if g.has(z, sp.Limit, sp.nan, sp.zoo, sp.oo, -sp.oo):
+                            raise ValueError
+                        integrand = g
+                        note = f" (as {z} -> {z0}: integrand {g}, from {lim[1]} to {lim[2]} -> {a} to {b})"
+                    except Exception:                        # sympy raises several error types
+                        integrand = None
+                        note = f" (as {z} -> {z0}: the integrand's pointwise limit could not be found)"
+                elif len(lim) == 3:
+                    a, b = to_mp(lim[1]), to_mp(lim[2])
+                set_("source_file", "pass", f"{source['problem_tex']}{note}")
         except Unparseable as exc:
-            set_("source_file", "fail", f"the website's TeX could not be read: {exc}")
+            what = "word problem could not be understood" if source.get("kind") == "word" else "TeX could not be read"
+            set_("source_file", "fail", f"the website's {what}: {exc}")
             source = None
         hashes = os.path.join(source_dir, "hashes.csv")
         want = None
@@ -913,20 +1053,31 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
                 problems.append("one has limits and the other does not")
             elif definite and not (close(to_mp(plim[1]), a, 1e-15, 1e-15) and close(to_mp(plim[2]), b, 1e-15, 1e-15)):
                 problems.append(f"limits {plim[1]} to {plim[2]}, website {mpmath.nstr(a, 10)} to {mpmath.nstr(b, 10)}")
-            if not problems:
+            # a word problem's PROBLEM may set up the integral in the problem's own names
+            # (y - (-2), R^2 - r^2): then only its limits can be compared, and FUNC carries
+            # the integrand check (func_matches_source)
+            named = word and bool(p.function.free_symbols - {pvar})
+            if not problems and not named:
                 r, d = compare_on_points(ref_f, mp_function(p.function, pvar), *lo_hi, rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
                 if r != "pass":
                     problems.append(f"integrand: {d}")
-            set_("problem_matches_source", "fail" if problems else "pass",
-                 "; ".join(problems) or "same limits, same integrand at 20 random points")
+            if named and not problems:
+                names = ", ".join(sorted(s.name for s in p.function.free_symbols - {pvar}))
+                set_("problem_matches_source", "unchecked",
+                     f"same limits; the integrand is written in the problem's own names ({names}), "
+                     "so FUNC is compared with the word problem's integrand instead")
+            else:
+                set_("problem_matches_source", "fail" if problems else "pass",
+                     "; ".join(problems) or "same limits, same integrand at 20 random points")
         except Unparseable as exc:
             set_("problem_matches_source", "unchecked", f"PROBLEM could not be read: {exc}")
         r, d = compare_on_points(ref_f, lambda x: cls.FUNC(float(x)), *lo_hi)
         set_("func_matches_source", r, d)
 
     # --- exact_integral(): its function and interval
+    quad_results = []
     try:
-        exact_value, calls = capture_exact(cls)
+        exact_value, calls = capture_exact(cls, quad_results)
         exact_value = mpmath.mpf(exact_value)
     except Exception as exc:
         exact_value, calls = None, []
@@ -943,6 +1094,14 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
             if len(calls) > 1:
                 problems.append(f"{len(calls)} calls to mpmath.quad; only the first was compared")
             r, d = compare_on_points(ref_f, f, *lo_hi, rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
+            if r == "fail" and word and len(calls) == 1 and quad_results and quad_results[0] != 0:
+                # a word problem's constant (the pi of a volume) may stay outside mpmath.quad:
+                # take the factor exact_integral() applies to the quad's result, and the function
+                # times that factor must equal the word problem's integrand
+                c = exact_value / mpmath.mpf(quad_results[0])
+                r2, d2 = compare_on_points(ref_f, lambda t: c * f(t), *lo_hi, rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
+                if r2 == "pass":
+                    r, d = r2, f"{d2} (times {mpmath.nstr(c, 12)}, applied outside mpmath.quad)"
             if r == "fail":
                 problems.insert(0, f"integrand: {d}")
             bad = r == "fail" or (definite and pts and problems and problems[0].startswith("interval"))

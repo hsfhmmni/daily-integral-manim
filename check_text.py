@@ -259,7 +259,10 @@ def numeric_checks(files):
         n = cls.COUNTS[-1]
         estimate = common.midpoint_sum(cls.FUNC, a, b, n)
         rel_ans = abs(exact - answer) / max(1.0, abs(exact))
-        rel_est = abs(estimate - answer) / abs(answer)
+        # an answer of exactly 0 (areas that cancel) has no relative error: measure the gap
+        # against the total area under |f| instead (verify.py scales its tolerances the same way)
+        scale = abs(answer) or common.midpoint_sum(lambda x: abs(cls.FUNC(x)), a, b, n)
+        rel_est = abs(estimate - answer) / scale
         print(f"  {rel}: numerical integral {exact:.10f}, stated answer {answer:.10f} "
               f"(diff {rel_ans:.1e}); {n}-rectangle estimate {estimate:.6f} ({rel_est * 100:.3f}% off)")
         if rel_ans > 1e-8:

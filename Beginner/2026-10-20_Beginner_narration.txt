@@ -1,0 +1,20 @@
+Beginner Integral - Tuesday 20 October 2026
+
+1. The line through A and B, walls x equals 0 and x equals 6, floor y equals minus 2.
+2. Lift it all up by 2: the floor becomes the x-axis.
+3. Each strip is y minus (minus 2) tall. What is the total area?
+4. Under a straight top, midpoint rectangles are exact: watch.
+5. First we need the line's equation, from A and B.
+6. Area Between Two Graphs
+7. A equals _a to the b (top minus bottom) dx
+8. Top: the line. Bottom: the floor y equals minus 2.
+9. Equation of a Straight Line
+10. m equals y_2 minus y_1x_2 minus x_1, y minus y_1 equals m (x minus x_1)
+11. Through A(4,5): y minus 5 equals 1 over 2(x minus 4).
+12. Gradient 5 minus 2 over 4 minus (minus 2) equals 1 over 2, so the line is y equals x over 2 plus 3.
+13. Minus a negative is a plus: 3 minus (minus 2) equals 5.
+14. Power rule: x over 2 gives x squared 4, and 5 gives 5x.
+15. Top limit 6 minus bottom limit 0.
+16. Check: a trapezium, 5 plus 8 over 2 6 equals 39.
+17. Thin rectangles agree: the area is exactly 39.
+18. Takeaway: measure each strip from the floor, not the axis.
