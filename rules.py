@@ -433,6 +433,53 @@ RULE_CARDS = {
         when=[cap(r"$\tan$ of an angle minus a constant, like $\frac{\pi}{4}-\theta$.")],
         why=[cap(r"Divide the $\sin(A-B)$ formula by the $\cos(A-B)$ formula.")],
     ),
+    "floor_function": dict(
+        name=r"The Floor Function",
+        statement=r"\lfloor y\rfloor=n\quad\Longleftrightarrow\quad n\le y<n+1,\ \ n\in\mathbb{Z}",
+        symbols=[cap(r"$\lfloor y\rfloor$ is $y$ rounded down to a whole number.")],
+        when=[cap(r"Brackets $\lfloor\ \rfloor$ around an expression.")],
+        why=[cap(r"It is constant between whole numbers and jumps at each one.")],
+    ),
+    "divisor_sum": dict(
+        name=r"Adding Up All Divisors",
+        statement=r"\sum_{d\mid p^{a}q^{b}} d=\big(1+p+\cdots+p^{a}\big)\big(1+q+\cdots+q^{b}\big)",
+        symbols=[cap(r"$d\mid N$ means $d$ divides $N$ exactly; $p$, $q$ are primes.")],
+        when=[cap(r"A sum over every divisor of a number with known prime factors.")],
+        why=[cap(r"Every divisor is one $p^{i}q^{j}$, with $0\le i\le a$ and $0\le j\le b$."),
+             cap(r"Expanding the product lists each $p^{i}q^{j}$ exactly once."),
+             cap(r"So there are $(a+1)(b+1)$ divisors.")],
+    ),
+    "cosh_sinh_exp": dict(
+        name=r"$\cosh$ and $\sinh$ as Exponentials",
+        statement=r"\cosh x+\sinh x=e^{x},\qquad \cosh x-\sinh x=e^{-x}",
+        symbols=[cap(r"$\cosh x=\frac{e^{x}+e^{-x}}{2}$ and $\sinh x=\frac{e^{x}-e^{-x}}{2}$.")],
+        when=[cap(r"$\cosh x$ and $\sinh x$ added or subtracted.")],
+        why=[cap(r"Add or subtract the definitions: one exponential cancels.")],
+    ),
+    "euler_formula": dict(
+        name=r"Euler's Formula",
+        statement=r"e^{i\theta}=\cos\theta+i\sin\theta",
+        symbols=[cap(r"$i^{2}=-1$; $\theta$ is a real angle in radians.")],
+        when=[cap(r"An exponential with an imaginary power.")],
+        why=[cap(r"The series for $e^{i\theta}$ splits into those of $\cos$ and $\sin$.")],
+    ),
+    "contour_shift": dict(
+        name=r"Shifting the Line of Integration",
+        statement=r"\int_{-\infty}^{\infty} e^{-(x+ic)^{2}}\,dx=\int_{-\infty}^{\infty} e^{-x^{2}}\,dx",
+        symbols=[cap(r"$c$ is a real constant; $x+ic$ runs along a horizontal line.")],
+        when=[cap(r"A Gaussian whose centre has moved off the real axis.")],
+        why=[cap(r"$e^{-z^{2}}$ has no poles, so its integral around a rectangle is $0$."),
+             cap(r"The short ends shrink to $0$ as the rectangle widens."),
+             cap(r"So the shifted line and the real line give equal integrals.")],
+    ),
+    "gaussian_integral": dict(
+        name=r"The Gaussian Integral",
+        statement=r"\int_{-\infty}^{\infty} e^{-x^{2}}\,dx=\sqrt{\pi}",
+        symbols=[cap(r"$e^{-x^{2}}$ is the bell curve.")],
+        when=[cap(r"A full bell curve $e^{-x^{2}}$ from $-\infty$ to $\infty$.")],
+        why=[cap(r"Its square is a double integral of $e^{-(x^{2}+y^{2})}$."),
+             cap(r"In polar coordinates that is $\int_{0}^{2\pi}\int_{0}^{\infty} e^{-r^{2}}r\,dr\,d\theta=\pi$.")],
+    ),
 }
 
 
@@ -451,7 +498,8 @@ SILENT = {          # assumed known: no card and no tag; the step's caption carr
 STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
 TAG_ONLY_LEVELS = ("Hard",)                     # techniques get a corner tag, not a short card
-ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value"}     # always the full card
+ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value",
+            "divisor_sum", "contour_shift", "gaussian_integral"}     # always the full card
 
 
 def card_kind(key, difficulty):

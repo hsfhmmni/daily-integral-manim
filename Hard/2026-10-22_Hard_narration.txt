@@ -1,0 +1,31 @@
+Hard Integral - Thursday 22 October 2026
+
+1. Complex powers everywhere. Why is this area a real number?
+2. The blue curve is the real part of the integrand.
+3. Thin rectangles estimate the area; watch the gap shrink.
+4. As exponentials, the complex powers merge into one.
+5. cos h x plus sine h x equals e to the x and cos h x minus sine h x equals e to the minus x.
+6. Add the powers: (1 plus i)x minus (1 minus i)x equals 2ix.
+7. Its imaginary part minus e to the minus x squared sine 2x is odd, so it cancels.
+8. The imaginary part minus e to the minus x squared sine 2x is odd.
+9. Spun half a turn, the left piece cancels the right piece.
+10. Complete the square: minus x squared minus 2ix equals minus (x plus i) squared minus 1.
+11. Shifting the Line of Integration
+12. _ minus infinity to the infinity e to the minus (x plus ic) squared dx equals _ minus infinity to the infinity e to the minus x squared dx
+13. c is a real constant; x plus ic runs along a horizontal line.
+14. A Gaussian whose centre has moved off the real axis.
+15. e to the minus z squared has no poles, so its integral around a rectangle is 0.
+16. The short ends shrink to 0 as the rectangle widens.
+17. So the shifted line and the real line give equal integrals.
+18. Here c equals 1: the path x plus i runs one unit above.
+19. Slide the path x plus i back down to the real axis.
+20. The Gaussian Integral
+21. _ minus infinity to the infinity e to the minus x squared dx equals root pi
+22. e to the minus x squared is the bell curve.
+23. A full bell curve e to the minus x squared from minus infinity to infinity.
+24. Its square is a double integral of e to the minus (x squared plus y squared).
+25. In polar coordinates that is _0 squared pi _0 to the infinity e to the minus r squared r dr d equals pi.
+26. Here the whole bell e to the minus x squared is left, times e inverse.
+27. The bell curve's area is root pi, so the answer is root pi e.
+28. Rectangles under the real part close in on 0.6520.
+29. Takeaway: complete the square, then slide the bell back home.

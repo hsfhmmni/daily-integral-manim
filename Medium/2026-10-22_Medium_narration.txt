@@ -1,0 +1,28 @@
+Medium Integral - Thursday 22 October 2026
+
+1. Zero almost everywhere, with thin spikes. Where are they?
+2. Rectangles miss the spikes until each strip is 1 wide.
+3. It is 1 only when x divides 2025; otherwise 0.
+4. Splitting the Interval
+5. _a to the c f(x) dx equals _a to the b f(x) dx plus _b to the c f(x) dx
+6. Split [1,2026] into 2025 pieces of width 1.
+7. The Floor Function
+8. y equals n n y<n plus 1,\ \ nZ
+9. For n x<n plus 1, x equals n stays constant.
+10. Cut at each whole number: on [n,n plus 1), x equals n.
+11. Keep only the pieces where n divides 2025.
+12. Each piece gives [x squared 2 ]_n to the n plus 1 equals n plus 1 over 2.
+13. Adding Up All Divisors
+14. _d p to the aq to the b d equals (1 plus p plus times s plus p to the a) (1 plus q plus times s plus q to the b)
+15. d N means d divides N exactly; p, q are primes.
+16. A sum over every divisor of a number with known prime factors.
+17. Every divisor is one p to the iq to the j, with 0 i a and 0 j b.
+18. Expanding the product lists each p to the iq to the j exactly once.
+19. So there are (a plus 1)(b plus 1) divisors.
+20. Here 2025 equals 3 to the 4 times 5 squared: p equals 3, a equals 4, q equals 5, b equals 2.
+21. 2025 equals 3 to the 4 times 5 squared has 5 times 3 equals 15 divisors.
+22. Expanding this product lists every divisor exactly once.
+23. 1 plus 3 plus 9 plus 27 plus 81 equals 121 and 1 plus 5 plus 25 equals 31.
+24. 3751 plus 15 over 2 equals 7517 over 2.
+25. Any whole multiple of 2025 strips gives exactly 3758.5.
+26. Takeaway: a floor is constant between integers, so split there.

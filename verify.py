@@ -67,7 +67,14 @@ other \\operatorname, a \\bmod b, \\pmod and \\{x\\} are refused, since sympy us
 without complaint (\\{2.5\\} as 2.5). A \\sum is added up term by term (series_value) until 60
 terms in a row no longer change it; a smooth sum that is slow to settle is finished by
 mpmath.nsum, but one with floor, mod or sign never is (it is refused if it does not settle);
-\\prod is refused. A line is about the video's integral,
+\\prod is refused. Complex integrands (from 2026-10-22): the letter i is the imaginary unit
+(unless a sum, product or integral uses it as its variable); such an integral is done as two
+real integrals, of the real and imaginary parts, and counts as real only if both methods find
+the imaginary part 0 (within the usual allowance); PROBLEM is compared with the website's
+integrand as a complex function, FUNC and exact_integral() with its real part. cosh and sinh
+are evaluated as exponentials, so cosh x - sinh x does not cancel to 0 far out. A floor (or
+mod) of a linear m x + c has its jumps found directly, up to LINEAR_JUMP_MAX of them (the
+\\lfloor x\\rfloor on [1, 2026] of 2026-10-22 has 2024). A line is about the video's integral,
 named "I" unless PROBLEM starts "V = ..." (then "V"); a line naming another quantity, or
 holding several statements, is unchecked.
 
@@ -237,6 +244,12 @@ def _fix(expr):
                         and len(e.args) == NAMED_FUNCTIONS[e.func.__name__][0],
                         lambda e: NAMED_FUNCTIONS[e.func.__name__][1](*e.args))
     expr = expr.subs({sp.Symbol("e"): sp.E, sp.Symbol("pi"): sp.pi})
+    # the letter i is the imaginary unit (from 2026-10-22: (\cosh x+\sinh x)^{1+i}), unless
+    # a sum, product or integral uses it as its own variable (\sum_{i=1}^{n})
+    i = sp.Symbol("i")
+    bound = {lim[0] for s in expr.atoms(sp.Sum, sp.Product, sp.Integral) for lim in s.limits}
+    if i in expr.free_symbols and i not in bound:
+        expr = expr.subs(i, sp.I)
     expr = expr.replace(lambda e: isinstance(e, sp.log) and len(e.args) == 2,
                         lambda e: sp.log(e.args[0]) / sp.log(e.args[1]))
     return expr
@@ -644,7 +657,12 @@ def _series_functions(expr):
     return replace(expr), impl
 
 
-def mp_function(expr, var):
+def mp_function(expr, var, complex_ok=False):
+    """expr as an mpmath function of var. A complex value raises ValueError, unless
+    complex_ok (then it is returned as an mpc). cosh and sinh are evaluated as exponentials
+    (an exact identity): cosh x - sinh x computed directly cancels to 0 for large x, and
+    tanh-sinh on an infinite range samples x far beyond 100."""
+    expr = expr.replace(lambda e: isinstance(e, (sp.cosh, sp.sinh)), lambda e: e.rewrite(sp.exp))
     if expr.has(DOTS):
         block, _ = nested_pattern(expr)
         outer = sp.lambdify((var, DOTS), expr, modules="mpmath")
@@ -658,6 +676,8 @@ def mp_function(expr, var):
 
     def g(x):
         y = f(x)
+        if complex_ok:
+            return mpmath.mpmathify(y)
         if isinstance(y, mpmath.mpc):
             if abs(y.imag) > 1e-20 * max(1, abs(y.real)):
                 raise ValueError("complex value")
@@ -694,6 +714,7 @@ def breakpoints(expr, var, a, b):
 
 
 JUMP_MAX = 200      # more jumps than this in the range: not split (the integral is left to the methods)
+LINEAR_JUMP_MAX = 20000     # the same for a linear inside (m x + c), whose jumps are found without solveset
 
 
 def jumps(expr, var, a, b):
@@ -728,6 +749,13 @@ def jumps(expr, var, a, b):
                 vals = [gf(a + (b - a) * mpmath.mpf(i) / 400) for i in range(401)]
                 vals = [mpmath.re(v) for v in vals if mpmath.isfinite(v)]
                 levels = range(int(mpmath.floor(min(vals))), int(mpmath.ceil(max(vals))) + 1)
+            poly = sp.Poly(g, var) if g not in zeros and g.is_polynomial(var) else None
+            if poly is not None and poly.degree() == 1 and len(levels) <= LINEAR_JUMP_MAX:
+                # m*x + c = k is solved directly, so even thousands of jumps cost nothing
+                # (from 2026-10-22: \lfloor x\rfloor on [1, 2026])
+                m, c = (mpmath.mpf(str(sp.N(v, 30))) for v in poly.all_coeffs())
+                pts.update(p for p in ((k - c) / m for k in levels) if a < p < b)
+                continue
             if len(levels) > JUMP_MAX:
                 continue
             for k in levels:
@@ -756,8 +784,30 @@ def integrate(expr, var, a, b, method="mpmath", scale=1.0):
     method "mpmath": tanh-sinh (mpmath.quad), or mpmath.quadosc for endless oscillation.
     method "scipy":  QUADPACK (scipy.integrate.quad); for endless oscillation, scipy over
                      each half-period, then repeated averaging of the partial sums.
-    Both split the range at the corners found by breakpoints()."""
-    f = mp_function(expr, var)
+    Both split the range at the corners found by breakpoints().
+    A complex integrand (one with i, from 2026-10-22) is done as two real integrals, of its
+    real and imaginary parts, by the same method; the result is then an mpc, and the caller
+    decides whether its imaginary part is 0 (real_part)."""
+    if expr.has(sp.I):
+        whole = mp_function(expr, var, complex_ok=True)
+        parts = [_integrate_f(lambda x, p=p: p(whole(x)), expr, var, a, b, method, scale)
+                 for p in (mpmath.re, mpmath.im)]
+        return mpmath.mpc(*parts)
+    return _integrate_f(mp_function(expr, var), expr, var, a, b, method, scale)
+
+
+def real_part(v, abs_tol=QUAD_ABS_TOL):
+    """v (an mpf, or an mpc from a complex integrand) as a real number: an imaginary part
+    within the usual allowance of 0 (QUAD_REL_TOL times |v|, or abs_tol) is numerical noise;
+    a larger one means the value is not real (ValueError)."""
+    if not isinstance(v, mpmath.mpc):
+        return v
+    if abs(v.imag) > max(QUAD_REL_TOL * abs(v), abs_tol):
+        raise ValueError(f"not a real number: imaginary part {mpmath.nstr(v.imag, 6)}")
+    return v.real
+
+
+def _integrate_f(f, expr, var, a, b, method, scale):
     pts = [a] + breakpoints(expr, var, a, b) + [b]
     omega = oscillation(expr, var, a, b)
     total = mpmath.mpf(0)
@@ -817,7 +867,10 @@ def quad_integral(integral, method="mpmath"):
     extra = integral.function.free_symbols - {var, DOTS}
     if extra:
         raise Unparseable(f"unknown symbols {sorted(s.name for s in extra)}")
-    return integrate(integral.function, var, to_mp(a), to_mp(b), method)
+    try:
+        return real_part(integrate(integral.function, var, to_mp(a), to_mp(b), method))
+    except ValueError as exc:
+        raise Unparseable(f"the integral is {exc}") from None
 
 
 def value_of(expr, method="mpmath"):
@@ -949,9 +1002,32 @@ def sample_points(a, b, rng):
     return mpmath.tan(mpmath.pi * (u - mpmath.mpf(0.5)))
 
 
-def compare_on_points(ref, test, a, b, rel=POINT_REL_TOL, abs_tol=POINT_ABS_TOL, seed=1):
+def compare_on_points(ref, test, a, b, rel=POINT_REL_TOL, abs_tol=POINT_ABS_TOL, seed=1, complex_ok=False):
     """Compare two functions at N_POINTS random points of (a, b) where ref is defined.
-    Returns (result, detail)."""
+    complex_ok: both may be complex, and are compared as complex numbers (the distance
+    |test - ref| within rel * |ref| or abs_tol). Returns (result, detail)."""
+    if complex_ok:
+        rng = random.Random(seed)
+        used, tries = 0, 0
+        while used < N_POINTS and tries < MAX_TRIES:
+            tries += 1
+            x = sample_points(a, b, rng)
+            try:
+                r = mpmath.mpmathify(ref(x))
+            except (ValueError, ZeroDivisionError, OverflowError, TypeError):
+                continue
+            if not mpmath.isfinite(r):
+                continue
+            try:
+                y = mpmath.mpmathify(test(x))
+            except Exception as exc:
+                return "fail", f"undefined at x = {mpmath.nstr(x, 8)} ({type(exc).__name__}), where the website's integrand is {mpmath.nstr(r, 10)}"
+            if not mpmath.isfinite(y) or abs(y - r) > max(rel * abs(r), abs_tol):
+                return "fail", f"at x = {mpmath.nstr(x, 8)}: {mpmath.nstr(y, 12)} but the website's integrand gives {mpmath.nstr(r, 12)}"
+            used += 1
+        if used < MIN_POINTS:
+            return "unchecked", f"only {used} usable points (need {MIN_POINTS})"
+        return "pass", f"equal at {used} random points"
     rng = random.Random(seed)
     used, tries = 0, 0
     while used < N_POINTS and tries < MAX_TRIES:
@@ -1181,6 +1257,15 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
 
     definite = a is not None
     ref_f = mp_function(integrand, var) if integrand is not None else None
+    # a complex integrand (from 2026-10-22): PROBLEM is compared with it as a complex function;
+    # FUNC (the graph) and exact_integral() with its real part, whose integral is the answer
+    # once quadratures_agree has found that the imaginary part integrates to 0
+    complex_src = integrand is not None and integrand.has(sp.I)
+    real_note = ""
+    if complex_src:
+        ref_whole = mp_function(integrand, var, complex_ok=True)
+        ref_f = lambda x: mpmath.re(ref_whole(x))      # noqa: E731
+        real_note = " (with the real part of the website's complex integrand)"
     lo_hi = (a, b) if definite else _graph_range(cls)
     # the name the video gives the integral: "V" in PROBLEM = "V=\pi\int...", otherwise "I"
     problem_sides = split_top_level(spec_tex(cls.PROBLEM), "=")
@@ -1216,7 +1301,12 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
             # (y - (-2), R^2 - r^2): then only its limits can be compared, and FUNC carries
             # the integrand check (func_matches_source)
             named = word and bool(p.function.free_symbols - {pvar})
-            if not problems and not named:
+            if not problems and not named and complex_src:
+                r, d = compare_on_points(ref_whole, mp_function(p.function, pvar, complex_ok=True), *lo_hi,
+                                         rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL, complex_ok=True)
+                if r != "pass":
+                    problems.append(f"integrand: {d}")
+            elif not problems and not named:
                 r, d = compare_on_points(ref_f, mp_function(p.function, pvar), *lo_hi, rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
                 if r != "pass":
                     problems.append(f"integrand: {d}")
@@ -1227,11 +1317,12 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
                      "so FUNC is compared with the word problem's integrand instead")
             else:
                 set_("problem_matches_source", "fail" if problems else "pass",
-                     "; ".join(problems) or "same limits, same integrand at 20 random points")
+                     "; ".join(problems) or "same limits, same integrand at 20 random points"
+                     + (" (as complex numbers)" if complex_src else ""))
         except Unparseable as exc:
             set_("problem_matches_source", "unchecked", f"PROBLEM could not be read: {exc}")
         r, d = compare_on_points(ref_f, lambda x: cls.FUNC(float(x)), *lo_hi)
-        set_("func_matches_source", r, d)
+        set_("func_matches_source", r, d + real_note)
 
     # --- exact_integral(): its function and interval
     quad_results = []
@@ -1265,7 +1356,7 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
                 problems.insert(0, f"integrand: {d}")
             bad = r == "fail" or (definite and pts and problems and problems[0].startswith("interval"))
             set_("exact_integral_matches_source", "fail" if bad else r,
-                 "; ".join(problems) or d)
+                 "; ".join(problems) or d + real_note)
 
     # --- the boxed answer as shown, and ANSWER_VALUE
     answer_exact = None
@@ -1323,8 +1414,20 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
             abs_tol = QUAD_ABS_TOL * size
             v_mp = integrate(integrand, var, a, b, "mpmath")
             v_sp = integrate(integrand, var, a, b, "scipy", scale=float(size))
-            agree = close(v_mp, v_sp, QUAD_REL_TOL, abs_tol)
             how = []
+            if complex_src:
+                # both parts must agree between the methods, and the imaginary part must be 0
+                agree = (close(mpmath.re(v_mp), mpmath.re(v_sp), QUAD_REL_TOL, abs_tol) and
+                         close(mpmath.im(v_mp), mpmath.im(v_sp), QUAD_REL_TOL, abs_tol))
+                how.append(f"complex integrand: imaginary part integrates to {mpmath.nstr(mpmath.im(v_mp), 3)} "
+                           f"(mpmath), {mpmath.nstr(mpmath.im(v_sp), 3)} (scipy)")
+                try:
+                    v_mp, v_sp = real_part(v_mp, abs_tol), real_part(v_sp, abs_tol)
+                except ValueError:
+                    agree = False
+                    how.append("so the integral is not a real number")
+            else:
+                agree = close(v_mp, v_sp, QUAD_REL_TOL, abs_tol)
             if breakpoints(integrand, var, a, b):
                 how.append("split at the corners of |...| and the jumps of floor, mod and sign")
             if oscillation(integrand, var, a, b):
