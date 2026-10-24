@@ -1,0 +1,38 @@
+Medium Integral - Friday 23 October 2026
+
+1. A sine trapped under a fraction. Which substitution frees it?
+2. The curve is almost flat, so even 4 rectangles are close.
+3. With t equals over 2, sine x becomes a fraction in t.
+4. The t equals over 2 Substitution
+5. t equals over 2: sine x equals 2t1 plus t squared , dx equals 2 dt1 plus t squared
+6. Here 2t1 plus t squared replaces the sine (x) on the bottom.
+7. Changing the Limits
+8. _a to the b f (g(x)) g'(x) dx equals _g(a) to the g(b) f(u) du
+9. x equals 0 gives t equals 0; x equals pi over 2 gives t equals pi over 4 equals 1.
+10. Let t equals over 2; the limits become 0 and 1.
+11. In x: a low, wide strip with area about 0.124.
+12. In t: narrower and taller, with exactly the same area.
+13. Multiply top and bottom by 1 plus t squared.
+14. Expand, then halve the top and the bottom.
+15. Completing the Square
+16. x squared plus 2bx plus c equals (x plus b) squared plus (c minus b squared)
+17. t squared plus t over 6 plus 1: here b equals 1 over 12, and 1 minus 1 over 144 equals 143 over 144.
+18. Take out 6 and complete the square on the bottom.
+19. u-Substitution
+20. f (g(x)) g'(x) dx equals f(u) du, u equals g(x)
+21. Let u equals 12t plus 1root 143, so dt equals root 14312 du.
+22. Integral of 11 plus x squared
+23. 11 plus x squared dx equals inverse x plus C
+24. inverse x is the angle, in radians, whose tangent is x.
+25. One over 1 plus a square, after completing the square.
+26. With y equals inverse x, dx over dy equals squared y equals 1 plus x squared.
+27. So dy over dx equals 11 plus x squared: undo it.
+28. Then the integral is 12root 143du1 plus u squared.
+29. Scale the square to u squared, and the bottom becomes 1 plus u squared.
+30. At t equals 1 the angle is inverse 13root 143; at t equals 0, inverse 1root 143.
+31. Tangent of a Difference
+32. (A minus B) equals A minus B over 1 plus A B
+33. A minus B over 1 plus A B equals 12/root 143156/143 equals root 14313.
+34. Merge the two angles with the tangent of a difference.
+35. Thin rectangles close in on 0.1244.
+36. Takeaway: t equals over 2 turns trig fractions into ordinary fractions.

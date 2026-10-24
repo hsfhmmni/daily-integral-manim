@@ -480,6 +480,43 @@ RULE_CARDS = {
         why=[cap(r"Its square is a double integral of $e^{-(x^{2}+y^{2})}$."),
              cap(r"In polar coordinates that is $\int_{0}^{2\pi}\int_{0}^{\infty} e^{-r^{2}}r\,dr\,d\theta=\pi$.")],
     ),
+    "weierstrass_substitution": dict(
+        name=r"The $t=\tan\frac{x}{2}$ Substitution",
+        statement=r"t=\tan\frac{x}{2}:\quad \sin x=\frac{2t}{1+t^{2}},\quad dx=\frac{2\,dt}{1+t^{2}}",
+        symbols=[cap(r"$t$ is the new variable; also $\cos x=\frac{1-t^{2}}{1+t^{2}}$.")],
+        when=[cap(r"A fraction built from $\sin x$ and $\cos x$.")],
+        why=[cap(r"$\sin x=2\sin\frac{x}{2}\cos\frac{x}{2}=\frac{2\tan\frac{x}{2}}{\sec^{2}\frac{x}{2}}$, and $\sec^{2}\frac{x}{2}=1+t^{2}$.")],
+    ),
+    "differentiation_under_integral": dict(
+        name=r"Differentiating Under the Integral Sign",
+        statement=r"\frac{d}{da}\int_{p}^{q} f(x,a)\,dx=\int_{p}^{q}\frac{\partial f}{\partial a}(x,a)\,dx",
+        symbols=[cap(r"$a$ is a parameter; $\frac{\partial f}{\partial a}$ holds $x$ fixed.")],
+        when=[cap(r"An integral that gets easier once its parameter is differentiated.")],
+        why=[cap(r"An integral is a limit of sums; differentiate each term."),
+             cap(r"This is allowed when $\frac{\partial f}{\partial a}$ is continuous.")],
+    ),
+    "analytic_continuation": dict(
+        name=r"Extending a Formula to Complex Values",
+        statement=r"f(a)=g(a)\ \text{for real } a\quad\Longrightarrow\quad f(a)=g(a)\ \text{for complex } a",
+        symbols=[cap(r"$f$ and $g$ are analytic: smooth in $a$ as complex functions.")],
+        when=[cap(r"A formula proved for real $a$, needed at a complex $a$.")],
+        why=[cap(r"An analytic function is fixed by its values on an interval."),
+             cap(r"So $f-g$, zero on the real line, is zero everywhere.")],
+    ),
+    "sum_of_squares_complex": dict(
+        name=r"Factorising a Sum of Squares",
+        statement=r"1+y^{2}=(1+iy)(1-iy)",
+        symbols=[cap(r"$i$ is the imaginary unit, with $i^{2}=-1$.")],
+        when=[cap(r"One plus a square, like $1+\sin^{4}x$, that will not factorise.")],
+        why=[cap(r"Expanding gives $1-i^{2}y^{2}=1+y^{2}$.")],
+    ),
+    "conjugate_product": dict(
+        name=r"A Number Times Its Conjugate",
+        statement=r"z\,\bar{z}=|z|^{2}=x^{2}+y^{2},\qquad z=x+iy",
+        symbols=[cap(r"$\bar{z}=x-iy$ is the conjugate of $z$.")],
+        when=[cap(r"A product of two conjugate complex numbers.")],
+        why=[cap(r"$(x+iy)(x-iy)=x^{2}-i^{2}y^{2}=x^{2}+y^{2}$.")],
+    ),
 }
 
 
@@ -499,7 +536,8 @@ STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
 TAG_ONLY_LEVELS = ("Hard",)                     # techniques get a corner tag, not a short card
 ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value",
-            "divisor_sum", "contour_shift", "gaussian_integral"}     # always the full card
+            "divisor_sum", "contour_shift", "gaussian_integral", "differentiation_under_integral",
+            "analytic_continuation"}     # always the full card
 
 
 def card_kind(key, difficulty):

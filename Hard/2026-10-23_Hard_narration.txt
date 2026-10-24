@@ -1,0 +1,39 @@
+Hard Integral - Friday 23 October 2026
+
+1. No substitution tames this logarithm. Can the area be exact?
+2. Already at 4 rectangles, the gap is tiny.
+3. One plus a square factorises, once we allow i.
+4. Allow i: 1 plus sine to the 4x equals (1 plus isine squared x)(1 minus isine squared x).
+5. Call I(a) equals _0 to the pi /2log (1 plus asine squared x) dx: a whole family.
+6. Differentiating Under the Integral Sign
+7. d over da_p to the q f(x,a) dx equals _p to the q f over a(x,a) dx
+8. a is a parameter; f over a holds x fixed.
+9. An integral that gets easier once its parameter is differentiated.
+10. An integral is a limit of sums; differentiate each term.
+11. This is allowed when f over a is continuous.
+12. Here f equals log (1 plus asine squared x), so f over a equals sine squared x1 plus asine squared x.
+13. For real a> minus 1, differentiate with respect to a inside.
+14. Split: sine squared x1 plus asine squared x equals 1 over a (1 minus 11 plus asine squared x).
+15. Divide by cos squared x and let t equals x, so dt equals squared x dx.
+16. Integral of 11 plus x squared
+17. 11 plus x squared dx equals inverse x plus C
+18. inverse x is the angle, in radians, whose tangent is x.
+19. One over 1 plus a square, after completing the square.
+20. With y equals inverse x, dx over dy equals squared y equals 1 plus x squared.
+21. So dy over dx equals 11 plus x squared: undo it.
+22. With u equals root 1 plus a t it is 1root 1 plus a_0 to the infinitydu1 plus u squared.
+23. The inverse climbs to pi over 2 as t tends to infinity.
+24. Factor a equals (root 1 plus a minus 1)(root 1 plus a plus 1) and cancel.
+25. This has that derivative, and both sides are 0 at a equals 0.
+26. Extending a Formula to Complex Values
+27. f(a) equals g(a)\ for real a f(a) equals g(a)\ for complex a
+28. f and g are analytic: smooth in a as complex functions.
+29. A formula proved for real a, needed at a complex a.
+30. An analytic function is fixed by its values on an interval.
+31. So f minus g, zero on the real line, is zero everywhere.
+32. Here f equals I(a) and g equals pi log 1 plus root 1 plus a2, both analytic.
+33. Both sides are analytic in a, so put a equals plus or minus i and add.
+34. The factors are conjugates, so their product is a modulus squared.
+35. With root 1 plus i equals p plus iq: p squared equals 1 plus root 22, p squared plus q squared equals root 2.
+36. Thin rectangles close in on 0.4470.
+37. Takeaway: give the integral a parameter, then differentiate in it.

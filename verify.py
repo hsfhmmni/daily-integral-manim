@@ -858,8 +858,9 @@ def _oscillating(f, lo, hi, omega, method):
     return mpmath.mpf(seq[-1])
 
 
-def quad_integral(integral, method="mpmath"):
-    """Numerical value of a definite sympy Integral (one variable)."""
+def quad_integral(integral, method="mpmath", complex_ok=False):
+    """Numerical value of a definite sympy Integral (one variable). complex_ok: a complex
+    value is returned as an mpc (value_of then decides whether the whole line is real)."""
     if len(integral.limits) != 1 or len(integral.limits[0]) != 3:
         raise Unparseable("not a definite integral in one variable")
     var, a, b = integral.limits[0]
@@ -867,10 +868,20 @@ def quad_integral(integral, method="mpmath"):
     extra = integral.function.free_symbols - {var, DOTS}
     if extra:
         raise Unparseable(f"unknown symbols {sorted(s.name for s in extra)}")
+    v = integrate(integral.function, var, to_mp(a), to_mp(b), method)
+    if complex_ok:
+        return v
     try:
-        return real_part(integrate(integral.function, var, to_mp(a), to_mp(b), method))
+        return real_part(v)
     except ValueError as exc:
         raise Unparseable(f"the integral is {exc}") from None
+
+
+def _as_sympy_number(v):
+    """An mpf or mpc as a sympy number (28 significant digits)."""
+    if isinstance(v, mpmath.mpc):
+        return sp.Float(mpmath.nstr(v.real, 28), 30) + sp.I * sp.Float(mpmath.nstr(v.imag, 28), 30)
+    return sp.Float(mpmath.nstr(v, 28), 30)
 
 
 def value_of(expr, method="mpmath"):
@@ -885,8 +896,10 @@ def value_of(expr, method="mpmath"):
             return value_of(expr, method)[0], False
     exact = not expr.has(sp.Integral)
     if not exact:
+        # each integral may be complex (from 2026-10-23): two conjugate integrals can add up to
+        # a real number, so only the whole line has to be real (checked below)
         expr = expr.replace(lambda e: isinstance(e, sp.Integral),
-                            lambda e: sp.Float(mpmath.nstr(quad_integral(e, method), 28), 30))
+                            lambda e: _as_sympy_number(quad_integral(e, method, complex_ok=True)))
     if expr.free_symbols:
         raise Unparseable(f"unknown symbols {sorted(s.name for s in expr.free_symbols)}")
     if expr.has(sp.Sum, sp.Product):             # added up term by term (series_value), not by sympy
@@ -897,10 +910,18 @@ def value_of(expr, method="mpmath"):
         if not mpmath.isfinite(v):
             raise Unparseable("not a finite real number")
         return v, exact
-    z = complex(sp.N(expr, 30))
-    if not math.isfinite(z.real) or abs(z.imag) > 1e-20 * max(1.0, abs(z.real)):
+    n = sp.N(expr, 30)
+    z = complex(n)
+    if not math.isfinite(z.real) or not math.isfinite(z.imag):
         raise Unparseable("not a finite real number")
-    return mpmath.mpf(str(sp.N(sp.re(expr), 30))), exact
+    # an exact expression may only carry rounding noise; one with numerical integrals the
+    # usual allowance of real_part
+    allowed = 1e-20 * max(1.0, abs(z.real)) if exact else max(QUAD_REL_TOL * abs(z), QUAD_ABS_TOL)
+    if abs(z.imag) > allowed:
+        raise Unparseable(f"not a real number: imaginary part {z.imag:.6g}")
+    # the real part of the evaluated number: sp.re of an unevaluated product of complex
+    # square roots stays symbolic, and its text is not a number mpmath can read
+    return mpmath.mpf(str(sp.re(n))), exact
 
 
 LIMIT_STEP = mpmath.mpf("0.1")      # mpmath: the expression at z0 + 0.1/2^k (mpmath.limit, exp=True)
@@ -1121,8 +1142,97 @@ def video_path(date, level, root=ROOT):
     return None
 
 
+# ---------------------------------------------------------------- functions the video defines
+IDENTITY_POINTS = (0.137, 0.291, 0.533, 0.712, 0.948)   # where in the sample range an identity is checked
+
+
+def read_definitions(cls):
+    r"""A script's DEFINITIONS (from 2026-10-23): functions the video defines and then uses in
+    its lines, such as I(a) = \int_0^{\pi/2}\ln(1+a\sin^2 x)\,dx:
+
+        DEFINITIONS = {"I": dict(of="a", tex=r"\int_{0}^{\frac{\pi}{2}}\ln(1+a\sin^{2}x)\,dx",
+                                 sample=(-0.5, 3))}
+
+    of: the function's variable; tex: its value; sample: the real range in which a line that is
+    an equation in that variable (I'(a) = ...) is checked. The definition is never trusted on its
+    own: a line such as I(i)+I(-i) is still compared with the website's integral.
+    Returns {name: dict(var, body, sample)}."""
+    defs = {}
+    for name, d in (getattr(cls, "DEFINITIONS", None) or {}).items():
+        var = sp.Symbol(d["of"])
+        body = to_sympy(d["tex"] if isinstance(d["tex"], str) else spec_tex(d["tex"]))
+        extra = body.free_symbols - {var}
+        if extra:
+            raise Unparseable(f"the definition of {name} uses unknown symbols {sorted(s.name for s in extra)}")
+        lo, hi = d.get("sample", (0.1, 2.0))
+        defs[name] = dict(var=var, body=body, sample=(float(lo), float(hi)))
+    return defs
+
+
+def _defined_calls(expr, defs):
+    """The calls I(z), I'(z), ... in expr of functions in defs."""
+    from sympy.core.function import AppliedUndef
+    return [e for e in expr.atoms(AppliedUndef)
+            if e.func.__name__.rstrip("'") in defs and len(e.args) == 1]
+
+
+def expand_definitions(expr, defs):
+    """expr with each I(z) replaced by the definition at z, and each I'(z), I''(z), ... by the
+    definition differentiated in its variable (an integral with fixed limits is differentiated
+    under the integral sign, by sympy) at z."""
+    calls = _defined_calls(expr, defs)
+
+    def value(e):
+        name = e.func.__name__
+        d = defs[name.rstrip("'")]
+        body = d["body"]
+        for _ in range(len(name) - len(name.rstrip("'"))):
+            body = sp.diff(body, d["var"])
+        return body.subs(d["var"], e.args[0])
+    return expr.xreplace({c: value(c) for c in calls})
+
+
+def identity_line(tex, defs, method="mpmath", abs_tol=QUAD_ABS_TOL):
+    """A line that uses a defined function and is an equation in its variable (I'(a) = ...):
+    every side is evaluated at IDENTITY_POINTS across the definition's sample range, and all
+    sides must agree at every point. Returns None for any other line, else (ok, detail) with
+    ok True (it holds), False (it fails at some point) or None (it could not be evaluated)."""
+    if not defs:
+        return None
+    sides = [s.strip() for s in split_top_level(tex, "=")]
+    try:
+        parsed = [to_sympy(s) for s in sides]
+    except Unparseable:
+        return None
+    if not any(_defined_calls(e, defs) for e in parsed):
+        return None
+    exprs = [expand_definitions(e, defs) for e in parsed]
+    free = set().union(*(e.free_symbols for e in exprs)) - {DOTS}
+    used = free & {d["var"] for d in defs.values()}
+    if not used:
+        return None                      # a value such as I(i)+I(-i): line_values reads it
+    names = ", ".join(sorted(s.name for s in free))
+    if len(used) > 1 or free - used:
+        return None, f"an equation in {names}"
+    if len(sides) < 2:
+        return None, f"an expression in {names}, not an equation"
+    var = used.pop()
+    lo, hi = next(d["sample"] for d in defs.values() if d["var"] == var)
+    for t in IDENTITY_POINTS:
+        pt = sp.Float(lo + (hi - lo) * t, 30)
+        try:
+            vals = [value_of(e.subs(var, pt), method)[0] for e in exprs]
+        except (Unparseable, ValueError, ZeroDivisionError, TypeError, ArithmeticError) as exc:
+            return None, f"at {var} = {float(pt):.4g}: {exc}"
+        for k, v in enumerate(vals[1:], 2):
+            if not close(v, vals[0], QUAD_REL_TOL, abs_tol):
+                return False, (f"at {var} = {float(pt):.4g} side 1 is {mpmath.nstr(vals[0], 12)} "
+                               f"but side {k} is {mpmath.nstr(v, 12)}")
+    return True, f"holds at {len(IDENTITY_POINTS)} points {var} in [{lo:g}, {hi:g}]"
+
+
 # ---------------------------------------------------------------- the checks
-def line_values(tex, main="I", method="mpmath"):
+def line_values(tex, main="I", method="mpmath", defs=None):
     """The value of the integral that one line states, from each side of its = signs.
     A side "I" or "2I" (main: the name the video gives the integral) names it; every other
     side is evaluated. A line about another named quantity (a side that is a different
@@ -1154,7 +1264,10 @@ def line_values(tex, main="I", method="mpmath"):
         if m and len(sides) > 1:
             return [], [f"the line is about another quantity, {m.group(2)}"]
         try:
-            v, _ = value_of(to_sympy(s), method)
+            e = to_sympy(s)
+            if defs:
+                e = expand_definitions(e, defs)      # I(i)+I(-i): the defined function's values
+            v, _ = value_of(e, method)
             values.append(v)
         except (Unparseable, ValueError, ZeroDivisionError, TypeError, ArithmeticError) as exc:
             unread.append(f"{s[:60]} ({exc})")
@@ -1493,6 +1606,11 @@ def _check_steps(cls, out, reference, set_, abs_tol=QUAD_ABS_TOL, main="I"):
     colors = getattr(cls, "COLORS", {})
     prev, prev_label = reference, "the website's integral"
     any_fail, misuse, checked = False, [], 0
+    try:
+        defs = read_definitions(cls)
+    except (Unparseable, KeyError, TypeError) as exc:
+        defs = {}
+        out["definitions_error"] = str(exc)          # lines using them stay unchecked
     for i, step in enumerate(steps, 1):
         tex = spec_tex(step["tex"])
         entry = dict(n=i, tex=tex)
@@ -1512,12 +1630,32 @@ def _check_steps(cls, out, reference, set_, abs_tol=QUAD_ABS_TOL, main="I"):
             out["unchecked_steps"].append(f"step {i}: {tex[:70]} (no reference value)")
             out["steps"].append(entry)
             continue
-        values, unread = line_values(tex, main)
+        ident = identity_line(tex, defs, abs_tol=abs_tol)
+        if ident is not None:
+            # an equation in a defined function's variable (I'(a) = ...): it states no value
+            # of the integral, so it is checked on its own and prev stays as it is
+            ok, detail = ident
+            if ok is False:
+                again = identity_line(tex, defs, method="scipy", abs_tol=abs_tol)
+                if again and again[0]:
+                    ok, detail = None, f"mpmath finds {detail}, but scipy finds it holds"
+            if ok:
+                checked += 1
+                entry.update(result="pass", detail=f"identity: {detail}")
+            elif ok is None:
+                entry.update(result="unchecked", detail=detail)
+                out["unchecked_steps"].append(f"step {i}: {tex[:70]} ({detail[:90]})")
+            else:
+                any_fail = True
+                entry.update(result="fail", detail=f"identity fails: {detail}")
+            out["steps"].append(entry)
+            continue
+        values, unread = line_values(tex, main, defs=defs)
         bad = [v for v in values if not close(v, prev, QUAD_REL_TOL, abs_tol)]
         if bad:
             # before calling a line wrong, do it again the other way: a line fails only if
             # scipy agrees that it differs; if the two methods disagree, it is unchecked
-            values2, _ = line_values(tex, main, method="scipy")
+            values2, _ = line_values(tex, main, method="scipy", defs=defs)
             if values2 and not [v for v in values2 if not close(v, prev, QUAD_REL_TOL, abs_tol)]:
                 values, unread = [], [f"mpmath gives {mpmath.nstr(bad[0], 12)} but scipy agrees with "
                                       f"{prev_label} ({mpmath.nstr(prev, 12)}): numerical integration unreliable here"]
