@@ -115,7 +115,7 @@ POINT_ABS_TOL = 1e-10
 SAME_REL_TOL = 1e-12          # two exact formulas for the same function (PROBLEM, exact_integral), compared
 SAME_ABS_TOL = 1e-14          # after rounding to ordinary double precision (about 16 digits)
 N_POINTS, MIN_POINTS, MAX_TRIES = 20, 10, 400
-VARIABLES = ("x", "t", "u", "v", "y", "z", "theta", "phi")
+VARIABLES = ("x", "t", "u", "v", "y", "z", "theta", "phi", "omega")
 
 CHECKS = ["source_file", "source_unchanged", "date_matches", "problem_matches_source",
           "func_matches_source", "exact_integral_matches_source", "answer_tex_matches_value",
@@ -151,7 +151,10 @@ def _group(s, i):
 
 def normalise(tex):
     """Remove spacing and sizing commands sympy does not need."""
-    t = re.sub(r"\\(?:Big|big|Bigg|bigg|left|right)(?![a-zA-Z])", "", tex)
+    # a leading instruction in words ("\text{Find } \int ...", 2026-10-24) is not maths: sympy
+    # would read it as the product of the letters F, i, n, d
+    t = re.sub(r"^\s*\\text\s*\{[^{}$]*\}", "", tex)
+    t = re.sub(r"\\(?:Big|big|Bigg|bigg|left|right)(?![a-zA-Z])", "", t)
     t = re.sub(r"\\[tdc]frac", r"\\frac", t)          # \cfrac: a continued fraction's display form
     t = re.sub(r"\\(?:cdots|ldots|ddots|vdots)(?![a-zA-Z])", r"\\dots", t)
     t = re.sub(r"\\(?:,|;|!|:|quad|qquad|displaystyle)", " ", t)
@@ -163,6 +166,9 @@ def normalise(tex):
     # \ln 2\cdot\ln 3 means ln(2)*ln(3); sympy would read ln(2*ln 3). A bare argument made of
     # numbers, letters and Greek letters ends where something else starts.
     t = FUNC_ATOM.sub(lambda m: f"{m.group(1)}({m.group(2)})", t)
+    # \sech\frac{\pi\omega}{2}: a function sympy does not know by name (sech, tanhc, ...) is
+    # read as a letter times the fraction, so the fraction gets brackets (from 2026-10-24)
+    t = FUNC_FRAC.sub(lambda m: f"{m.group(1)}({m.group(2)})", t)
     return _wrap_integrals(t).strip()
 
 
@@ -172,6 +178,18 @@ def normalise(tex):
 # \lfloor x\rfloor and \lceil x\rceil sympy already reads as floor and ceiling.
 NAMED_OPERATORS = {"mod": r"\mod", "floor": r"\floor", "ceil": r"\ceil", "sgn": r"\sgn", "sign": r"\sgn"}
 NAMED_FUNCTIONS = {"mod": (2, sp.Mod), "floor": (1, sp.floor), "ceil": (1, sp.ceiling), "sgn": (1, sp.sign)}
+# The reciprocal hyperbolic functions, and the cardinal functions trigc(x) = trig(x)/x (from
+# 2026-10-24, as the website defines them: \operatorname{tanhc}(x) = \tanh(x)/x). The limit at
+# x = 0 is never needed: a numerical integral does not sample an endpoint, and the random points
+# of the comparisons are never exactly 0.
+HYPERBOLIC = {"sech": sp.sech, "csch": sp.csch, "coth": sp.coth}
+CARDINAL = {"sinc": sp.sin, "cosc": sp.cos, "tanc": sp.tan, "sinhc": sp.sinh, "coshc": sp.cosh, "tanhc": sp.tanh}
+for _name, _f in HYPERBOLIC.items():
+    NAMED_OPERATORS[_name] = "\\" + _name
+    NAMED_FUNCTIONS[_name] = (1, _f)
+for _name, _f in CARDINAL.items():
+    NAMED_OPERATORS[_name] = "\\" + _name
+    NAMED_FUNCTIONS[_name] = (1, lambda u, _f=_f: _f(u) / u)
 # notation sympy misreads without complaint: refused rather than guessed
 MISREAD = [(r"\\[bp]mod(?![a-zA-Z])", r"\bmod or \pmod (written a \bmod b)"),
            (r"\\\{", r"\{...\} (a fractional part or a set)")]
@@ -192,7 +210,8 @@ def _named_operators(t):
     return t
 
 
-FUNCS = r"\\(?:sinh|cosh|tanh|sin|cos|tan|sec|csc|cot|ln|log|arcsin|arccos|arctan)(?![a-zA-Z])"
+FUNCS = (r"\\(?:sinhc|coshc|tanhc|sinc|cosc|tanc|sech|csch|coth|sinh|cosh|tanh|sin|cos|tan|sec|csc|cot|ln|log"
+         r"|arcsin|arccos|arctan)(?![a-zA-Z])")
 GREEK = r"\\(?:theta|phi|varphi|alpha|beta|pi)(?![a-zA-Z])"
 # the argument of a function written without brackets: numbers, single letters and Greek
 # letters only (never another function: \ln\cos(x) is ln(cos(x)))
@@ -201,7 +220,8 @@ FUNC_ARG = re.compile(r"(" + FUNCS + r"(?:\^\{[^{}]*\}|\^\d)?)\s*"
 FUNC_ATOM = re.compile(r"(" + FUNCS + r"(?:\^\{[^{}]*\}|\^\d)?)\s*"
                        r"((?:\d+(?:\.\d+)?|[a-zA-Z](?![a-zA-Z])|" + GREEK + r")++)"
                        r"(?![\(\^_{\[])")
-DIFFERENTIAL = re.compile(r"d(?:[a-zA-Z]|\\(?:theta|phi|varphi))(?![a-zA-Z])")
+FUNC_FRAC = re.compile(r"(" + FUNCS + r")\s*(\\frac\{(?:[^{}]|\{[^{}]*\})*\}\{(?:[^{}]|\{[^{}]*\})*\})")
+DIFFERENTIAL = re.compile(r"d(?:[a-zA-Z]|\\(?:theta|phi|varphi|omega))(?![a-zA-Z])")
 
 
 def _wrap_integrals(t):
@@ -212,7 +232,9 @@ def _wrap_integrals(t):
         k = t.find(r"\int", i)
         if k < 0:
             return out + t[i:]
-        depth, j, end = 0, k + 4, None
+        # an \int inside this one (a double integral, \int\int f\,d\omega\,dt) needs its own
+        # differential first: this integral ends at the differential that is left over
+        depth, j, end, pending, last_d = 0, k + 4, None, 1, None
         while j < len(t):
             c = t[j]
             if c in "{([":
@@ -221,16 +243,43 @@ def _wrap_integrals(t):
                 depth -= 1
                 if depth < 0:
                     break
+            elif depth == 0 and t.startswith(r"\int", j) and not t[j + 4:j + 5].isalpha():
+                pending += 1
+                j += 4
+                continue
             elif depth == 0 and c == "d" and (j == 0 or not t[j - 1].isalpha() or t[j - 2:j] == "\\,"):
                 m = DIFFERENTIAL.match(t, j)
                 if m:
-                    end = m.end()
-                    break
+                    pending -= 1
+                    if pending == 0:
+                        end, last_d = m.end(), j
+                        break
+                    j = m.end()
+                    continue
             j += 1
         if end is None:                                  # no differential found: leave it as it is
             return out + t[i:]
-        out += t[i:k] + "(" + t[k:end] + ")"
+        out += t[i:k] + r"(\int" + _wrap_integrals(t[k + 4:last_d]) + t[last_d:end] + ")"
         i = end
+
+
+# Named constants (from 2026-10-24): a script may write a well-known constant by its letter,
+# CONSTANTS = {"G": "catalan"}. Only the names below are accepted, and the value comes from
+# sympy, never from the script. They apply to the script's lines only, not to the website's TeX
+# (set after the website's integral has been read, in verify_level).
+KNOWN_CONSTANTS = {"catalan": sp.Catalan, "euler_gamma": sp.EulerGamma, "golden_ratio": sp.GoldenRatio,
+                   "apery": sp.zeta(3)}
+SCRIPT_CONSTANTS = {}
+
+
+def read_constants(cls):
+    """A script's CONSTANTS as {letter: sympy constant}; an unknown name is refused."""
+    out = {}
+    for letter, name in (getattr(cls, "CONSTANTS", None) or {}).items():
+        if name not in KNOWN_CONSTANTS:
+            raise Unparseable(f"CONSTANTS: {name!r} is not one of {sorted(KNOWN_CONSTANTS)}")
+        out[letter] = KNOWN_CONSTANTS[name]
+    return out
 
 
 def _fix(expr):
@@ -244,6 +293,8 @@ def _fix(expr):
                         and len(e.args) == NAMED_FUNCTIONS[e.func.__name__][0],
                         lambda e: NAMED_FUNCTIONS[e.func.__name__][1](*e.args))
     expr = expr.subs({sp.Symbol("e"): sp.E, sp.Symbol("pi"): sp.pi})
+    if SCRIPT_CONSTANTS:
+        expr = expr.subs({sp.Symbol(k): v for k, v in SCRIPT_CONSTANTS.items()})
     # the letter i is the imaginary unit (from 2026-10-22: (\cosh x+\sinh x)^{1+i}), unless
     # a sum, product or integral uses it as its own variable (\sum_{i=1}^{n})
     i = sp.Symbol("i")
@@ -864,6 +915,10 @@ def quad_integral(integral, method="mpmath", complex_ok=False):
     if len(integral.limits) != 1 or len(integral.limits[0]) != 3:
         raise Unparseable("not a definite integral in one variable")
     var, a, b = integral.limits[0]
+    if integral.function.has(sp.Integral):
+        # from 2026-10-25: an inner integral would have to be done anew at every point of the
+        # outer one, by both methods; tried on 2026-10-24's lines, that took over 10 minutes
+        raise Unparseable("a double integral (an integral inside an integral) is not evaluated")
     _no_unknown_functions(integral.function)
     extra = integral.function.free_symbols - {var, DOTS}
     if extra:
@@ -895,6 +950,8 @@ def value_of(expr, method="mpmath"):
         if not expr.has(sp.Integral):
             return value_of(expr, method)[0], False
     exact = not expr.has(sp.Integral)
+    if any(e.function.has(sp.Integral) for e in expr.atoms(sp.Integral)):
+        raise Unparseable("a double integral (an integral inside an integral) is not evaluated")
     if not exact:
         # each integral may be complex (from 2026-10-23): two conjugate integrals can add up to
         # a real number, so only the whole line has to be real (checked below)
@@ -1277,6 +1334,7 @@ def line_values(tex, main="I", method="mpmath", defs=None):
 def check_video(date, level, folder=None, source_dir=None, root=ROOT):
     """Run every check for one video. Returns a dict with checks, status and details."""
     checks = {c: dict(result="unchecked", detail="not run") for c in CHECKS}
+    SCRIPT_CONSTANTS.clear()            # a previous video's constants never carry over
     out = dict(date=date, level=level, checks=checks, unchecked_steps=[], check_false_lines=[],
                steps=[], script_sha256="", video_sha256="")
 
@@ -1362,6 +1420,12 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
         else:
             set_("source_unchanged", "pass", f"sha256 {got[:12]}... as saved")
 
+    # the script's named constants (CONSTANTS), for its own lines only: the website's TeX was read above
+    constants_error = None
+    try:
+        SCRIPT_CONSTANTS.update(read_constants(cls))
+    except Unparseable as exc:
+        constants_error = str(exc)
     if source is not None:
         set_("date_matches", "pass" if cls.DATE == source["date"] else "fail",
              f"script DATE {cls.DATE}, website {source['date']} ({source.get('page_date_text')})")
@@ -1492,6 +1556,8 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
             set_("answer_tex_matches_value", r, f"derivative of ANSWER vs the integrand: {d}")
     except Unparseable as exc:
         set_("answer_tex_matches_value", "unchecked", f"ANSWER could not be read: {exc}")
+    if constants_error:                                  # a CONSTANTS entry verify.py does not know
+        set_("answer_tex_matches_value", "fail", constants_error)
 
     # --- the reference value, two independent ways, from the website's integrand only
     ref_value = None

@@ -41,6 +41,11 @@ because its terms jump about. Notation that SymPy used to misread without compla
 refused instead: `\{x\}` (it read `\{2.5\}` as 2.5), `a \bmod b` and any unknown
 `\operatorname{...}`. Infinite products (`\prod`) are refused too.
 
+From 2026-10-24 it also reads `\operatorname{sech}` (with `csch` and `coth`) and the cardinal
+functions the website defines, such as `\operatorname{tanhc}(x) = \tanh(x)/x`. A video may name a
+well-known constant by its letter (Catalan's constant G, for example), but only from a short fixed
+list, and the value always comes from SymPy, never from the script.
+
 ### 2. Every check compares the script with that source, not with itself
 `verify.py` reads the saved TeX with SymPy and checks, independently:
 

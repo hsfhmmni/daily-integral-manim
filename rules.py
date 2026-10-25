@@ -517,6 +517,63 @@ RULE_CARDS = {
         when=[cap(r"A product of two conjugate complex numbers.")],
         why=[cap(r"$(x+iy)(x-iy)=x^{2}-i^{2}y^{2}=x^{2}+y^{2}$.")],
     ),
+    "hyperbolic_double_angle": dict(
+        name=r"Hyperbolic Double Angles",
+        statement=r"\sinh 2x=2\sinh x\cosh x,\qquad \cosh 2x=1+2\sinh^{2}x",
+        symbols=[cap(r"$\sinh x=\frac{e^{x}-e^{-x}}{2}$ and $\cosh x=\frac{e^{x}+e^{-x}}{2}$.")],
+        when=[cap(r"$\tanh$, $\sinh$ or $\cosh$ of $2x$ beside the same of $x$.")],
+        why=[cap(r"Write both sides with exponentials: they match term by term.")],
+    ),
+    "sech_cosine_transform": dict(
+        name=r"The Cosine Transform of $\operatorname{sech}$",
+        statement=r"\operatorname{sech}t=\int_{0}^{\infty}\operatorname{sech}\frac{\pi\omega}{2}\,\cos\omega t\,d\omega",
+        symbols=[cap(r"$\omega$ is a frequency; $\cos\omega t$ is a wave in $t$.")],
+        when=[cap(r"$\operatorname{sech}t$ where cosine waves would be easier.")],
+        why=[cap(r"$\operatorname{sech}$ is its own Fourier transform, up to scaling.")],
+    ),
+    "swap_order": dict(
+        name=r"Swapping the Order of Integration",
+        statement=r"\int_{0}^{\infty}\!\!\int_{0}^{\infty} f\,dt\,d\omega=\int_{0}^{\infty}\!\!\int_{0}^{\infty} f\,d\omega\,dt",
+        symbols=[cap(r"$f(\omega,t)$ is a function of two variables.")],
+        when=[cap(r"A double integral easier in the other order.")],
+        why=[cap(r"Both orders add up the same volume, if $f\ge 0$ or $\int\!\!\int|f|<\infty$.")],
+    ),
+    "one_minus_cos_integral": dict(
+        name=r"The Integral of $\frac{1-\cos at}{t^{2}}$",
+        statement=r"\int_{0}^{\infty}\frac{1-\cos at}{t^{2}}\,dt=\frac{\pi a}{2},\qquad a\ge 0",
+        symbols=[cap(r"$a$ is a fixed frequency; $t$ is the variable.")],
+        when=[cap(r"$1-\cos at$ over $t^{2}$, from $0$ to $\infty$.")],
+        why=[cap(r"By parts it is $a\int_{0}^{\infty}\frac{\sin at}{t}\,dt$, and that is $a\cdot\frac{\pi}{2}$.")],
+    ),
+    "geometric_series": dict(
+        name=r"Geometric Series",
+        statement=r"\frac{1}{1-r}=\sum_{n=0}^{\infty}r^{n},\qquad |r|<1",
+        symbols=[cap(r"$r$ is the common ratio between terms.")],
+        when=[cap(r"A fraction $\frac{1}{1-r}$ with a ratio $|r|<1$.")],
+        why=[cap(r"$(1-r)(1+r+\cdots+r^{N})=1-r^{N+1}$, and $r^{N+1}\to 0$.")],
+    ),
+    "catalan_constant": dict(
+        name=r"Catalan's Constant",
+        statement=r"G=\sum_{n=0}^{\infty}\frac{(-1)^{n}}{(2n+1)^{2}}=1-\frac{1}{9}+\frac{1}{25}-\cdots\approx 0.9160",
+        symbols=[cap(r"$G$ is a named constant, like $\pi$ or $e$.")],
+        when=[cap(r"An alternating sum of one over the odd squares.")],
+        why=[cap(r"No simpler closed form is known.")],
+    ),
+    "log_cosine_series": dict(
+        name=r"The Fourier Series of a Log of Cosines",
+        statement=r"\ln(1+2r\cos\psi+r^{2})=2\sum_{n=1}^{\infty}\frac{(-1)^{n+1}r^{n}}{n}\cos n\psi,\qquad |r|<1",
+        symbols=[cap(r"$r$ is fixed with $|r|<1$; $\psi$ is any angle.")],
+        when=[cap(r"A logarithm of $a+b\cos\psi$, with $a>|b|$.")],
+        why=[cap(r"$1+2r\cos\psi+r^{2}=|1+re^{i\psi}|^{2}$: expand $\ln(1+re^{i\psi})$.")],
+    ),
+    "dilogarithm": dict(
+        name=r"The Dilogarithm and Landen's Identity",
+        statement=(r"\operatorname{Li}_{2}(z)=\sum_{n=1}^{\infty}\frac{z^{n}}{n^{2}},\qquad"
+                   r" \operatorname{Li}_{2}(z)+\operatorname{Li}_{2}\Big(\frac{z}{z-1}\Big)=-\frac{1}{2}\ln^{2}(1-z)"),
+        symbols=[cap(r"$z$ is a complex number with $|z|\le 1$.")],
+        when=[cap(r"A sum of powers over squares, $\sum\frac{z^{n}}{n^{2}}$.")],
+        why=[cap(r"Differentiate both sides in $z$: they agree, and match at $z=0$.")],
+    ),
 }
 
 
@@ -537,7 +594,8 @@ STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standa
 TAG_ONLY_LEVELS = ("Hard",)                     # techniques get a corner tag, not a short card
 ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value",
             "divisor_sum", "contour_shift", "gaussian_integral", "differentiation_under_integral",
-            "analytic_continuation"}     # always the full card
+            "analytic_continuation", "sech_cosine_transform", "swap_order", "one_minus_cos_integral",
+            "catalan_constant", "log_cosine_series", "dilogarithm"}     # always the full card
 
 
 def card_kind(key, difficulty):

@@ -1,0 +1,40 @@
+Hard Integral - Saturday 24 October 2026
+
+1. tanhc (x) equals tanh x over x. Is this endless area exact?
+2. Zoomed out: the thin tail beyond 50 still adds about 0.01.
+3. The two tanh factors merge into a single sech.
+4. Unfold tanhc; then tanh x tanh 2x equals 2 sinh squared x over cosh 2x equals 1 minus sech 2x.
+5. Let t equals 2x: then dx over 2x squared equals dt over t squared, and the limits stay.
+6. The Cosine Transform of sech
+7. sech t equals the integral from 0 to infinity of sech pi omega over 2 cos omega t d omega
+8. omega is a frequency; cos omega t is a wave in t.
+9. sech t where cosine waves would be easier.
+10. sech is its own Fourier transform, up to scaling.
+11. At t equals 0 it gives 1; subtract to get 1 minus cos omega t.
+12. Write sech t as a blend of cosine waves cos omega t.
+13. Swapping the Order of Integration
+14. the integral from 0 to infinity of \!\! the integral from 0 to infinity of f dt d omega equals the integral from 0 to infinity of \!\! the integral from 0 to infinity of f d omega dt
+15. f(omega ,t) is a function of two variables.
+16. A double integral easier in the other order.
+17. Both orders add up the same volume, if f at least 0 or the integral of \!\! the integral of |f|<infinity.
+18. Here f equals sech pi omega over 2 times 1 minus cos omega t over t squared at least 0.
+19. Everything is positive, so swap the order.
+20. The Integral of 1 minus cos at over t squared
+21. the integral from 0 to infinity of 1 minus cos at over t squared dt equals pi a over 2, a at least 0
+22. a is a fixed frequency; t is the variable.
+23. 1 minus cos at over t squared, from 0 to infinity.
+24. By parts it is a the integral from 0 to infinity of sine at over t dt, and that is a times pi over 2.
+25. Here a equals omega at least 0, so the inner integral is pi omega over 2.
+26. The inner integral is just pi omega over 2.
+27. Let v equals pi omega over 2, so d omega equals 2 over pi dv.
+28. sech v equals 2e to the minus v over 1 plus e to the minus 2v: a geometric series in minus e to the minus 2v.
+29. Each term: the integral from 0 to infinity of ve to the minus kv dv equals 1 over k squared, with k equals 2n plus 1.
+30. Catalan's Constant
+31. G equals the sum from n equals 0 to infinity of (minus 1) to the n over (2n plus 1) squared equals 1 minus 1 over 9 plus 1 over 25 minus times s about 0.9160
+32. G is a named constant, like pi or e.
+33. An alternating sum of one over the odd squares.
+34. No simpler closed form is known.
+35. Our sum is exactly G, about 0.9160.
+36. So the answer is 4G over pi.
+37. Wider, thinner rectangles close in on 1.1662.
+38. Takeaway: write a function as a blend of waves, then swap.

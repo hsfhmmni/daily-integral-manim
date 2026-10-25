@@ -1,0 +1,21 @@
+Medium Integral - Saturday 24 October 2026
+
+1. The bottom is 0 at every whole number. What breaks there?
+2. At x equals 0 the curve jumps from 0 up to 1.
+3. Area below the axis counts as negative.
+4. x is minus 1 left of 0, and 0 right of it.
+5. Splitting the Interval
+6. the integral from a to c of f(x) dx equals the integral from a to b of f(x) dx plus the integral from b to c of f(x) dx
+7. Split [ minus 1 over 2,1] at 0, into two pieces.
+8. The Floor Function
+9. y equals n n at most y<n plus 1,\ \ nZ
+10. For minus 1 at most x<0, x equals minus 1; for 0 at most x<1, it is 0.
+11. Split the interval at 0, where x jumps.
+12. Left of 0: x minus (minus 1) equals x plus 1. Right of 0: x minus 0 equals x.
+13. x over x plus 1 equals 1 minus 1 over x plus 1, and x over x equals 1 for x>0.
+14. the integral of 1 over x plus 1 dx equals log |x plus 1|, and the integral of 1 dx equals x.
+15. At 0: 0 minus log 1 equals 0. At minus 1 over 2: minus 1 over 2 minus log 1 over 2.
+16. Clear the brackets: the two minus signs make plus.
+17. log 1 over 2 equals minus log 2, and 1 over 2 plus 1 equals 3 over 2.
+18. Thin rectangles close in on 0.8069.
+19. Takeaway: split a floor at its jumps; each piece is ordinary.

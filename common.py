@@ -1487,9 +1487,14 @@ def close(scene, current, trail, answer_spec, colors, func, window, answer_value
 
 
 # ---- narration
-_SPEAK = [(r"\\t?frac\{([^{}]*)\}\{([^{}]*)\}", r"\1 over \2"),
+_SPEAK = [(r"\\int_\{([^{}]*)\}\^\{([^{}]*)\}", r" the integral from \1 to \2 of "),
+          (r"\\int_([^{}\s])\^([^{}\s])", r" the integral from \1 to \2 of "), (r"\\int(?![a-z])", " the integral of "),
+          (r"\\sum_\{([^{}]*)\}\^\{([^{}]*)\}", r" the sum from \1 to \2 of "),
+          (r"\\[td]?frac\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}", r"\1 over \2"),   # one level of {} inside
           (r"\\sqrt\{([^{}]*)\}", r"root \1"), (r"\^\{-1\}", " inverse "), (r"\^\{?2\}?", " squared "),
           (r"\^\{?3\}?", " cubed"), (r"\^\{([^{}]*)\}", r" to the \1"), (r"\\infty", "infinity"),
+          (r"\\operatorname\{([A-Za-z]+)\}", r" \1 "), (r"\\(sinh|cosh|tanh)", r" \1 "), (r"\\omega", " omega "),
+          (r"\\ge(?![a-z])", " at least "), (r"\\le(?![a-z])", " at most "),
           (r"\\pi", " pi "), (r"\\sigma", "sigma"), (r"\\sin", "sine "), (r"\\cos", "cos "), (r"\\ln", "log "),
           (r"\\to", " tends to "), (r"\\approx", " about "), (r"\\pm", " plus or minus "), (r"\\cdot", " times "),
           (r"\\,|\\;|\\quad|\\left|\\right|\\Big|\\big", " "), (r"\\[a-zA-Z]+", ""), (r"[{}]", ""),
