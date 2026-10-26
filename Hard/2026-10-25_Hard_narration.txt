@@ -1,0 +1,40 @@
+Hard Integral - Sunday 25 October 2026
+
+1. Two logs and inverse x over an endless tail. Exact area?
+2. Zoomed out: the tail beyond 30 adds under 0.01.
+3. With x equals, the inverse x and x squared plus 1 become d.
+4. Let x equals: dx over x squared plus 1 equals d, and infinity becomes pi over 2.
+5. Times cos squared: sine squared plus 5cos squared equals 3 plus 2cos 2.
+6. Let t equals 2; then 2cos t plus or minus 2sine t equals 2root 2cos (t pi over 4).
+7. The Fourier Series of a Log of Cosines
+8. log (1 plus 2rcos plus r squared) equals 2 the sum from n equals 1 to infinity of (minus 1) to the n plus 1r to the n over ncos n, |r|<1
+9. r is fixed with |r|<1; is any angle.
+10. A logarithm of a plus bcos, with a>|b|.
+11. 1 plus 2rcos plus r squared equals |1 plus re to the i| squared: expand log (1 plus re to the i).
+12. Here 3 plus 2root 2cos equals 2(1 plus 2rcos plus r squared), r equals 1 over root 2.
+13. Expand each logarithm as a cosine series; the log 2 terms cancel.
+14. cos (A minus B) minus cos (A plus B) equals 2sine Asine B, with A equals nt, B equals n pi over 4.
+15. Swapping the Order of Integration
+16. the integral from 0 to infinity of \!\! the integral from 0 to infinity of f dt d omega equals the integral from 0 to infinity of \!\! the integral from 0 to infinity of f d omega dt
+17. f(omega ,t) is a function of two variables.
+18. A double integral easier in the other order.
+19. Both orders add up the same volume, if f at least 0 or the integral of \!\! the integral of |f|<infinity.
+20. A sum over n is an integral too; 1 over n2 to the n/2 converges.
+21. Swap, then by parts: the integral from 0 to pi of tsine nt dt equals (minus 1) to the n plus 1 pi over n.
+22. The Dilogarithm and Landen's Identity
+23. Li _2(z) equals the sum from n equals 1 to infinity of z to the n over n squared , Li _2(z) plus Li _2 (z over z minus 1) equals minus 1 over 2log squared (1 minus z)
+24. z is a complex number with |z| at most 1.
+25. A sum of powers over squares, to the n over n squared.
+26. Differentiate both sides in z: they agree, and match at z equals 0.
+27. Here z equals 1 plus i over 2, so z to the n equals 2 to the minus n/2e to the in pi /4.
+28. sine n pi 4 over 2 to the n/2 is the imaginary part of (1 plus i over 2) to the n.
+29. Landen's identity: z over z minus 1 equals minus i and 1 minus z equals 1 minus i over 2.
+30. Catalan's Constant
+31. G equals the sum from n equals 0 to infinity of (minus 1) to the n over (2n plus 1) squared equals 1 minus 1 over 9 plus 1 over 25 minus times s about 0.9160
+32. G is a named constant, like pi or e.
+33. An alternating sum of one over the odd squares.
+34. No simpler closed form is known.
+35. Im Li_2(minus i) equals minus 1 plus 1 over 9 minus 1 over 25 plus times s equals minus G.
+36. log 1 minus i over 2 equals minus 1 over 2log 2 minus i pi over 4; keep the imaginary parts.
+37. Wider, thinner rectangles close in on 2.0225.
+38. Takeaway: a logarithm of cosines has a Fourier series; sum it.

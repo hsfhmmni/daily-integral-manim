@@ -1,0 +1,32 @@
+Medium Integral - Sunday 25 October 2026
+
+1. A fraction that never ends, yet a gentle curve. What area?
+2. Thin rectangles estimate the area; watch the gap shrink.
+3. Below the first 2 plus, the whole fraction starts again.
+4. Infinite Nested Expressions
+5. y equals g (g(g(times s))) y equals g(y)
+6. g is the step repeated forever.
+7. An expression that repeats inside itself.
+8. Peel one layer: the same tail, y, remains.
+9. Of two roots, the limit has |g'(y)|<1.
+10. Here g(y) equals sine x over 2 plus y.
+11. Call the fraction y: below the first 2 plus sits y.
+12. Multiply by 2 plus y: a quadratic in y.
+13. Take the plus root: every layer is positive, so y at least 0.
+14. So the integrand 1 plus y is just root 1 plus sine x.
+15. The Pythagorean Identity
+16. sine squared x plus cos squared x equals 1
+17. Here 1 equals sine squared x over 2 plus cos squared x over 2.
+18. Double Angle Identities
+19. sine 2x equals 2sine xcos x, cos 2x equals cos squared x minus sine squared x
+20. Here sine x equals 2sine x over 2cos x over 2.
+21. In half angles, 1 plus sine x is a perfect square.
+22. Both are positive on [0, pi over 2], so the root is exact.
+23. The Chain Rule
+24. d over dxf (g(x)) equals f' (g(x)) g'(x)
+25. Inside is x over 2, with derivative 1 over 2: so a factor 2.
+26. Reverse chain rule: the integral of cos x over 2 dx equals 2sine x over 2.
+27. At pi over 2: cos pi over 4 equals sine pi over 4 equals root 2 over 2.
+28. The roots cancel: the area is exactly 2.
+29. Thin rectangles close in on 2.
+30. Takeaway: name the repeating tail, then solve for it.
