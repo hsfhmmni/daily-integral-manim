@@ -574,6 +574,41 @@ RULE_CARDS = {
         when=[cap(r"A sum of powers over squares, $\sum\frac{z^{n}}{n^{2}}$.")],
         why=[cap(r"Differentiate both sides in $z$: they agree, and match at $z=0$.")],
     ),
+    "inverse_trig_sum": dict(
+        name=r"$\sin^{-1}x$ and $\cos^{-1}x$ Add to $\frac{\pi}{2}$",
+        statement=r"\sin^{-1}x+\cos^{-1}x=\frac{\pi}{2},\qquad -1\le x\le 1",
+        symbols=[cap(r"$\sin^{-1}x$ is the angle in $[-\frac{\pi}{2},\frac{\pi}{2}]$ whose sine is $x$.")],
+        when=[cap(r"Both $\sin^{-1}x$ and $\cos^{-1}x$ appear together.")],
+        why=[cap(r"If $\sin\theta=x$, then $\cos\big(\frac{\pi}{2}-\theta\big)=x$ too.")],
+    ),
+    "arcsin_derivative": dict(
+        name=r"Derivative of $\sin^{-1}x$",
+        statement=r"\frac{d}{dx}\sin^{-1}x=\frac{1}{\sqrt{1-x^{2}}},\qquad -1<x<1",
+        symbols=[cap(r"$\sin^{-1}x$ is the angle whose sine is $x$.")],
+        when=[cap(r"Differentiating $\sin^{-1}x$, often inside integration by parts.")],
+        why=[cap(r"Differentiate $\sin y=x$: $\cos y\,y'=1$, and $\cos y=\sqrt{1-x^{2}}$.")],
+    ),
+    "csc_integral": dict(
+        name=r"Integral of $\csc\theta$",
+        statement=r"\int\csc\theta\,d\theta=-\ln|\csc\theta+\cot\theta|+C",
+        symbols=[cap(r"$\csc\theta=\frac{1}{\sin\theta}$ and $\cot\theta=\frac{\cos\theta}{\sin\theta}$.")],
+        when=[cap(r"The integrand is $\csc\theta$, or $\frac{1}{\sin\theta}$.")],
+        why=[cap(r"Times $\frac{\csc\theta+\cot\theta}{\csc\theta+\cot\theta}$: the top is minus the bottom's derivative.")],
+    ),
+    "summation_by_parts": dict(
+        name=r"Summation by Parts",
+        statement=r"\sum_{n=1}^{N}n\,(a_{n}-a_{n-1})=N a_{N}-\sum_{n=0}^{N-1}a_{n}",
+        symbols=[cap(r"$a_{0},a_{1},a_{2},\dots$ is any sequence of numbers.")],
+        when=[cap(r"A sum of $n$ times a difference of neighbouring terms.")],
+        why=[cap(r"Each $a_{n}$ appears with $n$ and with $-(n+1)$: net $-1$.")],
+    ),
+    "telescoping_product": dict(
+        name=r"Telescoping Products",
+        statement=r"\prod_{n=1}^{N}\frac{b_{n-1}}{b_{n}}=\frac{b_{0}}{b_{N}}",
+        symbols=[cap(r"$\prod$ multiplies the terms, as $\sum$ adds them.")],
+        when=[cap(r"Each factor is a ratio of neighbouring terms.")],
+        why=[cap(r"Each bottom $b_{n}$ cancels the same $b_{n}$ on the next top.")],
+    ),
 }
 
 

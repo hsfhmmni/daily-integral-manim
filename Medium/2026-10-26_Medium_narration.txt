@@ -1,0 +1,37 @@
+Medium Integral - Monday 26 October 2026
+
+1. Below the axis, then above. How much is left over?
+2. Area below the axis counts as negative; watch the gap.
+3. cos inverse x equals pi over 2 minus sine inverse x, so one inverse is enough.
+4. sine inverse x and cos inverse x Add to pi over 2
+5. sine inverse x plus cos inverse x equals pi over 2, minus 1 at most x at most 1
+6. Here cos inverse x equals pi over 2 minus sine inverse x for 1 over 2 at most x at most 1.
+7. Swap cos inverse x for pi over 2 minus sine inverse x.
+8. Split it: the integral of _1 over 2 to the 1dx over x squared equals [ minus 1 over x ]_1 over 2 to the 1 equals 1.
+9. Integration by Parts
+10. the integral of u dv equals uv minus the integral of v du
+11. Here u equals sine inverse x, dv equals dx over x squared, so v equals minus 1 over x.
+12. Derivative of sine inverse x
+13. d over dxsine inverse x equals 11 minus x squared , minus 1<x<1
+14. So du equals dx1 minus x squared.
+15. By parts: integrate 1 over x squared, differentiate sine inverse x.
+16. 2 (minus pi over 2 plus pi /6 over 1/2) equals minus pi over 3, since sine inverse 1 over 2 equals pi over 6.
+17. Trigonometric Substitution
+18. a squared minus x squared : x equals asine , dx equals acos d
+19. Here a equals 1: x equals sine, dx equals cos d.
+20. Changing the Limits
+21. the integral from a to b of f (g(x)) g'(x) dx equals the integral from g(a) to g(b) of f(u) du
+22. x equals 1 over 2 gives equals pi over 6; x equals 1 gives equals pi over 2.
+23. The Pythagorean Identity
+24. sine squared x plus cos squared x equals 1
+25. 1 minus sine squared equals cos, since cos at least 0 here.
+26. Let x equals sine: dx equals cos d and 1 minus x squared equals cos.
+27. The cos cancel, leaving 1 over sine equals.
+28. Integral of
+29. the integral of d equals minus log | plus | plus C
+30. Here the variable is , from pi over 6 to pi over 2.
+31. Integrate ; plus >0 here, so no bars.
+32. At pi over 2: minus log (1 plus 0) equals 0. At pi over 6: minus log (2 plus root 3).
+33. 2.6339 minus 2.6180: two nearly equal parts almost cancel.
+34. Thin rectangles close in on 0.0159.
+35. Takeaway: sine inverse x plus cos inverse x equals pi over 2 turns two inverses into one.
