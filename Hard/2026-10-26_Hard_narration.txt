@@ -1,0 +1,14 @@
+Hard Integral - Monday 26 October 2026
+
+1. Infinitely many steps crowd towards 0. Can we add them all?
+2. All of this area is below the axis, so negative.
+3. Each halving towards 0 drops the floor one more step.
+4. On [2 to the minus n,2 to the 1 minus n) the floor is minus n: split there.
+5. the integral of x dx equals minus log cos x, as cos x>0 on [0,1].
+6. Sum by parts; Nlog cos 2 to the minus N tends to 0, so each term counts once.
+7. Add the log terms: it is log of the product.
+8. cos t equals sine 2t over 2sine t: each bottom cancels the next top.
+9. 2 to the Nsine 2 to the minus N equals sine h over h tends to 1, with h equals 2 to the minus N.
+10. Double angle again: sine 1cos 1 equals 1 over 2sine 2.
+11. Thin rectangles close in on minus 0.7882.
+12. Takeaway: halving angles telescope, since sine 2t equals 2sine tcos t.

@@ -766,6 +766,13 @@ def breakpoints(expr, var, a, b):
 
 JUMP_MAX = 200      # more jumps than this in the range: not split (the integral is left to the methods)
 LINEAR_JUMP_MAX = 20000     # the same for a linear inside (m x + c), whose jumps are found without solveset
+EDGE_PROBES = 100   # jumps() also samples at (b - a) 2^-j from each end, j = 1..100 (from 2026-10-26)
+
+
+def _levels(gf, xs):
+    """The whole numbers g passes through, from its values at xs (non-finite values skipped)."""
+    vals = [mpmath.re(v) for v in (gf(x) for x in xs) if mpmath.isfinite(v)]
+    return range(int(mpmath.floor(min(vals))), int(mpmath.ceil(max(vals))) + 1)
 
 
 def jumps(expr, var, a, b):
@@ -797,9 +804,19 @@ def jumps(expr, var, a, b):
             if g in zeros:
                 levels = [0]
             else:                                          # the whole numbers g passes through
-                vals = [gf(a + (b - a) * mpmath.mpf(i) / 400) for i in range(401)]
-                vals = [mpmath.re(v) for v in vals if mpmath.isfinite(v)]
-                levels = range(int(mpmath.floor(min(vals))), int(mpmath.ceil(max(vals))) + 1)
+                levels = _levels(gf, [a + (b - a) * mpmath.mpf(i) / 400 for i in range(401)])
+                # From 2026-10-26: also probe ever closer to each end, where g may run off to
+                # infinity (\lfloor\log_{2}x\rfloor on (0, 1) jumps at every 2^-k, piling up at 0;
+                # the 401 points above reach only 2^-9). Kept only while the levels stay within
+                # JUMP_MAX, so a g that splits today never splits less.
+                near = [mpmath.mpf(2) ** -j for j in range(1, EDGE_PROBES + 1)]
+                try:
+                    edge = _levels(gf, [a + (b - a) * mpmath.mpf(i) / 400 for i in range(401)]
+                                   + [a + (b - a) * t for t in near] + [b - (b - a) * t for t in near])
+                except Exception:                          # a probe g cannot take: keep the 401 points
+                    edge = levels
+                if len(edge) <= JUMP_MAX:
+                    levels = edge
             poly = sp.Poly(g, var) if g not in zeros and g.is_polynomial(var) else None
             if poly is not None and poly.degree() == 1 and len(levels) <= LINEAR_JUMP_MAX:
                 # m*x + c = k is solved directly, so even thousands of jumps cost nothing
