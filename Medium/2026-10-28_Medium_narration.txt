@@ -1,0 +1,23 @@
+Medium Integral - Wednesday 28 October 2026
+
+1. Endless powers of cos x. Can they add to a finite area?
+2. The curve falls from 3 to 1 over 3; watch the gap shrink.
+3. Each term is the one before times cos squared x: geometric.
+4. Geometric Series
+5. 1 over 1 minus r equals the sum from n equals 0 to infinity of r to the n, |r|<1
+6. Here r equals cos squared x, between 1 over 4 and 3 over 4, so it converges.
+7. Starting at r: r plus r squared plus r cubed plus equals r over 1 minus r.
+8. The Pythagorean Identity
+9. sine squared x plus cos squared x equals 1
+10. Here 1 minus cos squared x equals sine squared x.
+11. The bottom 1 minus cos squared x is just sine squared x.
+12. cos x over sine x equals x, so the integrand is squared x.
+13. Divide the identity by sine squared x: squared x equals squared x minus 1.
+14. Integral of squared x
+15. the integral of squared x dx equals minus x plus C
+16. Here the integral of squared x dx equals minus x.
+17. Integrate each term: squared x gives minus x, and 1 gives x.
+18. pi over 3 equals 1 over root 3 and pi over 6 equals root 3: top minus bottom.
+19. root 3 minus 1 over root 3 equals 2root 3 over 3, and pi over 3 minus pi over 6 equals pi over 6.
+20. Thin rectangles close in on 0.6311.
+21. Takeaway: an endless sum of powers is often a geometric series.

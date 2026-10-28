@@ -1,0 +1,31 @@
+Hard Integral - Wednesday 28 October 2026
+
+1. The power k grows, the factor 1 over root k shrinks. Who wins?
+2. White: k equals 2 and k equals 8, stretched by root k. Nearly the limit already.
+3. Zoomed out: the tails beyond 3 still hold about 0.11.
+4. Stretch x by root k and the 1 over root k disappears.
+5. Let x equals root k t; dx equals root k dt cancels the 1 over root k.
+6. With u equals 1 over root k t this is sine u over u equals 1 minus u squared over 6 plus times s.
+7. The k-th power tends to e to the a, with a equals minus 1 over 6t squared.
+8. Limits Inside Integrals
+9. _k tends to infinity the integral of f_k dt equals the integral of _k tends to infinityf_k dt if |f_k| at most g
+10. f_k are the integrands; g is one bound with finite area.
+11. A limit outside an integral that you want inside.
+12. The bound g stops area escaping to infinity as k grows.
+13. Here every f_k at most (2,1 over 6t squared), a finite area.
+14. One bound with finite area lets the limit move inside.
+15. The integrand is even in t: take twice the right half.
+16. Let s equals 1 over root 6 t: the ends swap; the minus sign swaps them back.
+17. By parts with v equals minus 1 over s; the chain rule gives 2se to the minus s squared.
+18. The bracket is 0 at both ends, and the s cancels.
+19. The Gaussian Integral
+20. the integral from minus infinity to infinity of e to the minus x squared dx equals root pi
+21. e to the minus x squared is the bell curve.
+22. A full bell curve e to the minus x squared from minus infinity to infinity.
+23. Its square is a double integral of e to the minus (x squared plus y squared).
+24. In polar coordinates that is the integral from 0 to 2 pi of the integral from 0 to infinity of e to the minus r squared r dr d equals pi.
+25. Here only the right half, so root pi over 2.
+26. Half a bell curve: the integral from 0 to infinity of e to the minus s squared ds equals root pi over 2.
+27. 2root pi over root 6 equals root 4 pi over 6 equals root 2 pi over 3.
+28. Wider, thinner rectangles close in on 1.4472.
+29. Takeaway: rescale until the limit has a shape, then integrate it.

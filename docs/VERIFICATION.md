@@ -46,6 +46,14 @@ functions the website defines, such as `\operatorname{tanhc}(x) = \tanh(x)/x`. A
 well-known constant by its letter (Catalan's constant G, for example), but only from a short fixed
 list, and the value always comes from SymPy, never from the script.
 
+From 2026-10-28 it reads a series written out with `\dots` (`\cos(x)^2+\cos(x)^4+\cos(x)^6+\dots`)
+as an infinite sum. The pattern comes from the written terms only: at least three, of one shape,
+whose numbers step evenly, with the same or alternating signs; anything else is refused rather than
+guessed. It also reads a limit at infinity outside the integral (`\lim_{k\to\infty}\frac{1}{\sqrt{k}}\int\dots`):
+the integral is computed at whole numbers k, by each method at its own points, and extrapolated
+to k = infinity. The limit is never moved inside the integral, which would give the wrong answer
+(0) for that problem.
+
 ### 2. Every check compares the script with that source, not with itself
 `verify.py` reads the saved TeX with SymPy and checks, independently:
 

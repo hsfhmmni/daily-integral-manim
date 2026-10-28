@@ -609,6 +609,41 @@ RULE_CARDS = {
         when=[cap(r"Each factor is a ratio of neighbouring terms.")],
         why=[cap(r"Each bottom $b_{n}$ cancels the same $b_{n}$ on the next top.")],
     ),
+    "heaviside_step": dict(
+        name=r"The Heaviside Step Function",
+        statement=r"H(t)=\begin{cases}1, & t>0\\ 0, & t<0\end{cases}",
+        symbols=[cap(r"$t$ is any real number; one point never changes an integral.")],
+        when=[cap(r"A switch inside an integral that is either on or off.")],
+        why=[cap(r"Integrating $1$ where it is on, $0$ elsewhere, gives a length.")],
+    ),
+    "sin_cos_derivatives": dict(
+        name=r"Derivatives of $\sin x$ and $\cos x$",
+        statement=r"\frac{d}{dx}\sin x=\cos x,\qquad \frac{d}{dx}\cos x=-\sin x",
+        symbols=[cap(r"$x$ is an angle in radians.")],
+        when=[cap(r"Differentiating any expression built from $\sin x$ and $\cos x$.")],
+        why=[cap(r"For small $h$, $\sin h\approx h$ and $\cos h\approx 1$ in radians.")],
+    ),
+    "maclaurin_series": dict(
+        name=r"Maclaurin Series",
+        statement=r"\sin u=u-\frac{u^{3}}{3!}+\frac{u^{5}}{5!}-\cdots",
+        symbols=[cap(r"$u$ is an angle in radians; $3!=6$.")],
+        when=[cap(r"A function of a small quantity, needed to a few terms.")],
+        why=[cap(r"The polynomial matches every derivative of $\sin$ at $0$.")],
+    ),
+    "exp_limit": dict(
+        name=r"The Exponential Limit",
+        statement=r"\lim_{k\to\infty}\Big(1+\frac{a}{k}\Big)^{k}=e^{a}",
+        symbols=[cap(r"$a$ is fixed; $k$ grows without bound.")],
+        when=[cap(r"A $k$-th power of something within $\frac{1}{k}$ of $1$.")],
+        why=[cap(r"Its logarithm is $k\ln\big(1+\frac{a}{k}\big)\approx k\cdot\frac{a}{k}=a$.")],
+    ),
+    "dominated_convergence": dict(
+        name=r"Limits Inside Integrals",
+        statement=r"\lim_{k\to\infty}\int f_{k}\,dt=\int\lim_{k\to\infty}f_{k}\,dt\quad\text{if }|f_{k}|\le g",
+        symbols=[cap(r"$f_{k}$ are the integrands; $g$ is one bound with finite area.")],
+        when=[cap(r"A limit outside an integral that you want inside.")],
+        why=[cap(r"The bound $g$ stops area escaping to infinity as $k$ grows.")],
+    ),
 }
 
 
@@ -622,7 +657,7 @@ RULE_CARDS = {
 SILENT = {          # assumed known: no card and no tag; the step's caption carries the working
     "power_rule", "linearity", "constant_of_integration", "ftc", "log_laws", "exponent_laws",
     "absolute_value", "log_values", "exp_log_inverse", "exp_derivative", "ln_derivative",
-    "quadratic_formula",
+    "quadratic_formula", "sin_cos_derivatives",
 }
 STANDARD = {"exp_integral", "reciprocal_integral", "sin_integral", "cos_integral", "sec2_integral"}
 STANDARD_CARD_LEVELS = ("Beginner", "Easy")     # Medium viewers know the standard integrals
@@ -630,7 +665,8 @@ TAG_ONLY_LEVELS = ("Hard",)                     # techniques get a corner tag, n
 ADVANCED = {"laplace_transform", "nested_fixed_point", "arctan_integral", "average_value",
             "divisor_sum", "contour_shift", "gaussian_integral", "differentiation_under_integral",
             "analytic_continuation", "sech_cosine_transform", "swap_order", "one_minus_cos_integral",
-            "catalan_constant", "log_cosine_series", "dilogarithm"}     # always the full card
+            "catalan_constant", "log_cosine_series", "dilogarithm", "heaviside_step",
+            "dominated_convergence"}     # always the full card
 
 
 def card_kind(key, difficulty):

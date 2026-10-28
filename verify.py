@@ -76,7 +76,15 @@ are evaluated as exponentials, so cosh x - sinh x does not cancel to 0 far out. 
 mod) of a linear m x + c has its jumps found directly, up to LINEAR_JUMP_MAX of them (the
 \\lfloor x\\rfloor on [1, 2026] of 2026-10-22 has 2024). A line is about the video's integral,
 named "I" unless PROBLEM starts "V = ..." (then "V"); a line naming another quantity, or
-holding several statements, is unchecked.
+holding several statements, is unchecked. H(t) is the Heaviside step (from 2026-10-27): an outer H
+splits the range where its inside is 0, like sign; an inner integral of a step is split where each H
+switches (_step_integrals), its pieces done by the outer integral's own method. A series written
+out before \\dots (from 2026-10-28: \\cos(x)^2+\\cos(x)^4+\\cos(x)^6+\\dots) is a \\sum whose term is
+read from at least 3 written terms whose numbers step evenly (_dots_series, series_template); a
+\\dots after fewer terms stays a nested tail. A limit at infinity (\\lim_{k\\to\\infty}, a factor in
+k allowed outside the integral) is the integral at whole k extrapolated in 1/k (limit_value), with
+infinite ranges split by size and given spare digits (_scale_splits); FUNC and exact_integral() are
+then checked through their value only. An evaluation bar takes limits where an end gives no number.
 
 Numerical integrals (integrate): split at the corners of |...|, where the inside of a
 square root reaches 0, and where floor, ceiling, mod or sign jumps (jumps, outside any sum); for an expression with \\dots, mpmath also halves the range wherever
@@ -85,6 +93,7 @@ to infinity uses mpmath.quadosc, and scipy over half-periods with repeated avera
 A step fails only if both methods find it differs from the line before; if the two
 methods disagree with each other, the step is unchecked instead.
 """
+import contextlib
 import csv
 import datetime as dt
 import hashlib
@@ -178,6 +187,9 @@ def normalise(tex):
 # \lfloor x\rfloor and \lceil x\rceil sympy already reads as floor and ceiling.
 NAMED_OPERATORS = {"mod": r"\mod", "floor": r"\floor", "ceil": r"\ceil", "sgn": r"\sgn", "sign": r"\sgn"}
 NAMED_FUNCTIONS = {"mod": (2, sp.Mod), "floor": (1, sp.floor), "ceil": (1, sp.ceiling), "sgn": (1, sp.sign)}
+# H(t) is the Heaviside step function (from 2026-10-27, as the website writes it): 1 for t > 0,
+# 0 for t < 0. Its value at 0 never changes an integral (one point); sympy's is 1/2.
+NAMED_FUNCTIONS["H"] = (1, sp.Heaviside)
 # The reciprocal hyperbolic functions, and the cardinal functions trigc(x) = trig(x)/x (from
 # 2026-10-24, as the website defines them: \operatorname{tanhc}(x) = \tanh(x)/x). The limit at
 # x = 0 is never needed: a numerical integral does not sample an endpoint, and the random points
@@ -306,6 +318,16 @@ def _fix(expr):
     return expr
 
 
+def _bar_end(inner, var, end, side):
+    r"""inner at one end of an evaluation bar. Where plugging in gives no number (an end at
+    infinity, or 0/0 such as \frac{1-e^{-s^{2}}}{s} at 0), the bar means the limit there,
+    approached from inside the range (from 2026-10-28; before, such a line was unchecked)."""
+    v = inner.subs(var, end)
+    if end.is_infinite or v.has(sp.nan, sp.zoo, sp.oo, -sp.oo):
+        v = sp.limit(inner, var, end, dir=side)
+    return v
+
+
 def _bars(t):
     """Replace each evaluation bar [F]_{a}^{b} with a placeholder; returns (tex, {name: value})."""
     values = {}
@@ -336,35 +358,176 @@ def _bars(t):
             raise Unparseable("cannot tell the variable of an evaluation bar")
         a, b = to_sympy(lo), to_sympy(hi)
         name = f"Xi_{{{len(values)}}}"                  # parse_latex reads \Xi_{0} as Symbol("Xi_{0}")
-        values[name] = inner.subs(var[0], b) - inner.subs(var[0], a)
+        values[name] = _bar_end(inner, var[0], b, "-") - _bar_end(inner, var[0], a, "+")
         t = t[:start] + " \\" + name + " " + t[i:]
 
 
-def to_sympy(tex):
-    """TeX -> sympy expression (integrals stay as sympy Integral objects)."""
+def _parse(t):
+    """Normalised TeX -> sympy, with _fix applied."""
     from sympy.parsing.latex import parse_latex
-    t, bars = _bars(normalise(tex))
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             expr = parse_latex(t)
     except Exception as exc:                             # sympy raises several error types
         raise Unparseable(f"sympy could not read it ({type(exc).__name__})") from None
-    expr = _fix(expr)
-    for name, value in bars.items():
+    return _fix(expr)
+
+
+def to_sympy(tex):
+    """TeX -> sympy expression (integrals stay as sympy Integral objects)."""
+    t, bars = _bars(normalise(tex))
+    t, series = _dots_series(t)
+    expr = _parse(t)
+    for name, value in {**bars, **series}.items():
         expr = expr.subs(sp.Symbol(name), value)
     return expr
 
 
-def single_integral(expr):
+# ---- a series written out with \dots (from 2026-10-28): \cos(x)^2+\cos(x)^4+\cos(x)^6+\dots
+SERIES_MIN_TERMS = 3        # terms written before \dots: two differences confirm the pattern
+SERIES_INDEX = sp.Symbol("n_dots", integer=True, nonnegative=True)
+_OPEN, _CLOSE = "({[", ")}]"
+
+
+def _dots_series(t):
+    r"""Each "T_0 + T_1 + T_2 + \dots" in normalised TeX replaced by a placeholder for the sum
+    \sum_{n=0}^{\infty} T(n), where T is read from the terms themselves (series_template): they
+    must be at least SERIES_MIN_TERMS terms of one pattern whose numbers step evenly, with the
+    same sign or alternating signs. The terms are taken in the order they are written. A
+    \dots after fewer terms (the 1 + \dots at the bottom of a continued fraction) is left for
+    nested_pattern; one after enough terms that follow no such pattern is refused, never guessed.
+    Returns (tex, {placeholder name: sympy Sum})."""
+    values = {}
+    search_from = 0
+    while True:
+        m = re.compile(r"([+-])\s*\\dots(?![a-zA-Z])").search(t, search_from)
+        if not m:
+            return t, values
+        start, depth = 0, 0                              # the group the sum sits in
+        for j in range(m.start() - 1, -1, -1):
+            if t[j] in _CLOSE:
+                depth += 1
+            elif t[j] in _OPEN:
+                if depth == 0:
+                    start = j + 1
+                    break
+                depth -= 1
+        end = m.end()
+        while end < len(t) and t[end] == " ":
+            end += 1
+        terms = _signed_terms(t[start:m.start()])
+        if (terms is None or len(terms) < SERIES_MIN_TERMS or (end < len(t) and t[end] not in _CLOSE)):
+            search_from = m.end()                        # not a written-out series: nested_pattern's
+            continue
+        if any(re.search(r"\\(?:int|sum|prod|lim)(?![a-zA-Z])|=", s) for _, s in terms):
+            raise Unparseable(r"a series before \dots whose terms hold integrals, sums or equations")
+        exprs = [_evaluated(_parse(s)) for _, s in terms]
+        signs = [g for g, _ in terms]
+        if all(g == signs[0] for g in signs):
+            sign = signs[0]
+        elif all(signs[i + 1] == -signs[i] for i in range(len(signs) - 1)):
+            sign = signs[0] * (-1) ** SERIES_INDEX
+        else:
+            raise Unparseable(r"the signs before \dots neither stay the same nor alternate")
+        term = series_template(exprs, SERIES_INDEX)
+        name = f"Psi_{{{len(values)}}}"                # parse_latex reads \Psi_{0} as Symbol("Psi_{0}")
+        values[name] = sp.Sum(sign * term, (SERIES_INDEX, 0, sp.oo))
+        t = t[:start] + " \\" + name + " " + t[end:]
+        search_from = start
+
+
+def _evaluated(e):
+    r"""e rebuilt bottom up, so parse_latex's unevaluated pieces (\frac{1}{2} as 1 * 2^-1, x^2 * 1/2)
+    take sympy's usual form and terms can be compared."""
+    return e.func(*[_evaluated(a) for a in e.args]) if e.args else e
+
+
+def _signed_terms(s):
+    """s split at its top-level + and - into [(sign, text)], or None if a piece is empty."""
+    pieces, depth, cur, sign = [], 0, "", 1
+    for i, ch in enumerate(s):
+        if ch in _OPEN:
+            depth += 1
+        elif ch in _CLOSE:
+            depth -= 1
+        prev = s[:i].rstrip()[-1:]
+        if depth == 0 and ch in "+-" and prev not in ("^", "_", "", "+", "-") and cur.strip():
+            pieces.append((sign, cur.strip()))
+            cur, sign = "", (1 if ch == "+" else -1)
+        elif depth == 0 and ch in "+-" and not cur.strip():
+            sign = sign * (1 if ch == "+" else -1)
+        else:
+            cur += ch
+    if not cur.strip():
+        return None
+    pieces.append((sign, cur.strip()))
+    return pieces
+
+
+def series_template(exprs, n):
+    r"""The pattern T(n), n = 0, 1, 2, ..., with T(i) = exprs[i] exactly: the terms must have the
+    same shape, and every number that differs between them must step evenly: by a difference
+    (2, 4, 6), a ratio (1, 2, 4) or a difference of reciprocals (1, 1/2, 1/3). A
+    missing power counts as power 1 (x + x^2 + x^3), a lone 1 among powers of one base as power 0,
+    and a missing coefficient as 1 (x + 2x^2 + 3x^3). Anything else is refused (Unparseable)."""
+    t = _template(list(exprs), n)
+    if t is None or any(sp.simplify(t.subs(n, i) - e) != 0 for i, e in enumerate(exprs)):
+        raise Unparseable(r"no pattern in the terms before \dots (numbers stepping evenly)")
+    return t
+
+
+def _template(es, n):
+    es = [sp.sympify(e) for e in es]
+    if all(e == es[0] for e in es):
+        return es[0]
+    if all(e.is_Rational for e in es):
+        steps = range(len(es) - 1)
+        d = es[1] - es[0]
+        if all(es[i + 1] - es[i] == d for i in steps):                   # 2, 4, 6
+            return es[0] + d * n
+        if all(e != 0 for e in es):
+            r = es[1] / es[0]
+            if all(es[i + 1] / es[i] == r for i in steps):               # 1, 2, 4
+                return es[0] * r ** n
+            inv = [1 / e for e in es]
+            d = inv[1] - inv[0]
+            if all(inv[i + 1] - inv[i] == d for i in steps):             # 1, 1/2, 1/3
+                return 1 / (inv[0] + d * n)
+        return None
+    if any(isinstance(e, sp.Mul) and e.as_coeff_Mul()[0] != 1 for e in es) and len({e.func for e in es}) > 1:
+        coeffs, rests = zip(*(e.as_coeff_Mul() for e in es))
+        c, r = _template(list(coeffs), n), _template(list(rests), n)
+        return None if c is None or r is None else c * r
+    if any(isinstance(e, sp.Pow) for e in es) and len({e.func for e in es}) > 1:
+        bases = {e.base for e in es if isinstance(e, sp.Pow)}
+        one_base = next(iter(bases)) if len(bases) == 1 else None
+        pairs = []
+        for e in es:
+            if isinstance(e, sp.Pow):
+                pairs.append((e.base, e.exp))
+            elif e == 1 and one_base is not None:
+                pairs.append((one_base, 0))
+            else:
+                pairs.append((e, 1))
+        b, x = _template([p[0] for p in pairs], n), _template([p[1] for p in pairs], n)
+        return None if b is None or x is None else sp.Pow(b, x)
+    if len({(e.func, len(e.args)) for e in es}) != 1 or not es[0].args:
+        return None
+    args = [_template([e.args[i] for e in es], n) for i in range(len(es[0].args))]
+    return None if any(a is None for a in args) else es[0].func(*args)
+
+
+def single_integral(expr, allowed=()):
     r"""expr as one sympy Integral: an Integral, or a constant times one (\frac{1}{2}\int ...),
-    with the constant moved inside. Anything else is not a single integral."""
+    with the constant moved inside. Anything else is not a single integral. allowed: letters
+    the constant may contain, such as the k of \lim_{k\to\infty}\frac{1}{\sqrt{k}}\int ... dx."""
     if isinstance(expr, sp.Integral):
         return expr
     if isinstance(expr, sp.Mul):
         ints = [f for f in expr.args if isinstance(f, sp.Integral)]
         rest = [f for f in expr.args if not isinstance(f, sp.Integral)]
-        if len(ints) == 1 and not any(f.free_symbols or f.has(sp.Integral) for f in rest):
+        if len(ints) == 1 and not any(f.free_symbols - set(allowed) or f.has(sp.Integral) for f in rest):
             return sp.Integral(sp.Mul(*rest) * ints[0].function, *ints[0].limits)
     raise Unparseable("not a single integral")
 
@@ -650,7 +813,7 @@ SERIES_SETTLE = 60          # this many terms in a row too small to change the s
 SERIES_SMOOTH_TERMS = 500   # a smooth sum not settled by then (1/n^2) is finished by mpmath.nsum
 SERIES_MAX_TERMS = 5000     # a sum with floor, mod or sign must settle within this many terms
 SERIES_FINITE_MAX = 100000  # the longest finite sum added term by term
-JUMPS = (sp.floor, sp.ceiling, sp.Mod, sp.sign)
+JUMPS = (sp.floor, sp.ceiling, sp.Mod, sp.sign, sp.Heaviside)
 
 
 def series_value(term, lo, hi, smooth):
@@ -708,12 +871,80 @@ def _series_functions(expr):
     return replace(expr), impl
 
 
-def mp_function(expr, var, complex_ok=False):
+def _heaviside(t, h0=0.5):
+    """H(t) for lambdify: 1 for t > 0, 0 for t < 0, h0 at 0."""
+    t = mpmath.mpmathify(t)
+    if isinstance(t, mpmath.mpc):
+        raise ValueError("complex value")
+    return mpmath.mpf(1) if t > 0 else mpmath.mpf(0) if t < 0 else mpmath.mpf(h0)
+
+
+STEP_IMPL = {"Heaviside": _heaviside}
+STEP_SAMPLES = 400      # an inner step's switch points are found between this many + 1 points
+
+
+def _switch_points(hs, lo, hi):
+    """Points inside (lo, hi) where any of the functions hs changes sign: found between
+    STEP_SAMPLES + 1 evenly spaced points, then by bisection (as jumps() does for floor). Two
+    switches closer together than the spacing would be missed."""
+    xs = [lo + (hi - lo) * mpmath.mpf(i) / STEP_SAMPLES for i in range(STEP_SAMPLES + 1)]
+    pts = set()
+    for h in hs:
+        vals = [mpmath.mpf(h(x)) for x in xs]
+        for x0, v0, x1, v1 in zip(xs, vals, xs[1:], vals[1:]):
+            if v0 == 0 and lo < x0 < hi:
+                pts.add(x0)
+            elif v0 * v1 < 0:
+                pts.add(_bisect(h, x0, x1))
+    return sorted(pts)
+
+
+def _step_integrals(expr, method):
+    r"""expr with each inner integral of a step function, \int_{c}^{d} f(y) H(g(x, y))\,dy,
+    replaced by a function of the outer variables that splits [c, d] where each H switches
+    (_switch_points) and integrates the pieces by the given method (from 2026-10-27). Without
+    the split, tanh-sinh steps across the jump and loses most of its digits."""
+    impl = dict(STEP_IMPL)
+    for s in [s for s in expr.atoms(sp.Integral) if s.function.has(sp.Heaviside)]:
+        if s.function.has(sp.Integral, sp.Sum, sp.Product) or len(s.limits) != 1 or len(s.limits[0]) != 3:
+            raise Unparseable("an inner integral of a step function that is not a single definite integral")
+        y, c, d = s.limits[0]
+        args = sorted(s.free_symbols, key=str)
+        f = sp.lambdify([y] + args, s.function, modules=[STEP_IMPL, "mpmath"])
+        hs = [sp.lambdify([y] + args, h.args[0], modules="mpmath") for h in s.function.atoms(sp.Heaviside)]
+        ends = sp.lambdify(args, [c, d], modules="mpmath")
+
+        def value(*a, f=f, hs=hs, ends=ends):
+            lo, hi = (mpmath.mpf(v) for v in ends(*a))
+            if not (mpmath.isfinite(lo) and mpmath.isfinite(hi)):
+                raise ValueError("an inner step integral over an infinite range")
+            sign = 1
+            if hi < lo:
+                lo, hi, sign = hi, lo, -1
+            pts = [lo] + _switch_points([lambda t, h=h: h(t, *a) for h in hs], lo, hi) + [hi]
+            g = lambda t: f(t, *a)                       # noqa: E731
+            total = mpmath.mpf(0)
+            for p, q in zip(pts[:-1], pts[1:]):
+                if q > p:
+                    total += (mpmath.quad(g, [p, q]) if method == "mpmath"
+                              else mpmath.mpf(_scipy_quad(g, p, q, epsabs=1e-15)[0]))
+            return sign * total
+        name = f"StepIntegral{len(impl)}"
+        impl[name] = value
+        expr = expr.xreplace({s: sp.Function(name)(*args)})
+    return expr, impl
+
+
+def mp_function(expr, var, complex_ok=False, method="mpmath"):
     """expr as an mpmath function of var. A complex value raises ValueError, unless
     complex_ok (then it is returned as an mpc). cosh and sinh are evaluated as exponentials
     (an exact identity): cosh x - sinh x computed directly cancels to 0 for large x, and
-    tanh-sinh on an infinite range samples x far beyond 100."""
+    tanh-sinh on an infinite range samples x far beyond 100. An inner integral of a step
+    function H is split where H switches, its pieces done by method (_step_integrals)."""
     expr = expr.replace(lambda e: isinstance(e, (sp.cosh, sp.sinh)), lambda e: e.rewrite(sp.exp))
+    step_impl = STEP_IMPL
+    if any(s.function.has(sp.Heaviside) for s in expr.atoms(sp.Integral)):
+        expr, step_impl = _step_integrals(expr, method)
     if expr.has(DOTS):
         block, _ = nested_pattern(expr)
         outer = sp.lambdify((var, DOTS), expr, modules="mpmath")
@@ -721,9 +952,9 @@ def mp_function(expr, var, complex_ok=False):
         f = lambda x: outer(x, _nested_value(block_f, x))      # noqa: E731
     elif expr.has(sp.Sum, sp.Product):
         body, impl = _series_functions(expr)
-        f = sp.lambdify(var, body, modules=[impl, "mpmath"])
+        f = sp.lambdify(var, body, modules=[{**step_impl, **impl}, "mpmath"])
     else:
-        f = sp.lambdify(var, expr, modules="mpmath")
+        f = sp.lambdify(var, expr, modules=[step_impl, "mpmath"])
 
     def g(x):
         y = f(x)
@@ -783,7 +1014,7 @@ def jumps(expr, var, a, b):
     if not (mpmath.isfinite(a) and mpmath.isfinite(b)):
         return []
     in_sums = set()
-    for s in expr.atoms(sp.Sum):
+    for s in expr.atoms(sp.Sum, sp.Integral):          # an inner integral splits at its own jumps
         in_sums |= s.function.atoms(*JUMPS)
     pieces, zeros = [], []
     for e in expr.atoms(*JUMPS) - in_sums:
@@ -793,7 +1024,7 @@ def jumps(expr, var, a, b):
             if e.args[1].has(var):
                 continue
             pieces.append(e.args[0] / e.args[1])
-        elif isinstance(e, sp.sign):
+        elif isinstance(e, (sp.sign, sp.Heaviside)):
             zeros.append(e.args[0])
         else:
             pieces.append(e.args[0])
@@ -857,11 +1088,11 @@ def integrate(expr, var, a, b, method="mpmath", scale=1.0):
     real and imaginary parts, by the same method; the result is then an mpc, and the caller
     decides whether its imaginary part is 0 (real_part)."""
     if expr.has(sp.I):
-        whole = mp_function(expr, var, complex_ok=True)
+        whole = mp_function(expr, var, complex_ok=True, method=method)
         parts = [_integrate_f(lambda x, p=p: p(whole(x)), expr, var, a, b, method, scale)
                  for p in (mpmath.re, mpmath.im)]
         return mpmath.mpc(*parts)
-    return _integrate_f(mp_function(expr, var), expr, var, a, b, method, scale)
+    return _integrate_f(mp_function(expr, var, method=method), expr, var, a, b, method, scale)
 
 
 def real_part(v, abs_tol=QUAD_ABS_TOL):
@@ -875,8 +1106,44 @@ def real_part(v, abs_tol=QUAD_ABS_TOL):
     return v.real
 
 
+SCALE_SPLITS = [mpmath.mpf(10) ** j for j in range(-2, 10)]     # see _scale_splits
+_scale_split_depth = 0
+
+
+@contextlib.contextmanager
+def _scale_splits():
+    r"""While active, an infinite range is also split at 0 and +-10^j, j = -2..9 (from 2026-10-28). Used
+    only for the values of a limit at infinity (limit_value): there the integrand changes on a
+    scale that grows with the limit variable (a plateau of width about \sqrt{k}), and one
+    tanh-sinh or QUADPACK pass over the whole infinite range lost up to 1% of the value."""
+    global _scale_split_depth
+    _scale_split_depth += 1
+    try:
+        yield
+    finally:
+        _scale_split_depth -= 1
+
+
+def _with_spare_digits(f):
+    r"""f evaluated with 2|log10 x| extra digits, rounded back to the working precision. Far
+    out on an infinite range, an integrand such as 1-(x\sin\frac{1}{x})^{k} is a difference of
+    two numbers within 1/x^2 of each other: at the usual 30 digits it came out as rounding noise
+    (1e-31) beyond x = 1e15, and tanh-sinh, sampling out to 1e100, multiplied that noise by
+    enormous widths (2026-10-28)."""
+    def g(x):
+        e = 0 if x == 0 or not mpmath.isfinite(x) else int(abs(mpmath.log10(abs(x))))
+        with mpmath.workdps(mpmath.mp.dps + 2 * e):
+            y = f(x)
+        return +y
+    return g
+
+
 def _integrate_f(f, expr, var, a, b, method, scale):
     pts = [a] + breakpoints(expr, var, a, b) + [b]
+    if _scale_split_depth and not (mpmath.isfinite(a) and mpmath.isfinite(b)):
+        extra = [p for s in SCALE_SPLITS for p in (-s, s) if a < p < b] + ([mpmath.mpf(0)] if a < 0 < b else [])
+        pts = sorted(set(pts) | set(extra))
+        f = _with_spare_digits(f)
     omega = oscillation(expr, var, a, b)
     total = mpmath.mpf(0)
     for lo, hi in zip(pts[:-1], pts[1:]):
@@ -888,6 +1155,12 @@ def _integrate_f(f, expr, var, a, b, method, scale):
             total += _adaptive_quad(f, lo, hi)
         elif method == "mpmath":
             total += mpmath.quad(f, [lo, hi])
+        elif _scale_split_depth and ((hi == mpmath.inf and lo > 0) or (lo == -mpmath.inf and hi < 0)):
+            # a tail [X, inf) as x = X/u, u in (0, 1]: QUADPACK's own map left a 1/x^2 tail's
+            # whole area within 1e-8 of one end, and returned 0 (2026-10-28)
+            end = lo if hi == mpmath.inf else hi
+            g = lambda u, f=f, end=end: f(end / u) * abs(end) / u ** 2 if u > 0 else mpmath.mpf(0)    # noqa: E731
+            total += mpmath.mpf(_scipy_quad(g, 0, 1, epsabs=1e-13 * max(scale, 1e-300))[0])
         else:
             total += mpmath.mpf(_scipy_quad(f, lo, hi, epsabs=1e-13 * max(scale, 1e-300))[0])
     return total
@@ -1000,6 +1273,8 @@ def value_of(expr, method="mpmath"):
 
 LIMIT_STEP = mpmath.mpf("0.1")      # mpmath: the expression at z0 + 0.1/2^k (mpmath.limit, exp=True)
 SCIPY_LIMIT_STEPS = 6               # scipy: at z0 + 0.02/2^k, k = 0..5, then a polynomial through them at 0
+INF_LIMIT_POINTS = {"mpmath": [32 * 2 ** j for j in range(8)],      # 32 .. 4096
+                    "scipy": [48 * 2 ** j for j in range(6)]}       # 48 .. 1536
 
 
 def limit_value(lim, method="mpmath"):
@@ -1011,10 +1286,23 @@ def limit_value(lim, method="mpmath"):
                      each value with mpmath.quad at 30 digits.
     method "scipy":  values with scipy at z0 + 0.02/2^k (k = 0..5), extrapolated to z0 by the
                      polynomial through them (Neville).
-    A two-sided limit is done from both sides, which must agree."""
+    A two-sided limit is done from both sides, which must agree.
+    A limit at infinity (from 2026-10-28) is done at whole numbers z = start * 2^j, since a power
+    such as (x\sin\frac{1}{x})^{k} is real only for whole k, and extrapolated to h = 1/z = 0 by
+    the polynomial through the points (Neville), each method with its own points
+    (INF_LIMIT_POINTS) and its own integration; infinite ranges are also split by size
+    (_scale_splits)."""
     body, z, z0, direction = lim.args
     if z0 in (sp.oo, -sp.oo):
-        raise Unparseable("a limit at infinity")
+        sign = 1 if z0 == sp.oo else -1
+        zs = INF_LIMIT_POINTS[method]
+        vs = []
+        for zv in zs:
+            with sp.evaluate(False):         # (\sqrt{k}t)^k at k = 4096 would become 64^4096 t^4096
+                at_z = body.subs(z, sp.Integer(sign * zv))
+            with _scale_splits():
+                vs.append(value_of(at_z, method)[0])
+        return _extrapolate_to_zero([mpmath.mpf(1) / zv for zv in zs], vs)
     z0 = to_mp(z0)
 
     def at(h):                                   # the expression at z0 + h
@@ -1035,38 +1323,45 @@ def limit_value(lim, method="mpmath"):
 
 
 LIMIT_SAMPLES = ("0.3", "0.1", "0.03")      # distances from the limit point where two limits are compared
+INF_LIMIT_SAMPLES = (3, 10, 40)             # for a limit at infinity: whole numbers (from 2026-10-28)
 
 
 def compare_limit_problems(src, p):
     """Compare two limits of integrals (the website's and PROBLEM): the same limit point and
-    direction, and at each distance in LIMIT_SAMPLES (on each side the limit uses) the same
-    limits of integration and the same integrand at random points. Returns a list of problems."""
+    direction, and at each distance in LIMIT_SAMPLES (on each side the limit uses), or for a limit
+    at infinity at each whole number in INF_LIMIT_SAMPLES, the same limits of integration and the
+    same integrand (with any factor outside the integral) at random points. Returns a list of problems."""
     if not isinstance(p, sp.Limit):
         return ["PROBLEM is not a limit of an integral, but the website's is"]
     (sb, sz, sz0, sd), (pb, pz, pz0, pd) = src.args, p.args
     if sz0 != pz0:
         return [f"limit point {pz0}, website {sz0}"]
-    if str(sd) != str(pd):
+    infinite = sz0 in (sp.oo, -sp.oo)
+    if str(sd) != str(pd) and not infinite:              # at infinity there is only one side
         return [f"limit from side {pd}, website {sd}"]
-    si, pi_ = single_integral(sb), single_integral(pb)
+    si, pi_ = single_integral(sb, allowed=(sz,)), single_integral(pb, allowed=(pz,))
     if len(si.limits) != 1 or len(pi_.limits) != 1 or len(si.limits[0]) != 3 or len(pi_.limits[0]) != 3:
         return ["not a definite integral in one variable"]
     (svar, sa, sb_), (pvar, pa, pb_) = si.limits[0], pi_.limits[0]
     problems = []
-    for side in {"+": [1], "-": [-1]}.get(str(sd), [1, -1]):
-        for h in LIMIT_SAMPLES:
-            zv = sp.Float(mpmath.nstr(to_mp(sz0) + side * mpmath.mpf(h), 40), 40)
-            lo, hi = to_mp(sa.subs(sz, zv)), to_mp(sb_.subs(sz, zv))
-            plo, phi = to_mp(pa.subs(pz, zv)), to_mp(pb_.subs(pz, zv))
-            if not (close(plo, lo, 1e-15, 1e-15) and close(phi, hi, 1e-15, 1e-15)):
-                problems.append(f"at {sz} = {mpmath.nstr(zv, 4)}: limits {mpmath.nstr(plo, 8)} to "
-                                f"{mpmath.nstr(phi, 8)}, website {mpmath.nstr(lo, 8)} to {mpmath.nstr(hi, 8)}")
-                continue
-            r, d = compare_on_points(mp_function(si.function.subs(sz, zv), svar),
-                                     mp_function(pi_.function.subs(pz, zv), pvar), lo, hi,
-                                     rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
-            if r != "pass":
-                problems.append(f"at {sz} = {mpmath.nstr(zv, 4)}: integrand: {d}")
+    if infinite:                                         # whole numbers, as limit_value uses
+        sign = 1 if sz0 == sp.oo else -1
+        values = [sp.Integer(sign * zv) for zv in INF_LIMIT_SAMPLES]
+    else:
+        values = [sp.Float(mpmath.nstr(to_mp(sz0) + side * mpmath.mpf(h), 40), 40)
+                  for side in {"+": [1], "-": [-1]}.get(str(sd), [1, -1]) for h in LIMIT_SAMPLES]
+    for zv in values:
+        lo, hi = to_mp(sa.subs(sz, zv)), to_mp(sb_.subs(sz, zv))
+        plo, phi = to_mp(pa.subs(pz, zv)), to_mp(pb_.subs(pz, zv))
+        if not (close(plo, lo, 1e-15, 1e-15) and close(phi, hi, 1e-15, 1e-15)):
+            problems.append(f"at {sz} = {mpmath.nstr(zv, 4)}: limits {mpmath.nstr(plo, 8)} to "
+                            f"{mpmath.nstr(phi, 8)}, website {mpmath.nstr(lo, 8)} to {mpmath.nstr(hi, 8)}")
+            continue
+        r, d = compare_on_points(mp_function(si.function.subs(sz, zv), svar),
+                                 mp_function(pi_.function.subs(pz, zv), pvar), lo, hi,
+                                 rel=SAME_REL_TOL, abs_tol=SAME_ABS_TOL)
+        if r != "pass":
+            problems.append(f"at {sz} = {mpmath.nstr(zv, 4)}: integrand: {d}")
     return problems
 
 
@@ -1391,7 +1686,7 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
                 expr = to_sympy(source["problem_tex"])
                 if isinstance(expr, sp.Limit):               # a limit outside the integral, e.g. lim n->0 of int_n^(pi/2) f(x, n) dx
                     src_limit = expr
-                    expr = single_integral(expr.args[0])
+                    expr = single_integral(expr.args[0], allowed=(expr.args[1],))
                 expr = single_integral(expr)                 # a constant factor outside moves inside
                 if len(expr.limits) != 1:
                     raise Unparseable("not a single integral")
@@ -1407,15 +1702,23 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
                     z, z0, zdir = src_limit.args[1], src_limit.args[2], str(src_limit.args[3])
                     a = to_mp(sp.limit(lim[1], z, z0, dir=zdir))
                     b = to_mp(sp.limit(lim[2], z, z0, dir=zdir))
-                    try:
-                        g = sp.limit(integrand, z, z0, dir=zdir)
-                        if g.has(z, sp.Limit, sp.nan, sp.zoo, sp.oo, -sp.oo):
-                            raise ValueError
-                        integrand = g
-                        note = f" (as {z} -> {z0}: integrand {g}, from {lim[1]} to {lim[2]} -> {a} to {b})"
-                    except Exception:                        # sympy raises several error types
+                    if z0 in (sp.oo, -sp.oo):
+                        # from 2026-10-28: as z grows the integrand may spread out (here over a
+                        # width sqrt(k)) while its height tends to 0, so its pointwise limit says
+                        # nothing about the area, and the video draws a rescaled shape instead
                         integrand = None
-                        note = f" (as {z} -> {z0}: the integrand's pointwise limit could not be found)"
+                        note = (f" (as {z} -> {z0}: a limit at infinity; FUNC and exact_integral() are "
+                                "checked through their value only)")
+                    else:
+                        try:
+                            g = sp.limit(integrand, z, z0, dir=zdir)
+                            if g.has(z, sp.Limit, sp.nan, sp.zoo, sp.oo, -sp.oo):
+                                raise ValueError
+                            integrand = g
+                            note = f" (as {z} -> {z0}: integrand {g}, from {lim[1]} to {lim[2]} -> {a} to {b})"
+                        except Exception:                    # sympy raises several error types
+                            integrand = None
+                            note = f" (as {z} -> {z0}: the integrand's pointwise limit could not be found)"
                 elif len(lim) == 3:
                     a, b = to_mp(lim[1]), to_mp(lim[2])
                 set_("source_file", "pass", f"{source['problem_tex']}{note}")
@@ -1450,7 +1753,11 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
         set_("date_matches", "unchecked", "no readable source")
 
     definite = a is not None
-    ref_f = mp_function(integrand, var) if integrand is not None else None
+    try:
+        ref_f = mp_function(integrand, var) if integrand is not None else None
+    except Unparseable as exc:                           # before 2026-10-28 this stopped verify.py
+        set_("source_file", "fail", f"the website's integrand could not be read: {exc}")
+        integrand = ref_f = None
     # a complex integrand (from 2026-10-22): PROBLEM is compared with it as a complex function;
     # FUNC (the graph) and exact_integral() with its real part, whose integral is the answer
     # once quadratures_agree has found that the imaginary part integrates to 0
@@ -1470,14 +1777,19 @@ def check_video(date, level, folder=None, source_dir=None, root=ROOT):
     if src_limit is not None:
         try:
             problems = compare_limit_problems(src_limit, to_sympy(problem_sides[-1]))
+            n_samples = len(INF_LIMIT_SAMPLES if src_limit.args[2] in (sp.oo, -sp.oo) else LIMIT_SAMPLES)
             set_("problem_matches_source", "fail" if problems else "pass",
                  "; ".join(problems) or "same limit; same limits of integration and integrand at "
-                                        f"{len(LIMIT_SAMPLES)} values of {src_limit.args[1]}")
+                                        f"{n_samples} values of {src_limit.args[1]}")
         except Unparseable as exc:
             set_("problem_matches_source", "unchecked", f"PROBLEM could not be read: {exc}")
         if ref_f is not None:
             r, d = compare_on_points(ref_f, lambda x: cls.FUNC(float(x)), *lo_hi)
             set_("func_matches_source", r, d + " (with the integrand's pointwise limit)")
+        elif src_limit.args[2] in (sp.oo, -sp.oo):
+            for c in ("func_matches_source", "exact_integral_matches_source"):
+                set_(c, "unchecked", "a limit at infinity has no fixed integrand to compare with; "
+                                     "the value is checked (exact_integral_matches_reference)")
         else:
             set_("func_matches_source", "unchecked", "the integrand's pointwise limit could not be found")
     elif ref_f is not None:
