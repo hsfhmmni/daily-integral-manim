@@ -644,6 +644,42 @@ RULE_CARDS = {
         when=[cap(r"A limit outside an integral that you want inside.")],
         why=[cap(r"The bound $g$ stops area escaping to infinity as $k$ grows.")],
     ),
+    "log_limits": dict(
+        name=r"Logs Lose to Powers",
+        statement=r"x\ln x\to0\ \text{as }x\to0^{+},\qquad \frac{\ln x}{x}\to0\ \text{as }x\to\infty",
+        symbols=[cap(r"$x\to0^{+}$ means $x$ shrinks to $0$ through positive values.")],
+        when=[cap(r"A boundary term with $\ln x$ at $0$ or $\infty$.")],
+        why=[cap(r"With $x=e^{t}$, $\frac{\ln x}{x}=\frac{t}{e^{t}}$, and $e^{t}$ outgrows $t$.")],
+    ),
+    "arctan_reciprocal": dict(
+        name=r"$\tan^{-1}$ of a Reciprocal",
+        statement=r"\tan^{-1}\frac{1}{a}=\frac{\pi}{2}-\tan^{-1}a,\qquad a>0",
+        symbols=[cap(r"$\tan^{-1}a$ is the angle in $(0,\frac{\pi}{2})$ whose tangent is $a$.")],
+        when=[cap(r"$\tan^{-1}$ of something that a substitution turns upside down.")],
+        why=[cap(r"In a right triangle the two acute angles add to $\frac{\pi}{2}$."),
+             cap(r"Their tangents are $a$ and $\frac{1}{a}$.")],
+    ),
+    "arctan_derivative": dict(
+        name=r"Derivative of $\tan^{-1}x$",
+        statement=r"\frac{d}{dx}\tan^{-1}x=\frac{1}{1+x^{2}}",
+        symbols=[cap(r"$\tan^{-1}x$ is the angle whose tangent is $x$.")],
+        when=[cap(r"Differentiating $\tan^{-1}$, often inside integration by parts.")],
+        why=[cap(r"Differentiate $\tan y=x$: $\sec^{2}y\,y'=1$, and $\sec^{2}y=1+x^{2}$.")],
+    ),
+    "hyperbolic_identity": dict(
+        name=r"The Hyperbolic Identity",
+        statement=r"\cosh^{2}w-\sinh^{2}w=1",
+        symbols=[cap(r"$\sinh w=\frac{e^{w}-e^{-w}}{2}$ and $\cosh w=\frac{e^{w}+e^{-w}}{2}$.")],
+        when=[cap(r"A root $\sqrt{1+y^{2}}$, after putting $y=\sinh w$.")],
+        why=[cap(r"Expand both squares: the $e^{2w}$ and $e^{-2w}$ terms cancel.")],
+    ),
+    "arsinh_log": dict(
+        name=r"$\sinh^{-1}$ as a Logarithm",
+        statement=r"\sinh^{-1}y=\ln\big(y+\sqrt{1+y^{2}}\big)",
+        symbols=[cap(r"$\sinh^{-1}y$ is the number whose $\sinh$ is $y$.")],
+        when=[cap(r"Evaluating $\sinh^{-1}$ at a number.")],
+        why=[cap(r"Solve $\frac{e^{u}-e^{-u}}{2}=y$: a quadratic in $e^{u}$.")],
+    ),
 }
 
 

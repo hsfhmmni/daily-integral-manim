@@ -1,0 +1,44 @@
+Medium Integral - Thursday 29 October 2026
+
+1. Infinite at 0. Can the area still be finite?
+2. Thin rectangles still hug the spike; watch the gap shrink.
+3. We want log x gone: x tends to 1 over x flips it.
+4. u-Substitution
+5. the integral of f (g(x)) g'(x) dx equals the integral of f(u) du, u equals g(x)
+6. Here x equals 1 over u, so dx equals minus du over u squared.
+7. Changing the Limits
+8. the integral from a to b of f (g(x)) g'(x) dx equals the integral from g(a) to g(b) of f(u) du
+9. Here x equals 0 gives u equals infinity; x equals infinity gives u equals 0.
+10. Put x equals 1 over u: log 1 over u equals minus log u, and the limits swap.
+11. Swapping the Limits
+12. the integral from b to a of f(x) dx equals minus the integral from a to b of f(x) dx
+13. Here minus the integral from infinity to 0 of becomes the integral from 0 to infinity of.
+14. The minus flips the limits back; u squared is left.
+15. Call it I; rename u as x and add.
+16. The top is (1 plus x squared) minus (1 minus x squared)log x. Split it.
+17. The Quotient Rule
+18. (f over g)' equals f'g minus fg' over g squared
+19. Here f equals x, g equals 1 plus x squared: (1 plus x squared) minus 2x squared over (1 plus x squared) squared.
+20. That fraction is the derivative of x over 1 plus x squared.
+21. Integration by Parts
+22. the integral of u dv equals uv minus the integral of v du
+23. Here u equals log x and dv over dx equals (x over 1 plus x squared)'.
+24. By parts: log x gives 1 over x, cancelling the x.
+25. Logs Lose to Powers
+26. xlog x tends to 0\ as x tends to 0 to the plus , log x over x tends to 0\ as x tends to infinity
+27. Here xlog x over 1 plus x squared tends to 0 at both 0 and infinity.
+28. Logs lose to powers: the bracket is 0.
+29. Integral of 1 over 1 plus x squared
+30. the integral of 1 over 1 plus x squared dx equals inverse x plus C
+31. inverse x is the angle, in radians, whose tangent is x.
+32. One over 1 plus a square, after completing the square.
+33. With y equals inverse x, dx over dy equals squared y equals 1 plus x squared.
+34. So dy over dx equals 1 over 1 plus x squared: undo it.
+35. Here the whole integrand is 1 over 1 plus x squared.
+36. Improper Integrals
+37. the integral from a to infinity of f(x) dx equals _b tends to infinity the integral from a to b of f(x) dx
+38. Here inverse b tends to pi over 2 as b tends to infinity.
+39. What is left: the area under 1 over 1 plus x squared.
+40. inverse x climbs to pi over 2, so 2I equals pi.
+41. Rectangles out to 30 close in on 1.5708.
+42. Yes, finite: pairing x with 1 over x cancels log x.

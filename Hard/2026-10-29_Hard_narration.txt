@@ -1,0 +1,22 @@
+Hard Integral - Thursday 29 October 2026
+
+1. Why does the curve switch on at exactly t equals 1?
+2. Zoomed out to 512: a thin tail holds 40\% of the area.
+3. We want the 2026 gone. Flipping t to 1 over t nearly does it.
+4. Try t equals 1 over u on the weight: it comes back unchanged.
+5. Times u on top and bottom: the last factor is unchanged too.
+6. The limits swap, the minus swaps them back; rename u as t.
+7. For a>0, inverse 1 over a equals pi over 2 minus inverse a.
+8. Add this to I and halve: the 2026 is gone.
+9. Now let y equals t minus 1 over t plus 1, so t equals 1 plus y over 1 minus y.
+10. Weight 1 plus y squared over 4; limits 0 to infinity become minus 1 to 1.
+11. Even in y: twice the half from 0 to 1.
+12. By parts with v equals y plus y cubed over 3: 3 plus y squared cancels top and bottom.
+13. At 1 the bracket is 4 over 3 times pi over 4 equals pi over 3; at 0 it is 0.
+14. Let y equals sinh w: 1 plus y squared equals cosh w cancels dy equals cosh w dw.
+15. sinh squared w equals cosh 2w minus 1 over 2 integrates to sinh 2w over 4 minus w over 2.
+16. At the top sinh w equals 1, cosh w equals root 2, w equals log (1 plus root 2).
+17. Put it back: root 2 over 3 times root 2 over 2 equals 1 over 3.
+18. Multiply out the pi over 8.
+19. Wider, thinner rectangles close in on 0.4606.
+20. At t equals 1 the factor switches on; t tends to 1 over t averages it to pi over 4.

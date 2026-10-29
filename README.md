@@ -2,7 +2,7 @@
 
 **Every day, the [dailyintegral.com](https://dailyintegral.com) Medium and Hard integrals (Beginner, Easy and Medium until 20 October 2026), solved and turned into short 3Blue1Brown-style explainer videos with [Manim](https://www.manim.community/).**
 
-![Manim CE 0.21](https://img.shields.io/badge/Manim_CE-0.21-blue) ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB) ![LaTeX](https://img.shields.io/badge/LaTeX-MiKTeX-008080) ![videos](https://img.shields.io/badge/videos-52-brightgreen) ![minutes](https://img.shields.io/badge/minutes_of_animation-129-orange)
+![Manim CE 0.21](https://img.shields.io/badge/Manim_CE-0.21-blue) ![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB) ![LaTeX](https://img.shields.io/badge/LaTeX-MiKTeX-008080) ![videos](https://img.shields.io/badge/videos-54-brightgreen) ![minutes](https://img.shields.io/badge/minutes_of_animation-135-orange)
 
 | Symmetry you can see | Rectangles closing in | Unwrapping nested absolute values |
 |:---:|:---:|:---:|
@@ -10,18 +10,19 @@
 
 Each video starts from the **picture** (the curve and the shaded area) and asks a question. Then it builds intuition with rectangles that get thinner, highlights the one key idea, **morphs** the equations line by line, and ends with the estimate meeting the exact answer.
 
-## Latest: Wednesday 28 October 2026
+## Latest: Thursday 29 October 2026
 
 | Medium | Hard |
 |:---:|:---:|
-| [![Medium 2026-10-28](assets/thumbs/2026-10-28_Medium.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-28/2026-10-28_Medium.mp4)<br>$\Big({S}\Big)\thinspace dx$<br>**Answer:** $\frac{2\sqrt{3}}{3}-\frac{\pi}{6}$ | [![Hard 2026-10-28](assets/thumbs/2026-10-28_Hard.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-28/2026-10-28_Hard.mp4)<br>${LIM}{PRE}\Big(1-\big({XS}\big)^{k}\Big)\thinspace dx$<br>**Answer:** $\sqrt{\frac{2\pi}{3}}$ |
+| [![Medium 2026-10-29](assets/thumbs/2026-10-29_Medium.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-29/2026-10-29_Medium.mp4)<br>${TOP}{LN}{BOT}\thinspace dx$<br>**Answer:** $\frac{\pi}{2}$ | [![Hard 2026-10-29](assets/thumbs/2026-10-29_Hard.jpg)](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-29/2026-10-29_Hard.mp4)<br>${W}{A}{B}\thinspace dt$<br>**Answer:** $\frac{\pi(\pi+1)}{24}-\frac{\sqrt{2}\thinspace \pi}{48}\ln(1+\sqrt{2})$ |
 
-Click a thumbnail for the video (1080p60, about 1.5 to 2 minutes, no sound: the captions carry the story). Every day's videos are also on its [release page](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-28).
+Click a thumbnail for the video (1080p60, about 1.5 to 2 minutes, no sound: the captions carry the story). Every day's videos are also on its [release page](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-29).
 
 ## All videos
 
 | Date | Beginner | Easy | Medium | Hard |
 |---|---|---|---|---|
+| **[2026-10-29](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-29)** |  |  | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-29/2026-10-29_Medium.mp4) · [code](Medium/2026-10-29_Medium.py)<br>${TOP}{LN}{BOT}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-29/2026-10-29_Hard.mp4) · [code](Hard/2026-10-29_Hard.py)<br>${W}{A}{B}\thinspace dt$ |
 | **[2026-10-28](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-28)** |  |  | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-28/2026-10-28_Medium.mp4) · [code](Medium/2026-10-28_Medium.py)<br>$\Big({S}\Big)\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-28/2026-10-28_Hard.mp4) · [code](Hard/2026-10-28_Hard.py)<br>${LIM}{PRE}\Big(1-\big({XS}\big)^{k}\Big)\thinspace dx$ |
 | **[2026-10-26](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-26)** |  |  | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-26/2026-10-26_Medium.mp4) · [code](Medium/2026-10-26_Medium.py)<br>$\frac{{NUM}}{x^{2}}\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-26/2026-10-26_Hard.mp4) · [code](Hard/2026-10-26_Hard.py)<br>${FL}\tan(x)\thinspace dx$ |
 | **[2026-10-25](https://github.com/hsfhmmni/daily-integral-manim/releases/tag/2026-10-25)** |  |  | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-25/2026-10-25_Medium.mp4) · [code](Medium/2026-10-25_Medium.py)<br>$\Bigg(1+\frac{\sin x}{2+{REPEAT}}\Bigg)\thinspace dx$ | [▶ video](https://github.com/hsfhmmni/daily-integral-manim/releases/download/2026-10-25/2026-10-25_Hard.mp4) · [code](Hard/2026-10-25_Hard.py)<br>$\frac{{ATAN}}{{DEN}}{LOGS}\thinspace dx$ |
@@ -117,8 +118,8 @@ git clone https://github.com/hsfhmmni/daily-integral-manim.git
 cd daily-integral-manim
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
-python check_text.py 2026-10-28
-manim -ql Medium/2026-10-28_Medium.py MediumIntegral
+python check_text.py 2026-10-29
+manim -ql Medium/2026-10-29_Medium.py MediumIntegral
 ```
 
 ## Credits

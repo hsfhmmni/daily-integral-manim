@@ -31,6 +31,25 @@ reference manual (docs.manim.community, v0.21.0). No pi creatures, logos, music 
 | 14 | **Faint grid, numbered axes.** A soft background grid under clear axis numbers. | Gives scale without noise. | `Axes` + `NumberLine.add_labels` for nice values (fractions, multiples of pi), with faint grid lines from `axes.c2p` at stroke opacity 0.15. Helper: `build_graph()` |
 | 15 | **Gentle easing everywhere.** Smooth starts and stops; there-and-back for pulses. | Motion feels physical, not mechanical. | `rate_functions.smooth` (default), `there_and_back` for pulses, `ease_out_cubic` for trackers; run times of 1 to 2 s. |
 
+## More camera, smoother transitions (from 2026-10-29)
+Added after re-reading the same references (`laplace/integration.py`, `gauss_int/integral.py`,
+`sphere_area.py`, CE `examples.rst`). He moves the frame slowly and often, usually
+*alongside* other animations (`frame.animate.reorient(...)` with long run times and
+`time_span`), and objects survive from one beat to the next instead of fading out.
+
+| # | What he does | Why it works | How we do it in CE 0.21 |
+|---|---|---|---|
+| 16 | **The camera never quite stops.** Slow drifts during explanation. | Stillness reads as a slide; slight motion keeps the eye alive. | `hold()`: `frame.animate.scale(0.965).shift(≤0.1)` with `there_and_back` over the caption's hold, toward `scene._focus`. |
+| 17 | **Follow the thing being drawn.** (CE `FollowingGraphCamera`) | The eye rides with the pen. | `_follow_draw()`: zoom to the curve start, `UpdateFromAlphaFunc` moves the frame to the pen tip (`curve.points[-1]`) during `Create`, then pull back. |
+| 18 | **Reveal by pulling back.** (`frame.animate.to_default_state()`) | Detail first, then context. | `riemann_rectangles()`: rectangles appear close up, the frame returns to full view as n grows. |
+| 19 | **Look where it changed.** | Directs attention without an arrow. | `morph_to()` sets the focus to `changed_parts(old, new)`. |
+| 20 | **Objects persist.** The graph is not thrown away; it waits. | Continuity: the picture and the algebra are one story. | `to_thumbnail()`: no numbers, small, under the badge; it grows back in the close. |
+| 21 | **The result travels.** (`TransformFromCopy`) | One motion links two representations. | `close()`: a copy of the answer flies into the estimate and fades, the estimate pulses. |
+| 22 | **Stagger exits too.** (`LaggedStartMap(FadeOut, ...)`) | Leaving is as legible as arriving. | `exit_anim()` / `_exit()`. |
+
+Every camera move is chosen with `probe_view()`: the frame guard runs on a trial camera
+position, and a move that would cut text off is made smaller or skipped.
+
 ## Rule Cards
 From 2026-10-12 only rules worth teaching get a card (see README, Rule Cards): assumed basics
 get none, techniques and (in Beginner/Easy) standard integrals get a short card (name,

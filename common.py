@@ -315,6 +315,22 @@ def frame_problems(scene):
             if bx.overlap(r, t, pad=0.05):
                 out.append(f"{_label(t) if not isinstance(t, VGroup) else type(t).__name__} "
                            f"touches the reserved {_label(list(_texty_leaves(r))[0])}")
+    out += _thumb_problems(scene, tops, bx)
+    return out
+
+
+def _thumb_problems(scene, tops, bx):
+    """Text that is not dimmed must not sit on the graph thumbnail (it has no text of its own)."""
+    th = getattr(scene, "_thumb", None)
+    if th is None or th not in tops or getattr(th, "_guard_dimmed", False):
+        return []
+    out = []
+    for top in tops:
+        if top is th or getattr(top, "_guard_dimmed", False):
+            continue
+        for leaf in _texty_leaves(top):
+            if bx.has_points(leaf) and bx.visible(leaf) and bx.overlap(leaf, th, pad=0.05):
+                out.append(f"{_label(leaf)} touches the graph thumbnail")
     return out
 
 
@@ -719,6 +735,129 @@ def _caption_band_bottom():
     return max(SAFE_BOTTOM, watermark_box()[3] + 0.12)
 
 
+# ---- camera and transitions (user-approved 2026-10-29; STYLE_NOTES techniques 16-22)
+# On only for videos dated STYLE_FROM or later, so earlier days' scripts run exactly as before.
+STYLE_FROM = "2026-10-29"
+STYLE = dict(drift=True,            # C1: the camera breathes toward the subject during a caption hold
+             follow_curve=True,     # C2: the hook's camera follows the pen drawing the curve
+             pullback=True,         # C4: rectangles start close up, the camera pulls back as n grows
+             push_in=True,          # C5: the drift after a morph aims at the parts that changed
+             thumbnail=True,        # T1: the graph shrinks to a corner thumbnail instead of fading
+             answer_travel=True,    # T2: the boxed answer flies into the estimate readout
+             staggered_exits=True)  # T3: groups leave one piece after another
+DRIFT_SCALE = 0.965         # with a shift of at most DRIFT_SHIFT the view still covers the whole safe area
+DRIFT_SHIFT = 0.1
+FOLLOW_ZOOMS = (0.6, 0.7, 0.8)
+PULLBACK_ZOOMS = (0.65, 0.75, 0.85)
+THUMB_W, THUMB_GAP = 2.4, 0.2
+
+
+def new_style(scene, feature):
+    """True when this video uses the 2026-10-29 camera and transition feature `feature`."""
+    return STYLE.get(feature, False) and str(getattr(scene, "DATE", "")) >= STYLE_FROM
+
+
+def _frame_at_rest(scene):
+    """The camera frame when it shows the plain full view (not zoomed), else None."""
+    frame = getattr(getattr(scene, "camera", None), "frame", None)
+    if frame is None or getattr(scene, "_zoomed", False):
+        return None
+    if abs(frame.width - config.frame_width) > 1e-3 or np.linalg.norm(frame.get_center()[:2]) > 1e-3:
+        return None
+    return frame
+
+
+def _update_hud(scene):
+    for m in scene.mobjects:
+        if getattr(m, "_hud", False):
+            m.update(0)
+
+
+def probe_view(scene, center, zoom):
+    """The frame guard's problems if the camera were at `center` with width zoom * frame
+    width (nothing is drawn; the camera is put back). Used to pick camera moves that never
+    cut text off."""
+    frame = scene.camera.frame
+    c0, w0 = frame.get_center().copy(), frame.width
+    frame.set(width=config.frame_width * zoom).move_to(center)
+    _update_hud(scene)
+    problems = frame_problems(scene)
+    frame.set(width=w0).move_to(c0)
+    _update_hud(scene)
+    return problems
+
+
+def _pick_zoom(scene, centers, zooms):
+    """The first zoom in `zooms` for which every view in `centers` passes the guard, or None."""
+    for z in zooms:
+        if all(not probe_view(scene, c, z) for c in centers):
+            return z
+    return None
+
+
+def search_view(scene, targets, zooms, reach=2.0, step=0.5):
+    """(zoom, offset) so that the camera centred on each of `targets` + offset, at that zoom,
+    passes the guard: zooms in order, offsets nearest first (up to `reach` away, so the subject
+    stays near the middle of the view). (None, None) when nothing passes."""
+    k = int(round(reach / step))
+    offsets = sorted(((dx * step, dy * step) for dx in range(-k, k + 1) for dy in range(-k, k + 1)),
+                     key=lambda o: o[0] ** 2 + o[1] ** 2)
+    for z in zooms:
+        for dx, dy in offsets:
+            off = np.array([dx, dy, 0])
+            if all(not probe_view(scene, t + off, z) for t in targets):
+                return z, off
+    return None, None
+
+
+def _rest_view(frame):
+    return frame.animate.set(width=config.frame_width).move_to(ORIGIN)
+
+
+def hold(scene, seconds):
+    """Wait `seconds`. In the new style (C1) the camera meanwhile eases a little toward
+    scene._focus and back (there and back), so the frame is the plain full view again at the
+    end. DRIFT_SCALE and DRIFT_SHIFT keep the whole safe area in view at every moment."""
+    frame = _frame_at_rest(scene) if new_style(scene, "drift") else None
+    if frame is None or seconds < 1.0:
+        scene.wait(seconds)
+        return
+    focus = getattr(scene, "_focus", None)
+    shift = np.zeros(3)
+    if focus is not None and _has_points(focus):
+        v = focus.get_center()
+        v[2] = 0
+        d = np.linalg.norm(v)
+        if d > 1e-6:
+            shift = v / d * min(DRIFT_SHIFT, 0.05 * d)
+    scene.play(frame.animate.scale(DRIFT_SCALE).shift(shift), run_time=seconds, rate_func=there_and_back)
+
+
+def set_focus(scene, mob):
+    """What the camera drifts toward during the next caption holds (C1, C5)."""
+    scene._focus = mob
+
+
+def exit_anim(*mobs):
+    """FadeOut for a group; in the new style (T3) the pieces leave one after another."""
+    mobs = [m for m in mobs if m is not None]
+    return LaggedStart(*[FadeOut(m, shift=0.15 * DOWN) for m in mobs], lag_ratio=0.15)
+
+
+def _exit(scene, *mobs):
+    mobs = [m for m in mobs if m is not None]
+    if new_style(scene, "staggered_exits") and len(mobs) > 1:
+        return exit_anim(*mobs)
+    return FadeOut(VGroup(*mobs))
+
+
+def changed_parts(old, new):
+    """Parts of `new` whose TeX is not in `old` (what a morph brings in)."""
+    have = {getattr(p, "tex_string", None) for p in old.submobjects}
+    parts = [p for p in new.submobjects if getattr(p, "tex_string", None) not in have]
+    return VGroup(*parts) if parts else new
+
+
 # ---- hold times: every on-screen sentence stays at least read_time(text)
 def _now(scene):
     return scene.renderer.time
@@ -770,7 +909,7 @@ def caption(scene, text, color=WHITE, wait=True, key=None):
     if key:
         mark(scene, key, offset=0.3)
     if wait:
-        scene.wait(read_time(text))
+        hold(scene, read_time(text))
     return new
 
 
@@ -792,7 +931,10 @@ def intro_card(scene, difficulty, date_long, problem_spec, colors=None):
     scene.play(LaggedStart(FadeIn(title, shift=0.2 * UP), FadeIn(date), FadeIn(prob),
                            lag_ratio=0.25), run_time=1.0)
     scene.wait(1.0)
-    scene.play(FadeOut(group), run_time=0.5)
+    if new_style(scene, "staggered_exits"):
+        scene.play(exit_anim(title, date, prob), run_time=0.8)
+    else:
+        scene.play(FadeOut(group), run_time=0.5)
 
 
 # ---- graphs
@@ -850,11 +992,91 @@ def build_graph(g, func, box=GRAPH_BOX):
 
 
 def draw_graph(scene, gr, label=None):
-    """Animate a built graph: grid and axes, then the curve, then the shaded area."""
+    """Animate a built graph: grid and axes, then the curve, then the shaded area.
+    In the new style (C2) the camera follows the pen while the curve is drawn."""
     scene.play(FadeIn(gr.grid), Create(gr.axes, lag_ratio=0.02), FadeIn(gr.var_label), run_time=1.5)
+    if new_style(scene, "follow_curve") and _frame_at_rest(scene) is not None and _follow_draw(scene, gr, label):
+        return
     scene.play(Create(gr.curve), *([FadeIn(label, shift=0.1 * UP)] if label is not None else []),
                run_time=1.5)
     scene.play(FadeIn(gr.area), *([GrowFromCenter(gr.hole)] if gr.hole is not None else []), run_time=1.0)
+
+
+def _follow_draw(scene, gr, label):
+    """C2: zoom onto the start of the curve, follow the pen while Create draws it, then pull
+    back to the full view as the area fills in. False (nothing drawn) when no zoom in
+    FOLLOW_ZOOMS keeps the axis numbers whole at both ends of the path."""
+    frame = scene.camera.frame
+    mid_y = gr.axes.get_center()[1]
+
+    def look(p):                                   # follow x; y only halfway, so spikes do not jerk
+        return np.array([p[0], (p[1] + mid_y) / 2, 0])
+
+    start, end = look(gr.curve.get_start()), look(gr.curve.get_end())
+    z, off = search_view(scene, [start, end], FOLLOW_ZOOMS, reach=1.0)
+    if z is None:
+        return False
+    start = start + off
+    look_raw = look
+
+    def look(p):                                   # noqa: F811  (the same path, shifted clear of text)
+        return look_raw(p) + off
+    scene.play(frame.animate.set(width=config.frame_width * z).move_to(start), run_time=0.8)
+
+    def follow(f, alpha):
+        pts = gr.curve.points
+        f.move_to(look(pts[-1]) if len(pts) else start)
+
+    scene.play(Create(gr.curve), UpdateFromAlphaFunc(frame, follow), run_time=2.0)
+    extra = [FadeIn(label, shift=0.1 * UP)] if label is not None else []
+    scene.play(_rest_view(frame), FadeIn(gr.area), *extra,
+               *([GrowFromCenter(gr.hole)] if gr.hole is not None else []), run_time=1.2)
+    _update_hud(scene)
+    return True
+
+
+def to_thumbnail(scene, gr, gone=()):
+    """T1: the graph keeps its curve, area and grid but drops its numbers, and shrinks to a
+    small picture under the badge, where it stays while the working runs (scene._thumb).
+    `gone` (rectangles, readouts) fades out meanwhile, and the area comes back."""
+    axis_lines = VGroup(*[Line(ax.get_start(), ax.get_end()).set_stroke(GREY_A, 2)
+                          for ax in (gr.axes.x_axis, gr.axes.y_axis)])
+    parts = [gr.grid, axis_lines, gr.area, gr.curve] + ([gr.hole] if gr.hole is not None else [])
+    thumb = VGroup(*parts)
+    badge = getattr(scene, "_badge", None)
+    top = (badge.get_bottom()[1] if badge is not None else SAFE_TOP) - 0.15
+    target = thumb.copy()
+    target.scale_to_fit_width(THUMB_W)
+    if target.height > top - (STAGE[3] + THUMB_GAP):
+        target.scale_to_fit_height(top - (STAGE[3] + THUMB_GAP))
+    target.move_to([SAFE_RIGHT - target.width / 2, top - target.height / 2, 0])
+    scene.add(axis_lines)
+    scene.play(FadeOut(gr.axes), FadeOut(gr.var_label), FadeIn(gr.area), *[FadeOut(m) for m in gone], run_time=0.8)
+    scene.remove(gr.axes, gr.var_label, *gone)
+    scene.add(thumb)
+    scene.remove(*parts)
+    scene.add(thumb)
+    scene.play(Transform(thumb, target), run_time=1.0)
+    thumb.area = gr.area
+    scene._thumb = thumb
+    if _frame_at_rest(scene) is not None:
+        attach_hud(scene, thumb)
+    return thumb
+
+
+def unpin(mob):
+    """Undo attach_hud (before animating the mobject somewhere else)."""
+    mob.clear_updaters()
+    mob._hud = False
+    return mob
+
+
+def thumb_left(scene):
+    """x of the thumbnail's left edge, or SAFE_RIGHT when there is none on screen."""
+    th = getattr(scene, "_thumb", None)
+    if th is None or th not in scene.mobjects:
+        return SAFE_RIGHT
+    return th.get_left()[0] - THUMB_GAP
 
 
 def midpoint_sum(func, a, b, n):
@@ -926,9 +1148,27 @@ def riemann_rectangles(scene, gr, a, b, true_value, counts=(4, 8, 16, 32, 64), k
                         font_size=34, color=TRAP_COLOR)
     readout = _readout([(r"n=", n_num), (r"\text{estimate}\approx", est), (r"\text{gap}=", gap)])
     n_num.add_updater(lambda m: _show_value(m, count()))
-    est.add_updater(lambda m: _show_value(m, midpoint_sum(gr.func, a, b, count())))
-    gap.add_updater(lambda m: _show_value(m, abs(midpoint_sum(gr.func, a, b, count()) - true_value)))
-    scene.play(FadeOut(gr.area), FadeIn(rects, lag_ratio=0.1), FadeIn(readout, lag_ratio=0.2), run_time=1.5)
+    sums = {}
+
+    def ms(k):
+        if k not in sums:
+            sums[k] = midpoint_sum(gr.func, a, b, k)
+        return sums[k]
+    est.add_updater(lambda m: _show_value(m, ms(count())))
+    gap.add_updater(lambda m: _show_value(m, abs(ms(count()) - true_value)))
+    frame = _frame_at_rest(scene) if new_style(scene, "pullback") and len(counts) > 2 else None
+    z = None
+    if frame is not None:
+        # C4: start close in on the rectangle tops; the camera pulls back as they get thinner
+        # aim at the top of the tallest rectangle (the interesting edge), nearest safe view
+        tallest = max(rects.submobjects, key=lambda r: r.get_top()[1])
+        z, off = search_view(scene, [tallest.get_top()], PULLBACK_ZOOMS)
+        center = None if z is None else tallest.get_top() + off
+    if z is not None:
+        scene.play(FadeOut(gr.area), FadeIn(rects, lag_ratio=0.1),
+                   frame.animate.set(width=config.frame_width * z).move_to(center), run_time=1.5)
+    else:
+        scene.play(FadeOut(gr.area), FadeIn(rects, lag_ratio=0.1), FadeIn(readout, lag_ratio=0.2), run_time=1.5)
     if 0 in keyframes:
         mark(scene, f"rectangles n={counts[0]}")
     scene.wait(1.0)
@@ -937,6 +1177,10 @@ def riemann_rectangles(scene, gr, a, b, true_value, counts=(4, 8, 16, 32, 64), k
         if i in keyframes:
             mark(scene, f"rectangles n={k}")
         scene.wait(0.6)
+        if z is not None and i == 1:
+            scene.play(_rest_view(frame), FadeIn(readout, lag_ratio=0.2), run_time=1.2)
+            _update_hud(scene)
+            z = None
     return rects, readout, n, midpoint_sum(gr.func, a, b, counts[-1])
 
 
@@ -997,6 +1241,10 @@ def highlight(scene, target, label, side=DOWN, zoom=True, color=YELLOW, hold=2.0
         frame.save_state()
         scene._zoomed = True
         anims.append(frame.animate.scale(z).move_to(focus.get_center() + DOWN * band * z / 2))
+        th = getattr(scene, "_thumb", None)
+        if th is not None and th in scene.mobjects:
+            anims.append(FadeOut(th))
+            scene._thumb_hidden = True
     mark(scene, "insight", offset=1.5)
     scene.play(*anims, run_time=1.5)
     scene.wait(max(MIN_HOLD, hold))
@@ -1006,6 +1254,9 @@ def highlight(scene, target, label, side=DOWN, zoom=True, color=YELLOW, hold=2.0
 def unzoom(scene, *anims):
     """Ease the camera back to the full view (after highlight(zoom=True))."""
     if getattr(scene, "_zoomed", False):
+        if getattr(scene, "_thumb_hidden", False):
+            anims = list(anims) + [FadeIn(scene._thumb)]
+            scene._thumb_hidden = False
         scene.play(Restore(scene.camera.frame), *anims, run_time=1.2)
         scene._zoomed = False
     elif anims:
@@ -1066,6 +1317,8 @@ def morph_to(scene, current, new_spec, colors, trail, run_time=1.5, name=None):
         mark(scene, name, offset=run_time / 2)
     # matching parts glide; parts that change fade out/in (transform_mismatches=True turns
     # them into unreadable glyph soup mid-morph, seen in review round 1)
+    if new_style(scene, "push_in"):
+        set_focus(scene, changed_parts(current, new))
     scene.play(TransformMatchingTex(current, new, path_arc=-15 * DEGREES), *trail_anims, run_time=run_time)
     return new
 
@@ -1351,7 +1604,8 @@ def show_rule_tag(scene, keys, using=()):
     top = (badge.get_bottom()[1] if badge is not None else SAFE_TOP) - 0.12
     if tag.width > 5.0:
         tag.scale_to_fit_width(5.0)
-    tag.move_to([SAFE_RIGHT - tag.width / 2 - 0.05, top - tag.height / 2, 0])
+    right = min(SAFE_RIGHT, thumb_left(scene) + 0.05) if new_style(scene, "thumbnail") else SAFE_RIGHT
+    tag.move_to([right - tag.width / 2 - 0.05, top - tag.height / 2, 0])
     scene.play(FadeIn(tag, shift=0.1 * LEFT), run_time=0.4)
     mark(scene, "tag " + "+".join(keys), offset=0.1)
     return tag
@@ -1373,7 +1627,9 @@ def substitution_view(scene, current, trail, x_graph, x_func, u_graph, u_func, a
     gx, gu = build_graph(x_graph, x_func, box), build_graph(u_graph, u_func, box)
     value = DecimalNumber(area_value, num_decimal_places=3, font_size=36, color=AREA_COLOR)
     readout = _readout([(r"\text{area}\approx", value)], box=(3.25, SAFE_RIGHT, CAPTION_TOP + 0.1, top))
-    scene.play(Transform(current, small), run_time=1.0)
+    th = getattr(scene, "_thumb", None)
+    th = th if th is not None and th in scene.mobjects else None
+    scene.play(Transform(current, small), *([FadeOut(th)] if th is not None else []), run_time=1.0)
     draw_graph(scene, gx)
     scene.play(FadeIn(readout, shift=0.1 * UP), run_time=0.8)
     caption(scene, says[0], key="substitution: x view")
@@ -1382,7 +1638,8 @@ def substitution_view(scene, current, trail, x_graph, x_func, u_graph, u_func, a
     scene.play(ReplacementTransform(gx.curve, gu.curve), ReplacementTransform(gx.area, gu.area), run_time=1.5)
     scene.play(Indicate(value, color=AREA_COLOR), run_time=1.0)
     caption(scene, says[1], key="substitution: u view")
-    scene.play(FadeOut(gu.group), FadeOut(readout), Restore(current), run_time=1.2)
+    scene.play(_exit(scene, gu.group, readout), Restore(current), *([FadeIn(th)] if th is not None else []),
+               run_time=1.2)
 
 
 # ---- symmetry pictures
@@ -1417,7 +1674,7 @@ def reflection_view(scene, spec, func, mode, says, box=None):
         scene.play(Rotate(ghost, angle=-PI, about_point=origin), run_time=2.0)
         scene.play(Indicate(VGroup(ghost, right), color=WHITE), run_time=1.0)
         caption(scene, says[1], key="reflection: result")
-        scene.play(FadeOut(VGroup(gr.group, left, right, ghost)), run_time=1.0)
+        scene.play(_exit(scene, gr.group, left, right, ghost), run_time=1.0)
     else:
         mirror = gr.curve.copy()
         mirror.set_color(spec.get("mirror_color", NEW_VAR_COLOR))
@@ -1436,7 +1693,7 @@ def reflection_view(scene, spec, func, mode, says, box=None):
             total_label = MathTex(f"{spec['sum']:g}", font_size=34).next_to(total, RIGHT, buff=0.15)
         scene.play(Create(total), FadeIn(total_label), run_time=1.2)
         caption(scene, says[1], key="reflection: result")
-        scene.play(FadeOut(VGroup(gr.group, mirror, total, total_label)), run_time=1.0)
+        scene.play(_exit(scene, gr.group, mirror, total, total_label), run_time=1.0)
 
 
 # ---- the close
@@ -1450,14 +1707,26 @@ def close(scene, current, trail, answer_spec, colors, func, window, answer_value
     """
     scene._guard_section = "Close"
     clear_caption(scene)        # the last step's caption must not linger under the answer
+    th = getattr(scene, "_thumb", None)
+    th = th if th is not None and th in scene.mobjects and new_style(scene, "thumbnail") else None
+    readout_box = (-3.5, 3.5, CAPTION_TOP + 0.15, -0.1)
+    grow = []
+    if th is not None:
+        # T1: the picture grows back beside the readout, out of the answer's way
+        unpin(th)
+        target = th.copy()
+        fit_into(target.scale(10), 2.9, SAFE_RIGHT, CAPTION_TOP + 0.15, -0.1, center=True)
+        readout_box = (SAFE_LEFT + 0.4, 2.6, CAPTION_TOP + 0.15, -0.1)
+        grow = [Transform(th, target)]
     answer = mt(eq(r"\text{Answer}", "=", *answer_spec), colors).scale(1.3)
     answer.set_color(AREA_COLOR)
     fit_into(answer, SAFE_LEFT, SAFE_RIGHT, 0.4, 2.6, center=True)
-    scene.play(TransformMatchingTex(current, answer), *trail.fade(), run_time=1.5)
+    scene.play(TransformMatchingTex(current, answer), *trail.fade(), *grow, run_time=1.5)
     trail.lines = []
     box = SurroundingRectangle(answer, color=AREA_COLOR, buff=0.25)
     scene.play(Create(box), run_time=0.8)
     mark(scene, "answer")
+    set_focus(scene, answer)
     t = ValueTracker(0)
     a0, b0 = window
     a1, b1 = widen_to or window
@@ -1467,20 +1736,34 @@ def close(scene, current, trail, answer_spec, colors, func, window, answer_value
         k = int(round(final_count * (end_count / final_count) ** s))
         return a0 + (a1 - a0) * s, b0 + (b1 - b0) * s, k
 
+    sums = {}
+
     def estimate():
-        a, b, k = state()
-        return midpoint_sum(func, a, b, k)
+        key = state()
+        if key not in sums:
+            sums[key] = midpoint_sum(func, *key)
+        return sums[key]
 
     n_num = Integer(final_count, font_size=34, group_with_commas=False)   # "2,048" reads like 2.048
     est = DecimalNumber(estimate(), num_decimal_places=5, font_size=34)
     gap = DecimalNumber(abs(estimate() - answer_value), num_decimal_places=5, font_size=34, color=TRAP_COLOR)
     readout = _readout([(r"\text{rectangles}=", n_num), (r"\text{estimate}\approx", est),
-                        (r"\text{gap}=", gap)], box=(-3.5, 3.5, CAPTION_TOP + 0.15, -0.1))
+                        (r"\text{gap}=", gap)], box=readout_box)
     n_num.add_updater(lambda m: _show_value(m, state()[2]))
     est.add_updater(lambda m: _show_value(m, estimate()))
     gap.add_updater(lambda m: _show_value(m, abs(estimate() - answer_value)))
     scene.play(FadeIn(readout, lag_ratio=0.2), run_time=1.0)
     scene.play(t.animate.set_value(1), run_time=2.5, rate_func=smooth)
+    if new_style(scene, "answer_travel"):
+        # T2: a copy of the answer flies into the estimate and merges with it
+        ghost = VGroup(*answer.submobjects[2:]).copy()
+        scene.add(ghost)
+        scene.play(ghost.animate.scale_to_fit_height(max(est.height * 1.6, 0.3)).move_to(est).set_opacity(0),
+                   run_time=1.2)
+        scene.remove(ghost)
+        scene.play(Indicate(est, color=AREA_COLOR),
+                   *([Indicate(th.area, color=AREA_COLOR, scale_factor=1.05)] if th is not None else []),
+                   run_time=0.8)
     caption(scene, says[0], key="estimate meets answer")
     caption(scene, says[1], color=YELLOW)
     scene.wait(1.0)
@@ -1619,6 +1902,7 @@ class IntegralVideo(MovingCameraScene):
             # the readout column is still empty during the hook, so the label may use it
             fit_into(label, SAFE_LEFT, SAFE_RIGHT, GRAPH_BOX[2], GRAPH_BOX[3])
         draw_graph(self, gr, label)
+        set_focus(self, gr.area)
         caption(self, self.HOOK, key="hook")
         if self.HOOK_NOTE:
             if gr.hole is not None:
@@ -1642,7 +1926,10 @@ class IntegralVideo(MovingCameraScene):
         rects, readout, n, est = riemann_rectangles(self, gr, a, b, self.ANSWER_VALUE, self.COUNTS)
         self.wait(1.0)
         clear_caption(self)
-        self.play(FadeOut(VGroup(gr.group, readout)), FadeOut(rects), run_time=1.0)
+        if new_style(self, "thumbnail"):
+            to_thumbnail(self, gr, [rects, readout])
+        else:
+            self.play(FadeOut(VGroup(gr.group, readout)), FadeOut(rects), run_time=1.0)
         return est
 
     def insight(self, problem):
@@ -1651,6 +1938,7 @@ class IntegralVideo(MovingCameraScene):
         fit_into(target, SAFE_LEFT, SAFE_RIGHT, STAGE[2], STAGE[3])
         target.move_to([0, 0.2, 0])
         self.play(Transform(problem, target), run_time=1.2)
+        set_focus(self, problem)
         if not self.INSIGHT:
             return problem
         if self.INSIGHT.get("before"):
@@ -1658,7 +1946,7 @@ class IntegralVideo(MovingCameraScene):
         extra = highlight(self, parts_of(problem, *self.INSIGHT["parts"]), self.INSIGHT["label"],
                           side=self.INSIGHT.get("side", DOWN), context=problem)
         caption(self, self.INSIGHT["say"])
-        unzoom(self, FadeOut(extra))
+        unzoom(self, _exit(self, *extra))
         return problem
 
     def method(self, problem):
@@ -1696,7 +1984,8 @@ class IntegralVideo(MovingCameraScene):
         problem = self.insight(problem)
         current, trail = self.method(problem)
         close(self, current, trail, self.ANSWER, self.COLORS, self.FUNC, self.window(), self.ANSWER_VALUE,
-              self.COUNTS[-1], self.CLOSE_SAYS, widen_to=self.CLOSE_WIDEN)
+              self.COUNTS[-1], self.CLOSE_SAYS, widen_to=self.CLOSE_WIDEN,
+              end_count=getattr(self, "END_COUNT", 2048))
         if self._caption_log and self._caption_log[-1][2] is None:
             self._caption_log[-1][2] = _now(self)        # the last caption stays to the end
         self.write_narration()
